@@ -29,6 +29,13 @@ ArquivoAtualizacao <- "src/OSC-v2023.R"
 assert_that(file.exists(ArquivoAtualizacao), 
             msg = "Atualize caminho do arquivo de atualização!")
 
+# Checa funções de "findOSC":
+assert_that(file.exists("src/findosc-v2023.R"), 
+            msg = "Função 'findosc-v2023.R' não encontrada!")
+
+assert_that(file.exists("src/generalFunctions/str_detect_split.R"), 
+            msg = "Função 'str_detect_split.R' não encontrada!")
+
 # Periodicidade das Atualizações (em dias)
 ValidadeAtts <- 365
 
@@ -38,7 +45,15 @@ DirBackupFiles <- "data/backup_files/"
 # Diretório onde está a última versão dos dados
 # Fundamental para algumas variáveis, como id_osc e informações
 # inseridas por usuários
-LastVersionMOSC <- "data/temp/2023-10-05 Extracao MOSC/"
+LastVersionMOSC <- "data/raw/MOSC/20231005/"
+
+# Verifica se esses dados estão corretos:
+assert_that(dir.exists(LastVersionMOSC), 
+            msg = "Diretório da última versão não existe")
+
+# Verifica se esses dados estão corretos:
+assert_that(file.exists(paste0(LastVersionMOSC, "tb_osc.csv")), 
+            msg = "Arquivo tb_osc.csv não está presente na última atualização")
 
 # Baixa dados do controle de atualização
 ControleAtualizacao <- read_xlsx("data/dataset/ControleAtualizacaoOSC.xlsx", 
@@ -253,7 +268,7 @@ if(!"11" %in% ProcessosAtt_Atual$Controle) {
   rm(connec, CanConnect)
   
   # Caminho do arquivo Backup
-  PathFile <- paste0(DirName, "tb_JoinOSC.RDS")
+  PathFile <- paste0(DirName, "IntermediateFiles/tb_JoinOSC.RDS")
   
   # Salva Backup
   saveRDS(tb_JoinOSC, PathFile)
@@ -273,9 +288,10 @@ if(!"11" %in% ProcessosAtt_Atual$Controle) {
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_1"), 
-            FileFolder = DirName, 
+            FileFolder = paste0(DirName, "IntermediateFiles/"), 
             FileName = "tb_JoinOSC.RDS", 
-            FileSizeMB = file.size(paste0(DirName, "tb_JoinOSC.RDS"))/1024000)
+            FileSizeMB = file.size(paste0(DirName, 
+                                          "IntermediateFiles/tb_JoinOSC.RDS"))/1024000)
   
   rm(PathFile, DataProcessoInicio)
 } else {message("Dados da RFB já carregados anteriormente")}
@@ -298,7 +314,7 @@ if(!"21" %in% ProcessosAtt_Atual$Controle) {
   # Se o arquivo não estiver carregado, carrega ele.
   if(!exists("tb_JoinOSC")) {
     
-    PathFile <- paste0(DirName, "tb_JoinOSC.RDS")
+    PathFile <- paste0(DirName, "IntermediateFiles/tb_JoinOSC.RDS")
     
     # Garante que o arquivo existe.
     assert_that(file.exists(PathFile), 
@@ -361,7 +377,7 @@ if(!"21" %in% ProcessosAtt_Atual$Controle) {
     mutate(ft_IsOSC = paste0("findOSC.R_", Att_Atual$At_CodRef[1]))
   
   # Salva Backup
-  PathFile <- paste0(DirName, "Tb_OSC_Full.RDS")
+  PathFile <- paste0(DirName, "IntermediateFiles/Tb_OSC_Full.RDS")
   saveRDS(tb_JoinOSC, PathFile)
   
   # Muda nome do objeto para marcar mudança de processamento:
@@ -382,9 +398,10 @@ if(!"21" %in% ProcessosAtt_Atual$Controle) {
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_2"), 
-            FileFolder = DirName, 
+            FileFolder = Dpaste0(DirName, "IntermediateFiles/"),
             FileName = "Tb_OSC_Full.RDS", 
-            FileSizeMB = file.size(paste0(DirName, "Tb_OSC_Full.RDS"))/1024000)
+            FileSizeMB = file.size(paste0(DirName, 
+                                          "IntermediateFiles/Tb_OSC_Full.RDS"))/1024000)
   
   rm(DataProcessoInicio, PathFile)
   rm(tb_JoinOSC) # não vamos mais utilizar esses dados
@@ -410,7 +427,7 @@ if(!"31" %in% ProcessosAtt_Atual$Controle) {
   if(!(exists("Tb_OSC_Full") && "data.frame" %in% class(Tb_OSC_Full)) ) {
     
     # Se o arquivo já tiver sido baixado, vamos direto para carregar ele.
-    PathFile <- paste0(DirName, "Tb_OSC_Full.RDS")
+    PathFile <- paste0(DirName, "IntermediateFiles/Tb_OSC_Full.RDS")
     
     # Garante que o arquivo existe.
     assert_that(file.exists(PathFile), 
@@ -466,7 +483,7 @@ if(!"31" %in% ProcessosAtt_Atual$Controle) {
   rm(AreaAtuacaoOSC, DB_SubAreaRegras, DB_AreaSubaria)
 
   # Salva Backup
-  PathFile <- paste0(DirName, "DB_OSC.RDS")
+  PathFile <- paste0(DirName, "IntermediateFiles/DB_OSC.RDS")
   saveRDS(DB_OSC, PathFile)
 
   # Atualiza realização de processos:
@@ -484,9 +501,10 @@ if(!"31" %in% ProcessosAtt_Atual$Controle) {
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_3"), 
-            FileFolder = DirName, 
+            FileFolder = paste0(DirName, "IntermediateFiles/"),
             FileName = "DB_OSC.RDS", 
-            FileSizeMB = file.size(paste0(DirName, "DB_OSC.RDS"))/1024000)
+            FileSizeMB = file.size(paste0(DirName, 
+                                          "IntermediateFiles/DB_OSC.RDS"))/1024000)
   
   rm(DataProcessoInicio, PathFile)
   ls()
@@ -513,7 +531,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   if(!(exists("DB_OSC") && "data.frame" %in% class(DB_OSC)) ) {
     
     # Se o arquivo já tiver sido baixado, vamos direto para carregar ele.
-    PathFile <- paste0(DirName, "DB_OSC.RDS")
+    PathFile <- paste0(DirName, "IntermediateFiles/DB_OSC.RDS")
     
     # Garante que o arquivo existe.
     assert_that(file.exists(PathFile), 
@@ -607,15 +625,16 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   rm(Max_OldID, NewID)
   
   # Salva Backup
-  # PathFile <- paste0(DirName, "tb_osc.RDS")
-  # saveRDS(tb_osc, PathFile)
+  PathFile <- paste0(DirName, "OutputFiles/tb_osc.RDS")
+  saveRDS(tb_osc, PathFile)
   
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = DirName, 
+            FileFolder = paste0(DirName, "OutputFiles/"), 
             FileName = "tb_osc.RDS", 
-            FileSizeMB = file.size(paste0(DirName, "tb_osc.RDS"))/1024000 )
+            FileSizeMB = file.size(paste0(DirName, 
+                                          "OutputFiles/tb_osc.RDS"))/1024000 )
 
   # Tabela: tb_dados_gerais ####
   
@@ -655,15 +674,16 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            situacao)
   
   # Salva Backup
-  PathFile <- paste0(DirName, "tb_dados_gerais.RDS")
+  PathFile <- paste0(DirName, "OutputFiles/tb_dados_gerais.RDS")
   saveRDS(tb_dados_gerais, PathFile)
   
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = DirName, 
+            FileFolder = paste0(DirName, "OutputFiles/"), 
             FileName = "tb_dados_gerais.RDS", 
-            FileSizeMB = file.size(paste0(DirName, "tb_dados_gerais.RDS"))/1024000 )
+            FileSizeMB = file.size(paste0(DirName, 
+                                          "OutputFiles/tb_dados_gerais.RDS"))/1024000 )
 
   
   
@@ -711,22 +731,24 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   
   
   # Salva Backup
-  PathFile <- paste0(DirName, "tb_contato.RDS")
+  PathFile <- paste0(DirName, "OutputFiles/tb_contato.RDS")
   saveRDS(tb_contato, PathFile)
   
-  PathFile <- paste0(DirName, "tb_contato2.RDS")
+  PathFile <- paste0(DirName, "OutputFiles/tb_contato2.RDS")
   saveRDS(tb_contato2, PathFile)
   
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = DirName, 
+            FileFolder = paste0(DirName, "OutputFiles/"), 
             FileName = "tb_contato.RDS", 
-            FileSizeMB = file.size(paste0(DirName, "tb_contato.RDS"))/1024000 ) %>% 
+            FileSizeMB = file.size(paste0(DirName, 
+                                          "OutputFiles/tb_contato.RDS"))/1024000 ) %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = DirName, 
+            FileFolder = paste0(DirName, "OutputFiles/"), 
             FileName = "tb_contato2.RDS", 
-            FileSizeMB = file.size(paste0(DirName, "tb_contato2.RDS"))/1024000 )
+            FileSizeMB = file.size(paste0(DirName, 
+                                          "OutputFiles/tb_contato2.RDS"))/1024000 )
   
   # Tabela: tb_localizacao ####
   
@@ -777,15 +799,16 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   rm(Galileo_data)
   
   # Salva Backup
-  PathFile <- paste0(DirName, "tb_localizacao.RDS")
+  PathFile <- paste0(DirName, "OutputFiles/tb_localizacao.RDS")
   saveRDS(tb_localizacao, PathFile)
   
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = DirName, 
+            FileFolder = paste0(DirName, "OutputFiles/"), 
             FileName = "tb_localizacao.RDS", 
-            FileSizeMB = file.size(paste0(DirName, "tb_localizacao.RDS"))/1024000 )
+            FileSizeMB = file.size(paste0(DirName, 
+                                          "OutputFiles/tb_localizacao.RDS"))/1024000 )
   
   
   # Tabela: tb_area_atuacao ####
@@ -816,6 +839,37 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     # Evitar dar fonte de dado missing:
     mutate(ft_area_atuacao = ifelse(is.na(tx_subarea_atuacao), 
                                     NA, ft_area_atuacao))
+  
+  # Identifica área de atuação via CNES/MS
+  if(file.exists("data/raw/MS/InputCNES.RDS")) {
+    InputCNES <- readRDS("data/raw/MS/InputCNES.RDS")
+    
+    names(InputCNES)
+    
+    # Usa CEBAS/MS para identificar OSC como da área da saúde
+    newRows <- InputCNES %>% 
+      rename(cd_identificador_osc = cpf_cnpj) %>% 
+      
+      # Insere "id_osc"
+      left_join(select(tb_osc, cd_identificador_osc, id_osc), 
+                by = "cd_identificador_osc")     %>%
+      
+      dplyr::filter(!is.na(id_osc)) %>% 
+      
+      mutate(tx_area_atuacao = "Saúde", 
+             ft_area_atuacao = paste0("CNES/MS/", Att_Atual$At_CodRef[1]), 
+             tx_subarea_atuacao = NA, 
+             bo_oficial = TRUE) %>% 
+      select(id_osc, cd_identificador_osc, tx_area_atuacao, 
+             tx_subarea_atuacao, ft_area_atuacao, bo_oficial)
+    
+    tb_area_atuacao <- tb_area_atuacao %>% 
+      bind_rows(newRows) %>% 
+      arrange(id_osc)
+    
+    # table(tb_area_atuacao$ft_area_atuacao)
+    rm(InputCNES, newRows)
+  }
   
   # Identifica área de atuação via CEBAS/MS
   if(file.exists("data/raw/MS/InputCEBAS.xlsx")) {
