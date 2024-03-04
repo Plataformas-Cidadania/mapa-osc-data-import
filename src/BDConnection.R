@@ -17,7 +17,7 @@ library(RPostgres)
 # DadosNovos[["cd_identificador_osc"]] <- as.numeric(DadosNovos[["cd_identificador_osc"]])
 # Chave <- "id_osc"
 # Conexao <- connec
-# Table_NameAntigo <- "tb_osc_bckp"
+# Table_NameAntigo <- "tb_osc"
 # verbose = TRUE
 # # rm(DadosNovos, Chave, Conexao, Table_NameAntigo)
 # ls()
@@ -43,12 +43,13 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   
   ## Verifica se o nome da tabela a ser atualizada inserida está correto:
   assert_that(is.character(Table_NameAntigo) & length(Table_NameAntigo) == 1)
-  Tables <- dbListTables(connec)
-  assert_that(Table_NameAntigo %in% Tables)
+  Tables <- dbListTables(Conexao)
+  assert_that(Table_NameAntigo %in% Tables, 
+              msg = "Tabela de atualização não encontrada no banco de dados")
   
   # Baixa dados do banco a se atualizar
   message("Baixando dados antigos...")
-  DadosAntigos <- dbGetQuery(connec, 
+  DadosAntigos <- dbGetQuery(Conexao, 
                              paste0("SELECT * FROM ",
                                     Table_NameAntigo,
                                     # " LIMIT 500", 
@@ -106,10 +107,10 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   # sum(DeleteData[["deletar"]])
   
   ## Faz upload da tabela com as linhas a se deletar
-  if(dbExistsTable(connec, "deletedata")) {
-    dbRemoveTable(connec, "deletedata")
+  if(dbExistsTable(Conexao, "deletedata")) {
+    dbRemoveTable(Conexao, "deletedata")
   }
-  dbWriteTable(connec, "deletedata", DeleteData)
+  dbWriteTable(Conexao, "deletedata", DeleteData)
   
   # Faz umm join desta tabela com os dados antigos
   
@@ -117,14 +118,14 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   query_DropCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
                           " DROP COLUMN IF EXISTS deletar;")
   if("deletar" %in% names(DadosAntigos)) {
-    dbExecute(connec, query_DropCol)
+    dbExecute(Conexao, query_DropCol)
   }
   
   # Cria coluna na tabela de dados antigos
   query_AddCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
                          " ADD COLUMN deletar boolean;")
   
-  dbExecute(connec, query_AddCol)
+  dbExecute(Conexao, query_AddCol)
   
   # Insere a coluna com as linhas para deletar
   query_JoinDelete <- paste0("UPDATE ", Table_NameAntigo, "\n",
@@ -136,22 +137,22 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   # cat(query_JoinDelete)
   
   # query_JoinDelete
-  dbExecute(connec, query_JoinDelete)
+  dbExecute(Conexao, query_JoinDelete)
   
   # Deleta as linhas com base na nova coluna
   query_DeleteRows <- paste0("DELETE FROM ", Table_NameAntigo, 
                              " WHERE deletar;")
   # query_DeleteRows
-  LinhasDeletadas <- dbExecute(connec, query_DeleteRows)
+  LinhasDeletadas <- dbExecute(Conexao, query_DeleteRows)
   
   message(LinhasDeletadas, " linhas deletadas da tabela")
   
   # Deleta a coluna criada
-  dbExecute(connec, query_DropCol)
+  dbExecute(Conexao, query_DropCol)
   
   # Remove a tabela deletedata
-  if(dbExistsTable(connec, "deletedata")) {
-    dbRemoveTable(connec, "deletedata")
+  if(dbExistsTable(Conexao, "deletedata")) {
+    dbRemoveTable(Conexao, "deletedata")
   }
   
   rm(query_JoinDelete, query_DropCol, query_DeleteRows, query_AddCol)
@@ -165,7 +166,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   
   # Atualiza a tabela, para evitar problemas:
   message("Atualizando novamente os dados")
-  DadosAntigos <- dbGetQuery(connec, 
+  DadosAntigos <- dbGetQuery(Conexao, 
                              paste0("SELECT * FROM ",
                                     Table_NameAntigo,
                                     # " LIMIT 500", 
@@ -203,7 +204,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
     # names(AddData)[names(AddData) %in% names(DadosAntigos)]
     
     ## Insere linhas:
-    AddedRows <- dbAppendTable(connec, Table_NameAntigo, AddData)
+    AddedRows <- dbAppendTable(Conexao, Table_NameAntigo, AddData)
     
     message(AddedRows, " linhas novas inseridas na tabela")
     
@@ -222,8 +223,8 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   message("Iniciando atualização no banco: ")
   
   # Atualiza a tabela, para evitar problemas:
-  message("Atualizando novamente os dados")
-  DadosAntigos <- dbGetQuery(connec, 
+  message("Atualizando novamente os dados da tabela do BD")
+  DadosAntigos <- dbGetQuery(Conexao, 
                              paste0("SELECT * FROM ",
                                     Table_NameAntigo,
                                     # " LIMIT 500", 
@@ -275,7 +276,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
     # Atualiza por coluna:
     SQL_Coluna <- ""
     for (j in Att_Cols) {
-      # j <- Att_Cols[1]
+      # j <- Att_Cols[7]
       # print(j)
       
       # Seleciona apenas a coluna que será atualizada e a pk
@@ -301,23 +302,31 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
           # Se os dados forem iguais, não precisa atualizar
           Dado_Old == Dado_Old ~ FALSE,
           # Vou deixar isso aqui para os outros casos:
-          TRUE ~ TRUE), 
-          # Conserta problema das aspas simples (') no Postree (coloca '')
-          Dado = ifelse(str_detect(Dado, "'"), 
-                        str_replace_all(Dado, "'", fixed("''")), 
-                        Dado) ) %>% 
+          TRUE ~ TRUE)
+          ) %>% 
         # Mantem apenas linhas que serão atualizadas
         dplyr::filter(Atualiza)
       
       # Se não há linhas a se atualizar, pula
       if(nrow(Alteracao) > 0) {
         
+        # Conserta problema das aspas simples (') no Postree (coloca '')
+        if(is.character(Alteracao[["Dado"]])) {
+          Alteracao[["Dado"]] <- str_replace_all(Alteracao[["Dado"]], "'", fixed("''"))
+          # Coloca aspas no dado
+          Alteracao[["Dado"]] <- paste0("'", Alteracao[["Dado"]], "'")
+        }
+        
+        # Conserta problema das datas
+        if(is.Date(Alteracao[["Dado"]])) {
+          Alteracao[["Dado"]] <- paste0("DATE '", Alteracao[["Dado"]], "'")
+        }
+        
         # String único da coluna a ser alterada:
         ColUpdate <- paste0("WHEN '", 
-                            Alteracao[["id"]], 
-                            "' THEN '",  
-                            Alteracao[["Dado"]], 
-                            "'\n", collapse = " ") %>% 
+                            str_trim(Alteracao[["id"]]), 
+                            "' THEN ", Alteracao[["Dado"]], "\n", 
+                            collapse = " ") %>% 
           str_remove("\n$")
         
         SQL_Coluna <- paste0(SQL_Coluna, j, " = CASE ", Chave,"\n ",
@@ -342,14 +351,14 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
       SQL_Comand <- paste(SQL_Cabeca, SQL_Coluna,
                           paste0("WHERE ", Chave, " IN (", 
                                  paste0("'", 
-                                        unique(KeysUpdated), 
+                                        str_trim(unique(KeysUpdated)), 
                                         "'", 
                                         collapse = ", "), 
                                  ");"))
       # cat(SQL_Comand)
       
       # Executa a Query:
-      update_db <- dbSendQuery(connec, SQL_Comand)
+      update_db <- dbSendQuery(Conexao, SQL_Comand)
       
       # Limpa resultado
       dbClearResult(update_db)
@@ -367,6 +376,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   
   message("Atualização Concluída!")
   message("Marcação do tempo: ", now())
+  return(TRUE)
 }
 
 # Fim ####
