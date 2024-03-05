@@ -25,10 +25,8 @@ TestConexao <- dbCanConnect(RPostgres::Postgres(),
                             dbname = "portal_osc2",
                             host = "psql12-dev",
                             port = "5432",
-                            # user = keys$username, 
-                            # password = keys$password,
-                            user = "thiago.ramos", 
-                            password = "123456", 
+                            user = keys$username, 
+                            password = keys$password,
                             options="-c search_path=osc")
 
 assert_that(TestConexao, 
@@ -41,10 +39,8 @@ connec <- dbConnect(RPostgres::Postgres(),
                     dbname = "portal_osc2",
                     host = "psql12-dev",
                     port = "5432",
-                    # user = keys$username, 
-                    # password = keys$password,
-                    user = "thiago.ramos", 
-                    password = "123456",
+                    user = keys$username, 
+                    password = keys$password,
                     options="-c search_path=osc")
 
 # Verifica a coneção com a base
@@ -117,6 +113,7 @@ for (i in seq_along(ArquivosAtualizacao)) {
   message("Inserindo dados da tabela '", names(ArquivosAtualizacao)[i], "'")
   
   DadosNovos <- readRDS(ArquivosAtualizacao[[i]])
+  # names(DadosNovos)
   
   # Ajustas para "tb_osc"
   if(names(ArquivosAtualizacao)[i] == "tb_osc") {
@@ -135,6 +132,10 @@ for (i in seq_along(ArquivosAtualizacao)) {
     DadosNovos[["cd_natureza_juridica_osc"]] <- as.numeric(DadosNovos[["cd_natureza_juridica_osc"]])
     DadosNovos[["dt_fundacao_osc"]] <- as_date(DadosNovos[["dt_fundacao_osc"]])
     DadosNovos[["dt_ano_cadastro_cnpj"]] <- as_date(DadosNovos[["dt_ano_cadastro_cnpj"]])
+  }
+  
+  if(names(ArquivosAtualizacao)[i] == "tb_contato") {
+    "tb_contato"
   }
   
   AtualizaDados(Conexao = connec, 
