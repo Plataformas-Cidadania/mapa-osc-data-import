@@ -106,6 +106,12 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   DeleteData[["deletar"]] <- !(DadosAntigos[[Chave]] %in% DadosNovos[[Chave]])
   # sum(DeleteData[["deletar"]])
   
+  # Amostra de linhas deletadas
+  SampleDel <- sample(DeleteData[[Chave]][DeleteData$deletar], 20)
+  message("Amostra de linhas delitadas: ", Chave, " == ", 
+          paste0(SampleDel, collapse = ", "))
+  rm(SampleDel)
+  
   ## Faz upload da tabela com as linhas a se deletar
   if(dbExistsTable(Conexao, "deletedata")) {
     dbRemoveTable(Conexao, "deletedata")
@@ -177,6 +183,12 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   
   if(sum(DadosNovos[["AddRows"]]) > 0) {
     
+    # Amostra de linhas inseridas
+    SampleAdd <- sample(DadosNovos[[Chave]][DadosNovos$AddRows], 20)
+    message("Amostra de linhas inseridas: ", Chave, " == ", 
+            paste0(SampleAdd, collapse = ", "))
+    rm(SampleAdd)
+    
     ## Avisa das colunas que não serão atualizadas:
     MissingCols <- character(0)
     if(!all(names(DadosNovos) %in% names(DadosAntigos))) {
@@ -243,7 +255,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   rm(ids)
   
   for (i in seq_along(split_OSC)) {
-    # i <- 19
+    # i <- 20
     
     # Com verbose, mostrar a cada linha, sem, a cada 5000 linhas
     if(verbose) {
@@ -276,7 +288,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
     # Atualiza por coluna:
     SQL_Coluna <- ""
     for (j in Att_Cols) {
-      # j <- Att_Cols[7]
+      # j <- Att_Cols[4]
       # print(j)
       
       # Seleciona apenas a coluna que será atualizada e a pk
@@ -298,9 +310,9 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
           ## O dado novo não por der NA
           is.na(Dado) ~ FALSE, 
           ## Se o dado novo não for NA e o antigo sim
-          is.na(Dado_Old) & !is.na(Dado) ~ TRUE,
+          !is.na(Dado) & is.na(Dado_Old) ~ TRUE,
           # Se os dados forem iguais, não precisa atualizar
-          Dado_Old == Dado_Old ~ FALSE,
+          Dado == Dado_Old ~ FALSE,
           # Vou deixar isso aqui para os outros casos:
           TRUE ~ TRUE)
           ) %>% 
@@ -309,6 +321,18 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
       
       # Se não há linhas a se atualizar, pula
       if(nrow(Alteracao) > 0) {
+        
+        # Amostra de dados de atualização
+        if(i == 1 | i %% 10 == 0) {
+          SampleUpdate <- Alteracao %>% 
+            slice(sample(seq_len(nrow(Alteracao)), 
+                         min(20, nrow(Alteracao)))) %>% 
+            select(-Atualiza) %>% 
+            arrange(id)
+          message("Dados atualizados: ")
+          print(SampleUpdate)
+          rm(SampleUpdate)
+          }
         
         # Conserta problema das aspas simples (') no Postree (coloca '')
         if(is.character(Alteracao[["Dado"]])) {

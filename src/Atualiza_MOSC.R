@@ -10,6 +10,7 @@ library(stringr)
 library(DBI)
 library(RODBC)
 library(RPostgres)
+library(jsonlite)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -17,14 +18,14 @@ library(RPostgres)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Baixa a chave secreta do código
-keys <- jsonlite::read_json("keys/rais_2019_key.json")
+keys <- jsonlite::read_json("keys/rais_2019_key2.json")
 
 
 # Verifica se pode condenar
 TestConexao <- dbCanConnect(RPostgres::Postgres(), 
-                            dbname = "portal_osc2",
-                            host = "psql12-dev",
-                            port = "5432",
+                            dbname = keys$dbname,
+                            host = keys$host,
+                            port = keys$port,
                             user = keys$username, 
                             password = keys$password,
                             options="-c search_path=osc")
@@ -36,9 +37,9 @@ assert_that(TestConexao,
 
 # conencta à base
 connec <- dbConnect(RPostgres::Postgres(), 
-                    dbname = "portal_osc2",
-                    host = "psql12-dev",
-                    port = "5432",
+                    dbname = keys$dbname,
+                    host = keys$host,
+                    port = keys$port,
                     user = keys$username, 
                     password = keys$password,
                     options="-c search_path=osc")
@@ -46,7 +47,7 @@ connec <- dbConnect(RPostgres::Postgres(),
 # Verifica a coneção com a base
 dbIsValid(connec)
 
-rm(keys)
+rm(keys, TestConexao)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,8 +79,8 @@ tail(Teste)
 tail(Teste_verific)
 
 # Verifica se podemos deletar tabela:
-if(dbExistsTable(connec, "deletedata")) {
-  dbRemoveTable(connec, "deletedata")
+if(dbExistsTable(connec, "teste")) {
+  dbRemoveTable(connec, "teste")
 }
 dbExistsTable(connec, "teste")
 
@@ -98,17 +99,17 @@ file.exists("backup_files/2023_01/output_files/tb_contato.RDS")
 # Função de atualização de dados:
 source("src/BDConnection.R")
 
-ArquivosAtualizacao <- list(tb_osc = "backup_files/2023_01/output_files/tb_osc.RDS", 
+# Garante que a função existe
+assert_that(exists("AtualizaDados"))
+assert_that(class(AtualizaDados) == "function")
+
+ArquivosAtualizacao <- list(tb_osc_bckp = "backup_files/2023_01/output_files/tb_osc.RDS", 
                            tb_dados_gerais = "backup_files/2023_01/output_files/tb_dados_gerais.RDS",
                            # tb_area_atuacao = "backup_files/2023_01/output_files/tb_area_atuacao.RDS",
                            tb_contato = "backup_files/2023_01/output_files/tb_contato.RDS")
 
 for (i in seq_along(ArquivosAtualizacao)) {
-  # i <- 2
-  
-  # Garante que a função existe
-  assert_that(exists("AtualizaDados"))
-  assert_that(class(AtualizaDados) == "function")
+  # i <- 1
   
   message("Inserindo dados da tabela '", names(ArquivosAtualizacao)[i], "'")
   
@@ -116,13 +117,13 @@ for (i in seq_along(ArquivosAtualizacao)) {
   # names(DadosNovos)
   
   # Ajustas para "tb_osc"
-  if(names(ArquivosAtualizacao)[i] == "tb_osc") {
+  if(names(ArquivosAtualizacao)[i] == "tb_osc_bckp") {
     
     # Corrige tipo de dado para "cd_identificador_osc"
     DadosNovos[["cd_identificador_osc"]] <- as.numeric(DadosNovos[["cd_identificador_osc"]])
     
     # Por algum motivo, "tx_apelido_osc" está contrangido como valor único
-    DadosNovos[["tx_apelido_osc"]] <- NA
+    DadosNovos[["tx_apelido_osc"]] <- NA_character_
   }
   
   # Ajustas para "tb_dados_gerais"
