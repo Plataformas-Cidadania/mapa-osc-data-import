@@ -1,5 +1,11 @@
 
 
+
+DadosUpdate$temp_var[1:5]
+as.Date(DadosUpdate$temp_var[1:5])
+
+
+
 QueryTeste <- "SELECT column_name, data_type
 FROM information_schema.columns
 WHERE table_name = 'update_temp';"
@@ -14,7 +20,7 @@ dbColumnInfo(dbGetQuery(Conexao, "SELECT * FROM update_temp"))
 
 
 
-DadosAntigos <- dbGetQuery(Conexao, 
+DadosAntigos <- dbGetQuery(connec, 
                            paste0("SELECT * FROM ",
                                   Table_NameAntigo,
                                   # " LIMIT 500", 
@@ -23,6 +29,7 @@ DadosAntigos <- dbGetQuery(Conexao,
 
 names(DadosAntigos)
 View(DadosAntigos)
+class(DadosAntigos$temp_var)
 
 sum(DadosAntigos$deletar)
 

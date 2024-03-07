@@ -101,7 +101,7 @@ source("src/BDConnection.R")
 
 # Garante que a função existe
 assert_that(exists("AtualizaDados"))
-assert_that(class(AtualizaDados) == "function")
+assert_that(is.function(AtualizaDados))
 
 
 

@@ -258,10 +258,10 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   # Atualiza coluna a coluna, usando a estratégia da tabela
   # intermediária.
   for (col in Att_Cols) {
-    # col <- Att_Cols[4]
+    # col <- Att_Cols[7]
     # print(col)
     
-    message("Atualizando tabela ", col)
+    message("Atualizando coluna ", col)
     
     # Variável que será atualizada com o nome padronizado
     DadosCheck <- DadosNovos[, c(Chave, col)]
@@ -289,9 +289,14 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
     
     if(sum(DadosUpdate$Atualiza) > 0) {
       
-      
       message(sum(DadosUpdate$Atualiza), 
               " linhas serão atualizadas")
+      
+      # Corrige a formatação do dado de data
+      if(is.Date(DadosUpdate$Dado_Old)) {
+        DadosUpdate$temp_var <- as_date(DadosUpdate$temp_var)
+      }
+      
       
       # table(DadosUpdate$temp_var, useNA = "always")
       
