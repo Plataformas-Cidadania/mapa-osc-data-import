@@ -1,5 +1,33 @@
 
 
+QueryTeste <- "SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'update_temp';"
+
+teste <- dbGetQuery(Conexao, QueryTeste)
+
+teste$data_type[column_name]
+
+teste <- dbGetQuery(Conexao, "SELECT * FROM update_temp")
+
+dbColumnInfo(dbGetQuery(Conexao, "SELECT * FROM update_temp"))
+
+
+
+DadosAntigos <- dbGetQuery(Conexao, 
+                           paste0("SELECT * FROM ",
+                                  Table_NameAntigo,
+                                  # " LIMIT 500", 
+                                  ";"))
+
+
+names(DadosAntigos)
+View(DadosAntigos)
+
+sum(DadosAntigos$deletar)
+
+table(DadosAntigos[[col]], useNA = "always")
+
 
 QueryTeste <- "UPDATE tb_osc_teste 
 

@@ -19,12 +19,13 @@ library(RPostgres)
 # Conexao <- connec
 # Table_NameAntigo <- names(ArquivosAtualizacao)[i] 
 # verbose = TRUE
+# samples = TRUE
 # # rm(DadosNovos, Chave, Conexao, Table_NameAntigo)
 # ls()
 
 
 AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo, 
-                          verbose = FALSE) {
+                          verbose = FALSE, samples = TRUE) {
   
   message("Marcação do tempo: ", now())
   
@@ -93,6 +94,8 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
                    "' não estão na tabela de atualização."))  
   }  
   
+  
+  
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Remove linhas que  não estão mais em DadosNovos ####
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -105,18 +108,18 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   DeleteData[[Chave]] <- DadosAntigos[[Chave]]
   DeleteData[["deletar"]] <- !(DadosAntigos[[Chave]] %in% DadosNovos[[Chave]])
   
-  
   if(sum(DeleteData[["deletar"]]) > 0) {
-    # Amostra de linhas deletadas
-    SampleDel <- sample(DeleteData[[Chave]][DeleteData$deletar], min(20, sum(DeleteData$deletar)))
-    message("Amostra de linhas delitadas: ", Chave, " == ", 
-            paste0(SampleDel, collapse = ", "))
-    rm(SampleDel)
+    
+    if(samples) {
+      # Amostra de linhas deletadas
+      SampleDel <- sample(DeleteData[[Chave]][DeleteData$deletar], min(20, sum(DeleteData$deletar)))
+      message("Amostra de linhas deletadas: ", Chave, " == ", 
+              paste0(SampleDel, collapse = ", "))
+      rm(SampleDel)
+    }
     
     ## Faz upload da tabela com as linhas a se deletar
-    if(dbExistsTable(Conexao, "deletedata")) {
-      dbRemoveTable(Conexao, "deletedata")
-    }
+    if(dbExistsTable(Conexao, "deletedata")) dbRemoveTable(Conexao, "deletedata")
     dbWriteTable(Conexao, "deletedata", DeleteData)
     
     # Faz umm join desta tabela com os dados antigos
@@ -124,6 +127,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
     # Deleta a coluna, se ela existir:
     query_DropCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
                             " DROP COLUMN IF EXISTS deletar;")
+    
     if("deletar" %in% names(DadosAntigos)) {
       dbExecute(Conexao, query_DropCol)
     }
@@ -158,9 +162,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
     dbExecute(Conexao, query_DropCol)
     
     # Remove a tabela deletedata
-    if(dbExistsTable(Conexao, "deletedata")) {
-      dbRemoveTable(Conexao, "deletedata")
-    }
+    if(dbExistsTable(Conexao, "deletedata")) dbRemoveTable(Conexao, "deletedata")
     
     rm(query_JoinDelete, query_DropCol, query_DeleteRows, query_AddCol, 
        LinhasDeletadas)
@@ -189,11 +191,13 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   
   if(sum(DadosNovos[["AddRows"]]) > 0) {
     
-    # Amostra de linhas inseridas
-    SampleAdd <- sample(DadosNovos[[Chave]][DadosNovos$AddRows], 20)
-    message("Amostra de linhas inseridas: ", Chave, " == ", 
-            paste0(SampleAdd, collapse = ", "))
-    rm(SampleAdd)
+    if(samples) {
+      # Amostra de linhas inseridas
+      SampleAdd <- sample(DadosNovos[[Chave]][DadosNovos$AddRows], 20)
+      message("Amostra de linhas inseridas: ", Chave, " == ", 
+              paste0(SampleAdd, collapse = ", "))
+      rm(SampleAdd)
+    }
     
     ## Avisa das colunas que não serão atualizadas:
     MissingCols <- character(0)
@@ -211,14 +215,17 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
         AddData[[j]] <- NULL
       }
     }
+    rm(j)
     
     # Insere colunas faltantes
     for (j in MissingCols) {
       # print(j) 
       AddData[[j]] <- NA
     }
+    rm(j)
     # names(AddData)
     # names(AddData) %in% names(DadosAntigos)
+    # names(DadosAntigos) %in% names(AddData)
     # names(AddData)[names(AddData) %in% names(DadosAntigos)]
     
     ## Insere linhas:
@@ -247,168 +254,146 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
                                     Table_NameAntigo,
                                     # " LIMIT 500", 
                                     ";"))
-  
-  ## Em primeiro lutar, não precisamos nos preocupar com linhas do banco 
-  ## novo que foram recem inseridas. Elas não precisa ser atualizadas
-  DadosUpdate <- DadosNovos[!DadosNovos[["AddRows"]], ]
-  
-  message(nrow(DadosUpdate), " linhas serão atualizadas no banco.")
-  
-  # Divide o banco em chucks de 1000 linhas
-  ids <- DadosUpdate[[Chave]]
-  split_OSC <- split(ids, ceiling(seq_along(ids)/1000))
-  # length(split_OSC)
-  rm(ids)
-  
-  for (i in seq_along(split_OSC)) {
-    # i <- 2
+
+  # Atualiza coluna a coluna, usando a estratégia da tabela
+  # intermediária.
+  for (col in Att_Cols) {
+    # col <- Att_Cols[4]
+    # print(col)
     
-    # Com verbose, mostrar a cada linha, sem, a cada 5000 linhas
-    if(verbose) {
-      message("Verificando linha ", ifelse(i == 1, 1, i*1000+1), 
-              " de ", nrow(DadosUpdate))
+    message("Atualizando tabela ", col)
+    
+    # Variável que será atualizada com o nome padronizado
+    DadosCheck <- DadosNovos[, c(Chave, col)]
+    names(DadosCheck) <- c(Chave, "Dado")
+    
+    # Tabela temporária para inserir os dados atualizados
+    DadosUpdate <- tibble(.rows = nrow(DadosAntigos))
+    DadosUpdate[[Chave]] <- DadosAntigos[[Chave]]
+    DadosUpdate[["Dado_Old"]] <- DadosAntigos[[col]]
+    
+    DadosUpdate <- DadosUpdate %>% 
+      left_join(DadosCheck, by = Chave) %>% 
+      mutate(Atualiza = case_when(
+        ## O dado novo não por der NA
+        is.na(Dado) ~ FALSE, 
+        ## Se o dado novo não for NA e o antigo sim
+        !is.na(Dado) & is.na(Dado_Old) ~ TRUE,
+        # Se os dados forem iguais, não precisa atualizar
+        Dado == Dado_Old ~ FALSE,
+        # Vou deixar isso aqui para os outros casos:
+        TRUE ~ TRUE), 
+        temp_var = ifelse(Atualiza, Dado, Dado_Old)) %>% 
+      # select(all_of(Chave), temp_var) %>% 
+      select(everything())
+    
+    if(sum(DadosUpdate$Atualiza) > 0) {
+      
+      
+      message(sum(DadosUpdate$Atualiza), 
+              " linhas serão atualizadas")
+      
+      # table(DadosUpdate$temp_var, useNA = "always")
+      
+      if(samples) {
+        # Amostra de linhas atualizadas
+        LinhasAtualizadas <- DadosUpdate %>% 
+          dplyr::filter(Atualiza)
+        
+        SampleUpdate <- LinhasAtualizadas %>% 
+          slice(sample(seq_len(nrow(LinhasAtualizadas)), 
+                       min(20, nrow(LinhasAtualizadas)))) %>% 
+          select(all_of(Chave), Dado, Dado_Old)
+        
+        message("Amostra de linhas atualizadas da coluna ", col, ": ")
+        print(SampleUpdate)
+        rm(SampleUpdate, LinhasAtualizadas)
+      }
+      
+      ## Faz upload da tabela com as linhas a se deletar
+      if(dbExistsTable(Conexao, "update_temp")) dbRemoveTable(Conexao, "update_temp")
+      
+      dbWriteTable(Conexao, "update_temp", 
+                   select(DadosUpdate, 
+                          all_of(Chave), temp_var))
+      # teste <- dbGetQuery(Conexao, "SELECT * FROM update_temp")
+      # View(teste)
+      # table(teste$temp_var, useNA = "always")
+      
+      # Faz umm join desta tabela com os dados antigos
+      
+      # Deleta a coluna, se ela existir:
+      query_DropCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
+                              " DROP COLUMN IF EXISTS temp_var;")
+      if("temp_var" %in% names(DadosAntigos)) {
+        dbExecute(Conexao, query_DropCol)
+      }
+      
+      # Pega o tipo de variável a ser criado:
+      QueryGetInformation <- paste0("SELECT *", "\n",
+                                    "FROM information_schema.columns", "\n",
+                                    "WHERE table_name = 'update_temp';")
+      # cat(QueryGetInformation)
+      ColTypes <- dbGetQuery(Conexao, QueryGetInformation)
+      VarType <- ColTypes$data_type[ColTypes$column_name == "temp_var"]
+      
+      # Cria coluna na tabela de dados antigos
+      query_AddCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
+                             " ADD COLUMN temp_var ",  
+                             toupper(VarType), 
+                             ";")
+      
+      dbExecute(Conexao, query_AddCol)
+      
+      rm(QueryGetInformation, ColTypes, VarType, query_AddCol)
+      
+      # Insere a coluna com as linhas para deletar
+      query_JoinUpdate <- paste0("UPDATE ", Table_NameAntigo, "\n",
+                                 " SET temp_var = update_temp.temp_var", "\n",
+                                 " FROM update_temp", "\n",
+                                 " WHERE ", Table_NameAntigo, ".", Chave,
+                                 " = update_temp.", Chave,
+                                 ";")
+      # cat(query_JoinUpdate)
+      
+      # Executa a inserção das colunas
+      dbExecute(Conexao, query_JoinUpdate)
+      
+      # Determina a atualização da coluna com base no valor de temp_var
+      query_UpdateCol <- paste0("UPDATE ", Table_NameAntigo, "\n",
+                                " SET ", col, " = temp_var",
+                                ";")
+      # cat(query_UpdateCol)
+      
+      # query_DeleteRows
+      LinhasAtualizadas <- dbExecute(Conexao, query_UpdateCol)
+      
+      message("Linhas atualizadas na coluna ", col)
+      
+      # Deleta a coluna criada
+      dbExecute(Conexao, query_DropCol)
+      
+      # Remove a tabela deletedata
+      if(dbExistsTable(Conexao, "update_temp")) {
+        dbRemoveTable(Conexao, "update_temp")
+      }
+      
+      # ls()
+      rm(query_UpdateCol, query_DropCol, query_JoinUpdate, 
+         LinhasAtualizadas)
+      
     } else {
-      # Mensagem a cada 5000 linhas verificadas
-      if(i == 1 | i %% 5 == 0) {
-        message("Verificando linha ", ifelse(i==1, 1, i*1000+1), 
-                " de ", nrow(DadosUpdate))
-      }
+      message("Não há linhas na tabela '", col, 
+              "' para serem atualizadas.")
     }
-    
-    # Seleciona apenas um chuck de 1000 atualização para:
-    DadosUpdate_i <- DadosUpdate[DadosUpdate[[Chave]] %in% split_OSC[[i]], ]
-    # DadosUpdate_i <- DadosUpdate_i[1:100,]
-    DadosAntigos_i <- DadosAntigos[DadosAntigos[[Chave]] %in% DadosUpdate_i[[Chave]], ]
-    
-    # Evita problemas de formatação e notação científica
-    DadosUpdate_i[[Chave]] <- as.character(format(DadosUpdate_i[[Chave]], 
-                                                  scientific = FALSE))
-    DadosAntigos_i[[Chave]] <- as.character(format(DadosAntigos_i[[Chave]], 
-                                                   scientific = FALSE))
-    
-    # SQL que inicia a atualização
-    SQL_Cabeca <- paste("UPDATE",  Table_NameAntigo, "\n\n SET ")
-    
-    # Chaves das linhas que serão atualizadas:
-    KeysUpdated <- character(0)
-    
-    # Atualiza por coluna:
-    SQL_Coluna <- ""
-    for (j in Att_Cols) {
-      # j <- Att_Cols[5]
-      # print(j)
-      
-      # Seleciona apenas a coluna que será atualizada e a pk
-      DadosAntigos_j <- DadosAntigos_i[, c(Chave, j)] %>% 
-        # Padroniza os nomes para facilitar o dplyr
-        magrittr::set_names(c("id", "Dado_Old"))
-      
-      # table(DadosAntigos_j$tx_apelido_osc_Old, useNA = "always")
-      # names(Alteracao)
-      
-      # Seleciona apenas a coluna que será atualizada e a pk
-      Alteracao <- DadosUpdate_i[, c(Chave, j)] %>% 
-        # Padroniza os nomes para facilitar o dplyr
-        magrittr::set_names(c("id", "Dado")) %>% 
-        # Insere os dados antigos
-        left_join(DadosAntigos_j, by = "id") %>% 
-        # Condições para atualização:
-        mutate(Atualiza = case_when(
-          ## O dado novo não por der NA
-          is.na(Dado) ~ FALSE, 
-          ## Se o dado novo não for NA e o antigo sim
-          !is.na(Dado) & is.na(Dado_Old) ~ TRUE,
-          # Se os dados forem iguais, não precisa atualizar
-          Dado == Dado_Old ~ FALSE,
-          # Vou deixar isso aqui para os outros casos:
-          TRUE ~ TRUE)
-          ) %>% 
-        # Mantem apenas linhas que serão atualizadas
-        dplyr::filter(Atualiza) %>% 
-        # slice(1:30) %>% 
-        select(everything())
-      
-      # Se não há linhas a se atualizar, pula
-      if(nrow(Alteracao) > 0) {
-        
-        # Amostra de dados de atualização
-        if(i == 1 | i %% 10 == 0) {
-          SampleUpdate <- Alteracao %>% 
-            slice(sample(seq_len(nrow(Alteracao)), 
-                         min(20, nrow(Alteracao)))) %>% 
-            select(-Atualiza) %>% 
-            arrange(id)
-          message("Dados atualizados da coluna ", j, ": ")
-          print(SampleUpdate)
-          rm(SampleUpdate)
-          }
-        
-        # Conserta problema das aspas simples (') no Postree (coloca '')
-        if(is.character(Alteracao[["Dado"]])) {
-          Alteracao[["Dado"]] <- str_replace_all(Alteracao[["Dado"]], "'", fixed("''"))
-          # Coloca aspas no dado
-          Alteracao[["Dado"]] <- paste0("'", Alteracao[["Dado"]], "'")
-        }
-        
-        # Conserta problema das datas
-        if(is.Date(Alteracao[["Dado"]])) {
-          Alteracao[["Dado"]] <- paste0("DATE '", Alteracao[["Dado"]], "'")
-        }
-        
-        # String único da coluna a ser alterada:
-        ColUpdate <- paste0("WHEN '", 
-                            str_trim(Alteracao[["id"]]), 
-                            "' THEN ", Alteracao[["Dado"]], "\n", 
-                            collapse = " ") %>% 
-          str_remove("\n$")
-        
-        SQL_Coluna <- paste0(SQL_Coluna, j, " = CASE ", Chave,"\n ",
-                             ColUpdate, 
-                             "\n END, \n\n")
-        
-        KeysUpdated <- c(KeysUpdated, Alteracao[["id"]])
-        rm(ColUpdate)
-      }
-      rm(Alteracao, DadosAntigos_j)
-      # cat(SQL_Coluna)
-    }
-    rm(j, DadosUpdate_i, DadosAntigos_i)
-    
-    # Retira a última vírgula
-    SQL_Coluna <- str_replace(SQL_Coluna, ", \n\n$", "\n\n")
-    # cat(SQL_Coluna)
-    
-    # Atualiza se tiver algo a se atualizar
-    if(length(KeysUpdated) > 0) {
-      # Finalização da query:
-      SQL_Comand <- paste(SQL_Cabeca, SQL_Coluna,
-                          paste0("WHERE ", Chave, " IN (", 
-                                 paste0("'", 
-                                        sort(str_trim(unique(KeysUpdated))), 
-                                        "'", 
-                                        collapse = ", "), 
-                                 ");"))
-      # cat(SQL_Comand)
-      
-      # Executa a Query:
-      update_db <- try(dbSendQuery(Conexao, SQL_Comand))
-      
-      if(class(update_db) == "try-error") {
-        cat(SQL_Comand)
-        stop()
-      }
-      
-      # Limpa resultado
-      dbClearResult(update_db)
-      rm(SQL_Comand, update_db)
-    }
-    rm(SQL_Cabeca, SQL_Coluna, KeysUpdated)
-    # ls()
+    rm(DadosCheck, DadosUpdate)
   }
-  rm(i, DadosUpdate, split_OSC)
+  rm(col)
   
+  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Finaliza Atualização
-  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   rm(Att_Cols, Tables, DadosAntigos)
   # ls()
   
@@ -416,5 +401,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   message("Marcação do tempo: ", now())
   return(TRUE)
 }
+
+# Estou aqui !!! ####
 
 # Fim ####
