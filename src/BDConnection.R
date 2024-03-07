@@ -17,7 +17,7 @@ library(RPostgres)
 # DadosNovos[["cd_identificador_osc"]] <- as.numeric(DadosNovos[["cd_identificador_osc"]])
 # Chave <- "id_osc"
 # Conexao <- connec
-# Table_NameAntigo <- "tb_osc"
+# Table_NameAntigo <- names(ArquivosAtualizacao)[i] 
 # verbose = TRUE
 # # rm(DadosNovos, Chave, Conexao, Table_NameAntigo)
 # ls()
@@ -104,65 +104,71 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   DeleteData <- tibble(.rows = nrow(DadosAntigos)) 
   DeleteData[[Chave]] <- DadosAntigos[[Chave]]
   DeleteData[["deletar"]] <- !(DadosAntigos[[Chave]] %in% DadosNovos[[Chave]])
-  # sum(DeleteData[["deletar"]])
   
-  # Amostra de linhas deletadas
-  SampleDel <- sample(DeleteData[[Chave]][DeleteData$deletar], 20)
-  message("Amostra de linhas delitadas: ", Chave, " == ", 
-          paste0(SampleDel, collapse = ", "))
-  rm(SampleDel)
   
-  ## Faz upload da tabela com as linhas a se deletar
-  if(dbExistsTable(Conexao, "deletedata")) {
-    dbRemoveTable(Conexao, "deletedata")
-  }
-  dbWriteTable(Conexao, "deletedata", DeleteData)
-  
-  # Faz umm join desta tabela com os dados antigos
-  
-  # Deleta a coluna, se ela existir:
-  query_DropCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
-                          " DROP COLUMN IF EXISTS deletar;")
-  if("deletar" %in% names(DadosAntigos)) {
+  if(sum(DeleteData[["deletar"]]) > 0) {
+    # Amostra de linhas deletadas
+    SampleDel <- sample(DeleteData[[Chave]][DeleteData$deletar], min(20, sum(DeleteData$deletar)))
+    message("Amostra de linhas delitadas: ", Chave, " == ", 
+            paste0(SampleDel, collapse = ", "))
+    rm(SampleDel)
+    
+    ## Faz upload da tabela com as linhas a se deletar
+    if(dbExistsTable(Conexao, "deletedata")) {
+      dbRemoveTable(Conexao, "deletedata")
+    }
+    dbWriteTable(Conexao, "deletedata", DeleteData)
+    
+    # Faz umm join desta tabela com os dados antigos
+    
+    # Deleta a coluna, se ela existir:
+    query_DropCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
+                            " DROP COLUMN IF EXISTS deletar;")
+    if("deletar" %in% names(DadosAntigos)) {
+      dbExecute(Conexao, query_DropCol)
+    }
+    
+    # Cria coluna na tabela de dados antigos
+    query_AddCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
+                           " ADD COLUMN deletar boolean;")
+    
+    dbExecute(Conexao, query_AddCol)
+    
+    # Insere a coluna com as linhas para deletar
+    query_JoinDelete <- paste0("UPDATE ", Table_NameAntigo, "\n",
+                               " SET deletar = deletedata.deletar", "\n",
+                               " FROM deletedata", "\n",
+                               " WHERE ", Table_NameAntigo, ".", Chave,
+                               " = deletedata.", Chave,
+                               ";")
+    # cat(query_JoinDelete)
+    
+    # query_JoinDelete
+    dbExecute(Conexao, query_JoinDelete)
+    
+    # Deleta as linhas com base na nova coluna
+    query_DeleteRows <- paste0("DELETE FROM ", Table_NameAntigo, 
+                               " WHERE deletar;")
+    # query_DeleteRows
+    LinhasDeletadas <- dbExecute(Conexao, query_DeleteRows)
+    
+    message(LinhasDeletadas, " linhas deletadas da tabela")
+    
+    # Deleta a coluna criada
     dbExecute(Conexao, query_DropCol)
+    
+    # Remove a tabela deletedata
+    if(dbExistsTable(Conexao, "deletedata")) {
+      dbRemoveTable(Conexao, "deletedata")
+    }
+    
+    rm(query_JoinDelete, query_DropCol, query_DeleteRows, query_AddCol, 
+       LinhasDeletadas)
+    
+  } else {
+    message("Nenhuma linha deletada do banco")
   }
-  
-  # Cria coluna na tabela de dados antigos
-  query_AddCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
-                         " ADD COLUMN deletar boolean;")
-  
-  dbExecute(Conexao, query_AddCol)
-  
-  # Insere a coluna com as linhas para deletar
-  query_JoinDelete <- paste0("UPDATE ", Table_NameAntigo, "\n",
-                             " SET deletar = deletedata.deletar", "\n",
-                             " FROM deletedata", "\n",
-                             " WHERE ", Table_NameAntigo, ".", Chave,
-                             " = deletedata.", Chave,
-                             ";")
-  # cat(query_JoinDelete)
-  
-  # query_JoinDelete
-  dbExecute(Conexao, query_JoinDelete)
-  
-  # Deleta as linhas com base na nova coluna
-  query_DeleteRows <- paste0("DELETE FROM ", Table_NameAntigo, 
-                             " WHERE deletar;")
-  # query_DeleteRows
-  LinhasDeletadas <- dbExecute(Conexao, query_DeleteRows)
-  
-  message(LinhasDeletadas, " linhas deletadas da tabela")
-  
-  # Deleta a coluna criada
-  dbExecute(Conexao, query_DropCol)
-  
-  # Remove a tabela deletedata
-  if(dbExistsTable(Conexao, "deletedata")) {
-    dbRemoveTable(Conexao, "deletedata")
-  }
-  
-  rm(query_JoinDelete, query_DropCol, query_DeleteRows, query_AddCol)
-  rm(DeleteData, LinhasDeletadas)
+  rm(DeleteData)
   
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Insere linhas novas que não estavam no banco antigo ####
@@ -255,7 +261,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   rm(ids)
   
   for (i in seq_along(split_OSC)) {
-    # i <- 20
+    # i <- 2
     
     # Com verbose, mostrar a cada linha, sem, a cada 5000 linhas
     if(verbose) {
@@ -271,6 +277,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
     
     # Seleciona apenas um chuck de 1000 atualização para:
     DadosUpdate_i <- DadosUpdate[DadosUpdate[[Chave]] %in% split_OSC[[i]], ]
+    # DadosUpdate_i <- DadosUpdate_i[1:100,]
     DadosAntigos_i <- DadosAntigos[DadosAntigos[[Chave]] %in% DadosUpdate_i[[Chave]], ]
     
     # Evita problemas de formatação e notação científica
@@ -288,7 +295,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
     # Atualiza por coluna:
     SQL_Coluna <- ""
     for (j in Att_Cols) {
-      # j <- Att_Cols[4]
+      # j <- Att_Cols[5]
       # print(j)
       
       # Seleciona apenas a coluna que será atualizada e a pk
@@ -317,7 +324,9 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
           TRUE ~ TRUE)
           ) %>% 
         # Mantem apenas linhas que serão atualizadas
-        dplyr::filter(Atualiza)
+        dplyr::filter(Atualiza) %>% 
+        # slice(1:30) %>% 
+        select(everything())
       
       # Se não há linhas a se atualizar, pula
       if(nrow(Alteracao) > 0) {
@@ -329,7 +338,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
                          min(20, nrow(Alteracao)))) %>% 
             select(-Atualiza) %>% 
             arrange(id)
-          message("Dados atualizados: ")
+          message("Dados atualizados da coluna ", j, ": ")
           print(SampleUpdate)
           rm(SampleUpdate)
           }
@@ -375,14 +384,19 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
       SQL_Comand <- paste(SQL_Cabeca, SQL_Coluna,
                           paste0("WHERE ", Chave, " IN (", 
                                  paste0("'", 
-                                        str_trim(unique(KeysUpdated)), 
+                                        sort(str_trim(unique(KeysUpdated))), 
                                         "'", 
                                         collapse = ", "), 
                                  ");"))
       # cat(SQL_Comand)
       
       # Executa a Query:
-      update_db <- dbSendQuery(Conexao, SQL_Comand)
+      update_db <- try(dbSendQuery(Conexao, SQL_Comand))
+      
+      if(class(update_db) == "try-error") {
+        cat(SQL_Comand)
+        stop()
+      }
       
       # Limpa resultado
       dbClearResult(update_db)

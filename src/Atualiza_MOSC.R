@@ -18,6 +18,7 @@ library(jsonlite)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Baixa a chave secreta do código
+assert_that(file.exists("keys/rais_2019_key2.json"))
 keys <- jsonlite::read_json("keys/rais_2019_key2.json")
 
 
@@ -55,7 +56,7 @@ rm(keys, TestConexao)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Testa extrair dados do banco
-Teste <- dbGetQuery(connec, paste0("SELECT * FROM tb_osc",
+Teste <- dbGetQuery(connec, paste0("SELECT * FROM tb_osc_teste",
                                    " LIMIT 500", 
                                    ";"))
 
@@ -69,21 +70,19 @@ Tables
 
 Teste_verific <- dbGetQuery(connec, "SELECT * FROM teste;")
 
-names(Teste)
-names(Teste_verific)
-dim(Teste)
-dim(Teste_verific)
-head(Teste)
-head(Teste_verific)
-tail(Teste)
-tail(Teste_verific)
+all(names(Teste) == names(Teste_verific))
+all(dim(Teste) == dim(Teste_verific))
+# head(Teste)
+# head(Teste_verific)
+# tail(Teste)
+# tail(Teste_verific)
 
 # Verifica se podemos deletar tabela:
 if(dbExistsTable(connec, "teste")) {
   dbRemoveTable(connec, "teste")
 }
 dbExistsTable(connec, "teste")
-
+rm(Teste, Teste_verific)
 
 # Verifica se os arquivos existem:
 file.exists("backup_files/2023_01/output_files/tb_osc.RDS")
@@ -103,10 +102,10 @@ source("src/BDConnection.R")
 assert_that(exists("AtualizaDados"))
 assert_that(class(AtualizaDados) == "function")
 
-ArquivosAtualizacao <- list(tb_osc_bckp = "backup_files/2023_01/output_files/tb_osc.RDS", 
-                           tb_dados_gerais = "backup_files/2023_01/output_files/tb_dados_gerais.RDS",
+ArquivosAtualizacao <- list(tb_osc_teste = "backup_files/2023_01/output_files/tb_osc.RDS", 
+                           tb_dados_gerais_teste = "backup_files/2023_01/output_files/tb_dados_gerais.RDS",
                            # tb_area_atuacao = "backup_files/2023_01/output_files/tb_area_atuacao.RDS",
-                           tb_contato = "backup_files/2023_01/output_files/tb_contato.RDS")
+                           tb_contato_teste = "backup_files/2023_01/output_files/tb_contato.RDS")
 
 for (i in seq_along(ArquivosAtualizacao)) {
   # i <- 1
@@ -117,7 +116,7 @@ for (i in seq_along(ArquivosAtualizacao)) {
   # names(DadosNovos)
   
   # Ajustas para "tb_osc"
-  if(names(ArquivosAtualizacao)[i] == "tb_osc_bckp") {
+  if(names(ArquivosAtualizacao)[i] == "tb_osc_teste") {
     
     # Corrige tipo de dado para "cd_identificador_osc"
     DadosNovos[["cd_identificador_osc"]] <- as.numeric(DadosNovos[["cd_identificador_osc"]])
@@ -127,7 +126,7 @@ for (i in seq_along(ArquivosAtualizacao)) {
   }
   
   # Ajustas para "tb_dados_gerais"
-  if(names(ArquivosAtualizacao)[i] == "tb_dados_gerais") {
+  if(names(ArquivosAtualizacao)[i] == "tb_dados_gerais_teste") {
     
     # Corrige tipos de dado
     DadosNovos[["cd_natureza_juridica_osc"]] <- as.numeric(DadosNovos[["cd_natureza_juridica_osc"]])
@@ -135,7 +134,7 @@ for (i in seq_along(ArquivosAtualizacao)) {
     DadosNovos[["dt_ano_cadastro_cnpj"]] <- as_date(DadosNovos[["dt_ano_cadastro_cnpj"]])
   }
   
-  if(names(ArquivosAtualizacao)[i] == "tb_contato") {
+  if(names(ArquivosAtualizacao)[i] == "tb_contato_teste") {
     "tb_contato"
   }
   
