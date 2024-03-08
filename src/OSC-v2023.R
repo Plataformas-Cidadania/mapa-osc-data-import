@@ -19,6 +19,7 @@ library(lubridate)
 library(stringr)
 library(assertthat)
 library(readxl)
+library(jsonlite)
 
 # Variáveis importantes
 
@@ -29,31 +30,30 @@ ArquivoAtualizacao <- "src/OSC-v2023.R"
 assert_that(file.exists(ArquivoAtualizacao), 
             msg = "Atualize caminho do arquivo de atualização!")
 
-# Checa funções de "findOSC":
-assert_that(file.exists("src/findosc-v2023.R"), 
-            msg = "Função 'findosc-v2023.R' não encontrada!")
-
-assert_that(file.exists("src/generalFunctions/str_detect_split.R"), 
-            msg = "Função 'str_detect_split.R' não encontrada!")
-
 # Periodicidade das Atualizações (em dias)
 ValidadeAtts <- 365
 
-# Diretório onde fica os arquivos backup
-DirBackupFiles <- "data/backup_files/"
+# Verifica a senha dos bancos de dados:
+assert_that(file.exists("keys/rais_2019_key2.json"), 
+            msg = "Não encontrado chave secreta do banco 'rais_2019'")
 
-# Diretório onde está a última versão dos dados
-# Fundamental para algumas variáveis, como id_osc e informações
-# inseridas por usuários
-LastVersionMOSC <- "data/raw/MOSC/20231005/"
+# Verifica se os arquivos necessários estão em tab_auxiliares
 
-# Verifica se esses dados estão corretos:
-assert_that(dir.exists(LastVersionMOSC), 
-            msg = "Diretório da última versão não existe")
+## Controle do ID colocado pelo último usuário
+assert_that(file.exists("tab_auxiliares/idControl.RDS"), 
+            msg = "O arquivo de ID das OSC da última versão não está disponível")
 
-# Verifica se esses dados estão corretos:
-assert_that(file.exists(paste0(LastVersionMOSC, "tb_osc.csv")), 
-            msg = "Arquivo tb_osc.csv não está presente na última atualização")
+## Nomes que indicam que determinado CNPJ não é OSC
+assert_that(file.exists("tab_auxiliares/NonOSCNames.csv"), 
+            msg = "O arquivo de ID das OSC da última versão não está disponível")
+
+## Relação entre áreas e subáreas de atuação
+assert_that(file.exists("tab_auxiliares/Areas&Subareas.csv"), 
+            msg = "O arquivo de ID das OSC da última versão não está disponível")
+
+## Critérios para determinar as áreas de atuação
+assert_that(file.exists("tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv"), 
+            msg = "O arquivo de ID das OSC da última versão não está disponível")
 
 # Baixa dados do controle de atualização
 ControleAtualizacao <- read_xlsx("data/dataset/ControleAtualizacaoOSC.xlsx", 
@@ -149,7 +149,7 @@ if(!"51" %in% ProcessosAtt_Atual$Controle) {
   # Loop para criar um diretório
   for (i in 1:99) {
     # i <- 1
-    DirName <- paste0(DirBackupFiles,
+    DirName <- paste0("backup_files/",
                       year(today()), "_", 
                       str_pad(i, 2, pad = "0"), "/")
     
@@ -189,7 +189,7 @@ if(!"51" %in% ProcessosAtt_Atual$Controle) {
 }
 
 # Diretório de backup
-DirName <- paste0(DirBackupFiles, Att_Atual$At_CodRef[1], "/")
+DirName <- paste0("backup_files/", Att_Atual$At_CodRef[1], "/")
 assert_that(dir.exists(DirName), 
             msg = "Diretório de Backup não existe")
 
@@ -215,28 +215,32 @@ if(!"11" %in% ProcessosAtt_Atual$Controle) {
   
   # Baixa dados da Receita Federal no Posgres do IPEA.
   
+  # Baixa a chave secreta do código
+  keys <- jsonlite::read_json("keys/rais_2019_key.json")
+  
   # Verifica se pode condenar
   CanConnect <- dbCanConnect(RPostgres::Postgres(), 
-                             dbname = "rais_2019",
-                             host = "psql10-df",
-                             port = "5432",
-                             user = "p22433438861", 
-                             # password = "", # Inserir senha aqui
+                             dbname = keys$dbname,
+                             host = keys$host,
+                             port = keys$port,
+                             user = keys$username, 
+                             password = keys$password,
                              options="-c search_path=rfb_2023")
   
-  # Verifica a coneção com a base
-  if(!CanConnect) {
-    stop("Erro ao tentar se conectar à base de dados IPEA.")
-  }
+  assert_that(CanConnect, 
+              msg = "Teste de coneção a 'rais_2019' falhou.")
   
   # conencta à base
   connec <- dbConnect(RPostgres::Postgres(), 
-                      dbname = "rais_2019",
-                      host = "psql10-df",
-                      port = "5432",
-                      user = "p22433438861", 
-                      # password = "", # Inserir senha aqui
+                      dbname = keys$dbname,
+                      host = keys$host,
+                      port = keys$port,
+                      user = keys$username, 
+                      password = keys$password,
                       options="-c search_path=rfb_2023")
+  
+  rm(keys)
+  assert_that(dbIsValid(connec))
   
   # Query para buscar as informações nas tabelas "tb_rfb_empresas" e 
   # "tb_rfb_estabelecimentos". Já faz o Join entre as tabelas e também 
@@ -251,7 +255,6 @@ if(!"11" %in% ProcessosAtt_Atual$Controle) {
   ## 399-9	Associação Privada
   # Fonte: https://concla.ibge.gov.br/estrutura/natjur-estrutura/natureza-juridica-2021
   
-  
   tb_JoinOSC <- dbGetQuery(connec, 
                            paste0("SELECT * FROM tb_rfb_empresas", 
                                   " RIGHT JOIN tb_rfb_estabelecimentos ", 
@@ -262,13 +265,16 @@ if(!"11" %in% ProcessosAtt_Atual$Controle) {
                                   # " LIMIT 1000", 
                                   ";"))
   
+  # Debug:
+  # tb_JoinOSC <- readRDS("backup_files/2023_01/intermediate_files/tb_JoinOSC.RDS")
+  
   # Desconecta da base
   dbDisconnect(connec)
   
   rm(connec, CanConnect)
   
   # Caminho do arquivo Backup
-  PathFile <- paste0(DirName, "IntermediateFiles/tb_JoinOSC.RDS")
+  PathFile <- paste0(DirName, "tb_JoinOSC.RDS")
   
   # Salva Backup
   saveRDS(tb_JoinOSC, PathFile)
@@ -288,10 +294,9 @@ if(!"11" %in% ProcessosAtt_Atual$Controle) {
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_1"), 
-            FileFolder = paste0(DirName, "IntermediateFiles/"), 
+            FileFolder = DirName, 
             FileName = "tb_JoinOSC.RDS", 
-            FileSizeMB = file.size(paste0(DirName, 
-                                          "IntermediateFiles/tb_JoinOSC.RDS"))/1024000)
+            FileSizeMB = file.size(paste0(DirName, "tb_JoinOSC.RDS"))/1024000)
   
   rm(PathFile, DataProcessoInicio)
 } else {message("Dados da RFB já carregados anteriormente")}
@@ -314,7 +319,7 @@ if(!"21" %in% ProcessosAtt_Atual$Controle) {
   # Se o arquivo não estiver carregado, carrega ele.
   if(!exists("tb_JoinOSC")) {
     
-    PathFile <- paste0(DirName, "IntermediateFiles/tb_JoinOSC.RDS")
+    PathFile <- paste0(DirName, "intermediate_files/tb_JoinOSC.RDS")
     
     # Garante que o arquivo existe.
     assert_that(file.exists(PathFile), 
@@ -360,9 +365,8 @@ if(!"21" %in% ProcessosAtt_Atual$Controle) {
   # Usa função find_OSC para determinar se um estabelecimento é OSC:
   
   # Expressões usadas em findosc
-  NonOSCNames <- read_xlsx("data/dataset/IndicadoresNomesOSC.xlsx", 
-                           range = "NonOSCNames!A1:E60000") %>% 
-    dplyr::filter(!is.na(Expressao))
+  NonOSCNames <- fread("data/dataset/NonOSCNames.csv") %>% 
+    as_tibble()
   # names(NonOSCNames)
   
   # Uso da função find_OSC:
@@ -377,11 +381,12 @@ if(!"21" %in% ProcessosAtt_Atual$Controle) {
     mutate(ft_IsOSC = paste0("findOSC.R_", Att_Atual$At_CodRef[1]))
   
   # Salva Backup
-  PathFile <- paste0(DirName, "IntermediateFiles/Tb_OSC_Full.RDS")
-  saveRDS(tb_JoinOSC, PathFile)
+  PathFile <- paste0(DirName, "intermediate_files/Tb_OSC_Full.RDS")
   
   # Muda nome do objeto para marcar mudança de processamento:
   Tb_OSC_Full <- tb_JoinOSC
+  
+  saveRDS(Tb_OSC_Full, PathFile)
   
   # Atualiza realização de processos:
   ProcessosAtt_Atual <- ProcessosAtt_Atual %>% 
@@ -398,10 +403,9 @@ if(!"21" %in% ProcessosAtt_Atual$Controle) {
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_2"), 
-            FileFolder = Dpaste0(DirName, "IntermediateFiles/"),
+            FileFolder = str_remove(PathFile, "Tb_OSC_Full.RDS$"), 
             FileName = "Tb_OSC_Full.RDS", 
-            FileSizeMB = file.size(paste0(DirName, 
-                                          "IntermediateFiles/Tb_OSC_Full.RDS"))/1024000)
+            FileSizeMB = file.size(PathFile)/1024000)
   
   rm(DataProcessoInicio, PathFile)
   rm(tb_JoinOSC) # não vamos mais utilizar esses dados
@@ -427,7 +431,7 @@ if(!"31" %in% ProcessosAtt_Atual$Controle) {
   if(!(exists("Tb_OSC_Full") && "data.frame" %in% class(Tb_OSC_Full)) ) {
     
     # Se o arquivo já tiver sido baixado, vamos direto para carregar ele.
-    PathFile <- paste0(DirName, "IntermediateFiles/Tb_OSC_Full.RDS")
+    PathFile <- paste0(DirName, "intermediate_files/Tb_OSC_Full.RDS")
     
     # Garante que o arquivo existe.
     assert_that(file.exists(PathFile), 
@@ -441,12 +445,12 @@ if(!"31" %in% ProcessosAtt_Atual$Controle) {
   }
   
   # Regras para determinar as subáreas de atuação
-  DB_SubAreaRegras <- read_xlsx("data/dataset/IndicadoresAreasAtuacaoOSC.xlsx", 
-                                sheet = "IndicadoresAreaAtuacaoOSC")
+  DB_SubAreaRegras <- fread("data/dataset/IndicadoresAreaAtuacaoOSC.csv",
+                            encoding = "Latin-1")
   
   # Relação entre micro áreas e macro áreas
-  DB_AreaSubaria <- read_xlsx("data/dataset/IndicadoresAreasAtuacaoOSC.xlsx", 
-                              sheet = "Areas&Subareas")
+  DB_AreaSubaria <- fread("data/dataset/Areas&Subareas.csv",
+                          encoding = "Latin-1")
   
   # Função para determinar as áreas de atuação
   source("src/specifcFuntions/AreaAtuacaoOSC.R")
@@ -483,7 +487,7 @@ if(!"31" %in% ProcessosAtt_Atual$Controle) {
   rm(AreaAtuacaoOSC, DB_SubAreaRegras, DB_AreaSubaria)
 
   # Salva Backup
-  PathFile <- paste0(DirName, "IntermediateFiles/DB_OSC.RDS")
+  PathFile <- paste0(DirName, "intermediate_files/DB_OSC.RDS")
   saveRDS(DB_OSC, PathFile)
 
   # Atualiza realização de processos:
@@ -501,13 +505,14 @@ if(!"31" %in% ProcessosAtt_Atual$Controle) {
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_3"), 
-            FileFolder = paste0(DirName, "IntermediateFiles/"),
+            FileFolder = str_remove(PathFile, "DB_OSC.RDS$"), 
             FileName = "DB_OSC.RDS", 
-            FileSizeMB = file.size(paste0(DirName, 
-                                          "IntermediateFiles/DB_OSC.RDS"))/1024000)
+            FileSizeMB = file.size(PathFile)/1024000)
   
   rm(DataProcessoInicio, PathFile)
-  ls()
+  
+  
+  # ls()
 } else {message("Determinação das áreas de atuação OSC já feita anteriormente")}
 
 
@@ -531,7 +536,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   if(!(exists("DB_OSC") && "data.frame" %in% class(DB_OSC)) ) {
     
     # Se o arquivo já tiver sido baixado, vamos direto para carregar ele.
-    PathFile <- paste0(DirName, "IntermediateFiles/DB_OSC.RDS")
+    PathFile <- paste0(DirName, "intermediate_files/DB_OSC.RDS")
     
     # Garante que o arquivo existe.
     assert_that(file.exists(PathFile), 
@@ -554,25 +559,13 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
                                           side = "left", 
                                           pad = "0"))
   
+  #  Inserir protocolo do idControl:
+  idControl <- readRDS("tab_auxiliares/idControl.RDS")
+  
+  
   ## Tabela: tb_osc ####
   
   # Resgata o "id_osc" antigo
-  
-  assert_that(file.exists(paste0(LastVersionMOSC, "tb_osc.csv")),
-              msg = "Não encontrado arquivo 'tb_osc.csv' anterior.")
-  
-  tb_osc_OLD <- fread(paste0(LastVersionMOSC, "tb_osc.csv"))
-  
-  tb_osc_OLD <- tb_osc_OLD %>% 
-    select(id_osc, cd_identificador_osc) %>% 
-    # Corrige o padding do identificador das osc
-    mutate(cd_identificador_osc = as.character(cd_identificador_osc), 
-           cd_identificador_osc = str_pad(cd_identificador_osc, 
-                                          width = 14, 
-                                          side = "left", 
-                                          pad = "0"), 
-           id_osc = as.integer(id_osc)) %>% 
-    rename(id_osc_OLD = id_osc)
   
   # Formata base:
   tb_osc <- DB_OSC %>% 
@@ -580,10 +573,9 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            cd_situacao_cadastral = situacao) %>% 
     
     # Resgata o id_osc antigo.
-    left_join(tb_osc_OLD, by = "cd_identificador_osc") %>% 
+    left_join(idControl, by = "cd_identificador_osc") %>% 
     
-    mutate(id_osc = id_osc_OLD, 
-           ft_apelido_osc = FonteRFB, 
+    mutate(ft_apelido_osc = FonteRFB, 
            ft_identificador_osc = FonteRFB,
            ft_osc_ativa = FonteRFB, 
            bo_osc_ativa = cd_situacao_cadastral %in% c(2, 3, 4), 
@@ -602,40 +594,66 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            ft_osc_ativa = ifelse(is.na(bo_osc_ativa), NA, ft_osc_ativa), 
            ft_Filial = ifelse(is.na(bo_Filial), NA, ft_Filial))
   
-  rm(tb_osc_OLD)
-  
   # Cria id_osc dos novos CNPJs:
   
-  # id máximo antigo
-  Max_OldID <- max(tb_osc$id_osc, na.rm = TRUE)
-  
-  # Novos IDs
-  NewID <- seq(from = Max_OldID + 1, 
-               to = Max_OldID + sum(is.na(tb_osc$id_osc)), 
-               by = 1)
-  
-  # Adiciona novos IDs
-  tb_osc$id_osc[is.na(tb_osc$id_osc)] <- NewID
+  if(sum(is.na(tb_osc$id_osc)) > 0) {
+    # id máximo antigo
+    Max_OldID <- max(tb_osc$id_osc, na.rm = TRUE)
+    
+    # Novos IDs
+    NewID <- seq(from = Max_OldID + 1, 
+                 to = Max_OldID + sum(is.na(tb_osc$id_osc)), 
+                 by = 1)
+    
+    # Adiciona novos IDs
+    tb_osc$id_osc[is.na(tb_osc$id_osc)] <- NewID
+    
+    rm(Max_OldID, NewID)
+    
+    # Guarda os novos IDs em idControl
+    NewId <- tb_osc %>% 
+      distinct(id_osc, cd_identificador_osc) %>% 
+      select(everything())
+    
+    # Update idControl
+    idControl <- bind_rows(idControl, NewId) %>% 
+      distinct(id_osc, cd_identificador_osc) %>% 
+      select(everything())
+    
+    saveRDS(idControl, "tab_auxiliares/idControl.RDS")
+    rm(NewId)
+  }
   
   # Garante chaves primárias únicas
   assert_that(nrow(tb_osc) == length(unique(tb_osc$id_osc)) && 
                 sum(is.na(tb_osc$id_osc)) == 0, 
-              msg = "Erro na criação de chaves primárias em tb_osc.")
+              msg = "Chaves primárias em tb_osc não únicas.")
   
-  rm(Max_OldID, NewID)
+  # Garante chaves primárias não nulas
+  assert_that(sum(is.na(tb_osc$id_osc)) == 0 , 
+              msg = "Criação de nulos em chaves primárias em tb_osc.")
+  
+  # Por enquanto, vou anular os valores de tx_apelido_osc, até entender
+  # melhor essa variável
+  tb_osc[["tx_apelido_osc"]] <- NA_character_
+  tb_osc[["ft_apelido_osc"]] <- NA_character_
+  
+  # Como o padrão da base de dados é class("cd_identificador_osc") == numeric , 
+  # vou deixar assim
+  tb_osc[["cd_identificador_osc"]] <- as.numeric(tb_osc[["cd_identificador_osc"]])
   
   # Salva Backup
-  PathFile <- paste0(DirName, "OutputFiles/tb_osc.RDS")
+  PathFile <- paste0(DirName, "output_files/tb_osc.RDS")
   saveRDS(tb_osc, PathFile)
   
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = paste0(DirName, "OutputFiles/"), 
+            FileFolder = str_remove(PathFile, "tb_osc.RDS$"), 
             FileName = "tb_osc.RDS", 
-            FileSizeMB = file.size(paste0(DirName, 
-                                          "OutputFiles/tb_osc.RDS"))/1024000 )
+            FileSizeMB = file.size(PathFile)/1024000 )
 
+  
   # Tabela: tb_dados_gerais ####
   
   tb_dados_gerais <- DB_OSC %>% 
@@ -644,8 +662,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            tx_nome_fantasia_osc = nome_fantasia) %>% 
     
     # Insere "id_osc"
-    left_join(select(tb_osc, cd_identificador_osc, id_osc), 
-              by = "cd_identificador_osc") %>% 
+    left_join(idControl, by = "cd_identificador_osc") %>% 
     
     mutate(dt_fundacao_osc = as.character(ymd(data_de_inicio_atividade)),
            dt_ano_cadastro_cnpj = str_sub(data_de_inicio_atividade, 1, 4),
@@ -673,19 +690,26 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            cd_classe_atividade_economica_osc, ft_classe_atividade_economica_osc, 
            situacao)
   
+  
+  assert_that(sum(is.na(tb_dados_gerais$id_osc)) == 0)
+  assert_that(nrow(tb_dados_gerais) == length(unique(tb_dados_gerais$id_osc)))
+  
+  # Como o padrão da base de dados é class("cd_identificador_osc") == numeric , 
+  # vou deixar assim
+  tb_dados_gerais[["cd_identificador_osc"]] <- as.numeric(tb_dados_gerais[["cd_identificador_osc"]])
+  
   # Salva Backup
-  PathFile <- paste0(DirName, "OutputFiles/tb_dados_gerais.RDS")
+  PathFile <- paste0(DirName, "output_files/tb_dados_gerais.RDS")
   saveRDS(tb_dados_gerais, PathFile)
   
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = paste0(DirName, "OutputFiles/"), 
+            FileFolder = str_remove(PathFile, "tb_dados_gerais.RDS$"), 
             FileName = "tb_dados_gerais.RDS", 
-            FileSizeMB = file.size(paste0(DirName, 
-                                          "OutputFiles/tb_dados_gerais.RDS"))/1024000 )
+            FileSizeMB = file.size(PathFile)/1024000 )
 
-  
+  # Arrumar com a dinâmica do output_file daqui para baixo! ####
   
   # Tabela: tb_contato ####
   
@@ -693,10 +717,10 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     rename(tx_email = correio_eletronico) %>% 
     
     # Insere "id_osc"
-    left_join(select(tb_osc, cd_identificador_osc, id_osc), 
-              by = "cd_identificador_osc") %>% 
+    left_join(idControl, by = "cd_identificador_osc") %>% 
     
-    mutate(tx_telefone = paste0(ddd_1, " ", telefone_1),
+    mutate(tx_telefone = ifelse(is.na(telefone_1), NA, 
+                                paste0(ddd_1, " ", telefone_1)),
            ft_telefone = FonteRFB, 
            ft_email = FonteRFB,
            bo_nao_possui_email = is.na(tx_email)) %>% 
@@ -714,8 +738,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     rename(tx_email = correio_eletronico) %>% 
     
     # Insere "id_osc"
-    left_join(select(tb_osc, cd_identificador_osc, id_osc), 
-              by = "cd_identificador_osc") %>% 
+    left_join(idControl, by = "cd_identificador_osc") %>% 
     
     mutate(tx_telefone = ifelse(is.na(telefone_1), NA, 
                                 paste0(ddd_1, " ", telefone_1))) %>% 
@@ -729,26 +752,30 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     # Evita linhas que não tem informação.
     dplyr::filter(!is.na(tx_contato))
   
+  assert_that(sum(is.na(tb_contato$id_osc)) == 0)
+  assert_that(nrow(tb_contato) == length(unique(tb_contato$id_osc)))
+  
+  assert_that(sum(is.na(tb_contato2$id_osc)) == 0)
+  assert_that(nrow(tb_contato2) == 
+                length(unique(paste(tb_contato2$id_osc, tb_contato2$tx_tipo_contato))))
   
   # Salva Backup
-  PathFile <- paste0(DirName, "OutputFiles/tb_contato.RDS")
+  PathFile <- paste0(DirName, "output_files/tb_contato.RDS")
   saveRDS(tb_contato, PathFile)
   
-  PathFile <- paste0(DirName, "OutputFiles/tb_contato2.RDS")
+  PathFile <- paste0(DirName, "output_files/tb_contato2.RDS")
   saveRDS(tb_contato2, PathFile)
   
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = paste0(DirName, "OutputFiles/"), 
+            FileFolder = DirName, 
             FileName = "tb_contato.RDS", 
-            FileSizeMB = file.size(paste0(DirName, 
-                                          "OutputFiles/tb_contato.RDS"))/1024000 ) %>% 
+            FileSizeMB = file.size(paste0(DirName, "tb_contato.RDS"))/1024000 ) %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = paste0(DirName, "OutputFiles/"), 
+            FileFolder = DirName, 
             FileName = "tb_contato2.RDS", 
-            FileSizeMB = file.size(paste0(DirName, 
-                                          "OutputFiles/tb_contato2.RDS"))/1024000 )
+            FileSizeMB = file.size(paste0(DirName, "tb_contato2.RDS"))/1024000 )
   
   # Tabela: tb_localizacao ####
   
@@ -765,8 +792,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            nr_cep = cep) %>% 
     
     # Insere "id_osc"
-    left_join(select(tb_osc, cd_identificador_osc, id_osc), 
-              by = "cd_identificador_osc") %>%
+    left_join(idControl, by = "cd_identificador_osc") %>% 
     
     # Incorpora dados de geolocalização
     left_join(Galileo_data, by = "cd_identificador_osc") %>% 
@@ -798,39 +824,33 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   
   rm(Galileo_data)
   
+  # Como o padrão da base de dados é class("cd_identificador_osc") == numeric , 
+  # vou deixar assim
+  tb_localizacao[["cd_identificador_osc"]] <- as.numeric(tb_localizacao[["cd_identificador_osc"]])
+  
   # Salva Backup
-  PathFile <- paste0(DirName, "OutputFiles/tb_localizacao.RDS")
+  PathFile <- paste0(DirName, "output_files/tb_localizacao.RDS")
   saveRDS(tb_localizacao, PathFile)
   
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = paste0(DirName, "OutputFiles/"), 
+            FileFolder = DirName, 
             FileName = "tb_localizacao.RDS", 
-            FileSizeMB = file.size(paste0(DirName, 
-                                          "OutputFiles/tb_localizacao.RDS"))/1024000 )
+            FileSizeMB = file.size(paste0(DirName, "tb_localizacao.RDS"))/1024000 )
   
   
   # Tabela: tb_area_atuacao ####
   
-  names(DB_OSC)
-  
-  table(DB_OSC$identificador_matrizfilial)
-  table(DB_OSC$situacao)
-  table(DB_OSC$situacao[DB_OSC$identificador_matrizfilial == "1"])
-  
   # Estou aqui!!!! ####
   
-  # Identificação por AreaAtuacaoOSC.R
   tb_area_atuacao <- DB_OSC %>% 
     dplyr::filter(!is.na(micro_area_atuacao)) %>% 
-    rename(cd_identificador_osc = cnpj,
-           tx_area_atuacao = macro_area_atuacao, 
+    rename(tx_area_atuacao = macro_area_atuacao, 
            tx_subarea_atuacao = micro_area_atuacao) %>% 
     
     # Insere "id_osc"
-    left_join(select(tb_osc, cd_identificador_osc, id_osc), 
-              by = "cd_identificador_osc") %>%
+    left_join(idControl, by = "cd_identificador_osc") %>% 
     
     mutate(ft_area_atuacao = paste0("AreaAtuacaoOSC.R_", Att_Atual$At_CodRef[1]), 
            bo_oficial = FALSE) %>% 
@@ -851,8 +871,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
       rename(cd_identificador_osc = cpf_cnpj) %>% 
       
       # Insere "id_osc"
-      left_join(select(tb_osc, cd_identificador_osc, id_osc), 
-                by = "cd_identificador_osc")     %>%
+      left_join(idControl, by = "cd_identificador_osc") %>% 
       
       dplyr::filter(!is.na(id_osc)) %>% 
       
@@ -875,13 +894,12 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   if(file.exists("data/raw/MS/InputCEBAS.xlsx")) {
     InputCEBAS <- read_xlsx("data/raw/MS/InputCEBAS.xlsx", sheet = 1)
     
-    # Usa CEBAS/MS para identificar OSC como assistência social
+    # Usa CEBAS/MS para identificar OSC como da área da saúde
     newRows <- InputCEBAS %>% 
       rename(cd_identificador_osc = NU_CNPJ) %>% 
       
       # Insere "id_osc"
-      left_join(select(tb_osc, cd_identificador_osc, id_osc), 
-                by = "cd_identificador_osc") %>%
+      left_join(idControl, by = "cd_identificador_osc") %>% 
       
       dplyr::filter(!is.na(id_osc)) %>% 
       
@@ -917,8 +935,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
       rename(cd_identificador_osc = cnpj) %>% 
       
       # Insere "id_osc"
-      left_join(select(tb_osc, cd_identificador_osc, id_osc), 
-                by = "cd_identificador_osc") %>%
+      left_join(idControl, by = "cd_identificador_osc") %>% 
       
       dplyr::filter(!is.na(id_osc)) %>% 
       mutate(tx_area_atuacao = "Assistência social", 
@@ -936,6 +953,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     rm(InputCNEAS, newRows)
   }
  
+  names(tb_area_atuacao)
   
   # Salva Backup
   PathFile <- paste0(DirName, "tb_area_atuacao.RDS")

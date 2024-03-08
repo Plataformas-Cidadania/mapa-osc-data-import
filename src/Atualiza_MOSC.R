@@ -56,9 +56,11 @@ rm(keys, TestConexao)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Testa extrair dados do banco
-Teste <- dbGetQuery(connec, paste0("SELECT * FROM tb_osc",
-                                   " LIMIT 500", 
-                                   ";"))
+Teste <- try(dbGetQuery(connec, 
+                        paste0("SELECT * FROM tb_osc",
+                               " LIMIT 500", 
+                               ";")))
+assert_that(!is.error(Teste))
 
 # Testa inserir uma nova tabela:
 if(dbExistsTable(connec, "teste")) dbRemoveTable(connec, "teste")
