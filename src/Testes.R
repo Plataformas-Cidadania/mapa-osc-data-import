@@ -21,15 +21,16 @@ dbColumnInfo(dbGetQuery(Conexao, "SELECT * FROM update_temp"))
 
 
 DadosAntigos <- dbGetQuery(connec, 
-                           paste0("SELECT * FROM ",
-                                  Table_NameAntigo,
+                           paste0("SELECT * FROM tb_localizacao_teste",
+                                  # Table_NameAntigo,
                                   # " LIMIT 500", 
                                   ";"))
 
 
 names(DadosAntigos)
 View(DadosAntigos)
-class(DadosAntigos$temp_var)
+class(DadosAntigos$nr_cep)
+class(tb_localizacao_teste$nr_cep)
 
 sum(DadosAntigos$deletar)
 
