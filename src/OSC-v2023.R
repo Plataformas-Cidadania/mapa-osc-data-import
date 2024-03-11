@@ -43,6 +43,10 @@ assert_that(file.exists("keys/rais_2019_key2.json"),
 assert_that(file.exists("tab_auxiliares/idControl.RDS"), 
             msg = "O arquivo de ID das OSC da última versão não está disponível")
 
+## Controle do ID colocado pelo último usuário
+assert_that(file.exists("tab_auxiliares/idAreaAtuacaoControl.RDS"), 
+            msg = "O arquivo de ID das área de atuação das OSC da última versão não está disponível")
+
 ## Nomes que indicam que determinado CNPJ não é OSC
 assert_that(file.exists("tab_auxiliares/NonOSCNames.csv"), 
             msg = "O arquivo de ID das OSC da última versão não está disponível")
@@ -54,6 +58,14 @@ assert_that(file.exists("tab_auxiliares/Areas&Subareas.csv"),
 ## Critérios para determinar as áreas de atuação
 assert_that(file.exists("tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv"), 
             msg = "O arquivo de ID das OSC da última versão não está disponível")
+
+## Veja se os descritórios dos códigos das áreas estão das tabelas auxiliares
+assert_that(file.exists("tab_auxiliares/dc_area_atuacao.csv"), 
+            msg = "O arquivo de 'dc_area_atuacao.csv' não está disponível")
+
+## Veja se os descritórios dos códigos das áreas estão das tabelas auxiliares
+assert_that(file.exists("tab_auxiliares/dc_subarea_atuacao.csv"), 
+            msg = "O arquivo de 'dc_subarea_atuacao.csv' não está disponível")
 
 # Baixa dados do controle de atualização
 ControleAtualizacao <- read_xlsx("data/dataset/ControleAtualizacaoOSC.xlsx", 
@@ -852,13 +864,16 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     # Insere "id_osc"
     left_join(idControl, by = "cd_identificador_osc") %>% 
     
-    mutate(ft_area_atuacao = paste0("AreaAtuacaoOSC.R_", Att_Atual$At_CodRef[1]), 
+    mutate(ft_area_atuacao = paste0("AreaAtuacaoOSC.R_", 
+                                    Att_Atual$At_CodRef[1]), 
            bo_oficial = FALSE) %>% 
-    select(id_osc, cd_identificador_osc, tx_area_atuacao, 
-           tx_subarea_atuacao, ft_area_atuacao, bo_oficial) %>% 
+    
     # Evitar dar fonte de dado missing:
     mutate(ft_area_atuacao = ifelse(is.na(tx_subarea_atuacao), 
-                                    NA, ft_area_atuacao))
+                                    NA, ft_area_atuacao)) %>% 
+    
+    select(id_osc, cd_identificador_osc, tx_area_atuacao, 
+           tx_subarea_atuacao, ft_area_atuacao, bo_oficial) 
   
   # Identifica área de atuação via CNES/MS
   if(file.exists("data/raw/MS/InputCNES.RDS")) {
@@ -953,11 +968,75 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     rm(InputCNEAS, newRows)
   }
  
-  names(tb_area_atuacao)
+  # Insere os códigos das áreas
+  
+  ## Tabelas auxiliares:
+  dc_area_atuacao <- fread("tab_auxiliares/dc_area_atuacao.csv", encoding = "Latin-1")
+  dc_subarea_atuacao <- fread("tab_auxiliares/dc_subarea_atuacao.csv", encoding = "Latin-1")
+  
+  tb_area_atuacao <- tb_area_atuacao %>% 
+    left_join(dc_area_atuacao, by = "tx_area_atuacao") %>% 
+    left_join(select(dc_subarea_atuacao, -cd_area_atuacao), 
+              by = "tx_subarea_atuacao") %>% 
+    select(id_osc, cd_area_atuacao, cd_subarea_atuacao,
+           ft_area_atuacao, bo_oficial)
+  # table(tb_area_atuacao2$tx_area_atuacao[is.na(tb_area_atuacao2$cd_area_atuacao)])
+  # table(tb_area_atuacao2$tx_subarea_atuacao[is.na(tb_area_atuacao2$cd_subarea_atuacao)])
+  
+  rm(dc_area_atuacao, dc_subarea_atuacao)
+  
+  # Adiciona novos IDs:
+  idAreaAtuacaoControl <- readRDS("tab_auxiliares/idAreaAtuacaoControl.RDS")
+  
+  tb_area_atuacao2 <- tb_area_atuacao %>% 
+    bind_rows(idAreaAtuacaoControl) %>% 
+    distinct(id_osc, 
+             cd_area_atuacao, 
+             cd_subarea_atuacao, 
+             ft_area_atuacao, 
+             .keep_all = TRUE) %>% 
+    arrange(id_area_atuacao)
+  
+  MissID <- is.na(tb_area_atuacao2$id_area_atuacao)
+  NewID <- seq_len(sum(MissID)) + max(idAreaAtuacaoControl$id_area_atuacao)
+  
+  tb_area_atuacao2$id_area_atuacao[MissID] <- NewID
+  
+  # Update IDs
+  idAreaAtuacaoControl_Up <-  tb_area_atuacao2 %>% 
+    select(id_area_atuacao, id_osc, 
+           cd_area_atuacao, cd_subarea_atuacao, 
+           ft_area_atuacao, bo_oficial) %>% 
+    arrange(id_area_atuacao)
+  
+  saveRDS(idAreaAtuacaoControl_Up, 
+          "tab_auxiliares/idAreaAtuacaoControl.RDS")
+  
+  rm(idAreaAtuacaoControl, idAreaAtuacaoControl_Up)
+  
+  # Colocar ID na tabela nova
+  tb_area_atuacao3 <- tb_area_atuacao %>% 
+    distinct(id_osc, 
+             cd_area_atuacao, 
+             cd_subarea_atuacao, 
+             ft_area_atuacao,
+             .keep_all = TRUE) %>% 
+    left_join(select(tb_area_atuacao2, -bo_oficial), 
+              by = c("id_osc", 
+                     "cd_area_atuacao", 
+                     "cd_subarea_atuacao", 
+                     "ft_area_atuacao")) %>% 
+    select(id_area_atuacao, everything())
+  
+  assert_that(sum(is.na(tb_area_atuacao3$id_area_atuacao)) == 0, 
+              msg = "Valores nulos da chave-primária de 'tb_area_atuacao'")
+  
+  assert_that(length(unique(tb_area_atuacao3$id_area_atuacao)) == nrow(tb_area_atuacao3), 
+              msg = "Chave-primárias duplicadas em 'tb_area_atuacao'")
   
   # Salva Backup
-  PathFile <- paste0(DirName, "tb_area_atuacao.RDS")
-  saveRDS(tb_area_atuacao, PathFile)
+  PathFile <- paste0(DirName, "output_files/tb_area_atuacao.RDS")
+  saveRDS(tb_area_atuacao3, PathFile)
   
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
@@ -980,7 +1059,9 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
             Controle = "61")
   
   rm(DataProcessoInicio, FonteRFB, PathFile)
-  rm(tb_osc, tb_dados_gerais, tb_contato, tb_contato2, tb_localizacao, tb_area_atuacao)
+  rm(tb_osc, tb_dados_gerais, tb_contato, tb_contato2, 
+     tb_localizacao, tb_area_atuacao)
+  rm(tb_area_atuacao2, tb_area_atuacao3)
 } else {message("Desmembramento da base RFB já feito anteriormente")}
 
 

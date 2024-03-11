@@ -1,0 +1,45 @@
+cd_subarea_atuacao;tx_subarea_atuacao;cd_area_atuacao
+1;Habitação;1
+2;Outros Habitação;1
+3;Hospitais;2
+4;Outros serviços de saúde;2
+6;Cultura e arte;3
+7;Esportes e recreação;3
+8;Outros Cultura e recreação;3
+9;Educação infantil;4
+10;Ensino fundamental;4
+11;Ensino médio;4
+12;Ensino superior;4
+13;Estudos e pesquisas;4
+14;Educação profissional;4
+15;Outras formas de educação/ensino;4
+16;Outros Educação e pesquisa;4
+44;Atividades de apoio à educação;4
+17;Assistência social;5
+18;Outros Assistência social;5
+19;Religião;6
+20;Outros Religião;6
+21;Associações empresariais e patronais;7
+22;Associações profissionais;7
+23;Associações de produtores rurais, pescadores e similares;7
+24;Cooperativas sociais;7
+25;Outras Associações patronais e profissionais;7
+26;Meio ambiente;8
+27;Proteção animal;8
+28;Outros Meio ambiente e proteção animal;8
+29;Associações de moradores;9
+30;Centros e associações comunitárias;9
+31;Desenvolvimento rural;9
+32;Emprego e treinamento;9
+33;Defesa de direitos de grupos e minorias;9
+34;Desenvolvimento e defesa de direitos;9
+36;Associações de pais, professores, alunos e afins;9
+37;Associações patronais e profissionais;9
+38;Cultura e recreação;9
+39;Defesa de direitos e interesses - múltiplas áreas;9
+40;Meio ambiente e proteção animal;9
+41;Outras formas de desenvolvimento e defesa de direitos e interesses;9
+42;Desenvolvimento e defesa de direitos e interesses - Religião;9
+43;Saúde, assistência social e educação;9
+35;Associações de atividades não especificadas anteriormente;11
+35;Outras organizações da sociedade civil;11

@@ -92,6 +92,7 @@ assert_that(file.exists("backup_files/2023_01/output_files/tb_osc.RDS"))
 assert_that(file.exists("backup_files/2023_01/output_files/tb_dados_gerais.RDS"))
 assert_that(file.exists("backup_files/2023_01/output_files/tb_area_atuacao.RDS"))
 assert_that(file.exists("backup_files/2023_01/output_files/tb_contato.RDS"))
+assert_that(file.exists("backup_files/2023_01/output_files/tb_localizacao.RDS"))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -106,7 +107,6 @@ assert_that(exists("AtualizaDados"))
 assert_that(is.function(AtualizaDados))
 
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Atualiza tb_osc: ####
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -117,12 +117,12 @@ message("Inserindo dados da tabela 'tb_osc_teste'")
 tb_osc_teste <- readRDS("backup_files/2023_01/output_files/tb_osc.RDS")
 
 # Corrige tipo de dado para "cd_identificador_osc"
-tb_osc_teste[["cd_identificador_osc"]] <- as.numeric(tb_osc_teste[["cd_identificador_osc"]])
+# tb_osc_teste[["cd_identificador_osc"]] <- as.numeric(tb_osc_teste[["cd_identificador_osc"]])
 
 # Por algum motivo, "tx_apelido_osc" está contrangido como valor único
 # e, para solucionar isso, foi inteiro determinado como NA
-tb_osc_teste[["tx_apelido_osc"]] <- NA_character_
-tb_osc_teste[["ft_apelido_osc"]] <- NA_character_
+# tb_osc_teste[["tx_apelido_osc"]] <- NA_character_
+# tb_osc_teste[["ft_apelido_osc"]] <- NA_character_
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec, 
@@ -146,11 +146,11 @@ message("Inserindo dados da tabela 'tb_dados_gerais_teste'")
 tb_dados_gerais_teste <- readRDS("backup_files/2023_01/output_files/tb_dados_gerais.RDS")
 
 # Corrige tipos de dado
-tb_dados_gerais_teste[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais_teste[["cd_natureza_juridica_osc"]])
-tb_dados_gerais_teste[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais_teste[["dt_fundacao_osc"]])
+# tb_dados_gerais_teste[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais_teste[["cd_natureza_juridica_osc"]])
+# tb_dados_gerais_teste[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais_teste[["dt_fundacao_osc"]])
 
 # Esta variável tem um interpretação diferente no banco de dados antigo e novo (investigar!)
-tb_dados_gerais_teste[["dt_ano_cadastro_cnpj"]] <- NA_Date_
+# tb_dados_gerais_teste[["dt_ano_cadastro_cnpj"]] <- NA_Date_
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec, 
@@ -175,7 +175,7 @@ message("Inserindo dados da tabela 'tb_contato_teste'")
 tb_contato_teste <- readRDS("backup_files/2023_01/output_files/tb_contato.RDS")
 
 # Corrige tipos de dado
-tb_contato_teste[["cd_natureza_juridica_osc"]] <- as.numeric(tb_contato_teste[["cd_natureza_juridica_osc"]])
+# tb_contato_teste[["cd_natureza_juridica_osc"]] <- as.numeric(tb_contato_teste[["cd_natureza_juridica_osc"]])
 
 
 # Executa atualização
@@ -190,6 +190,29 @@ assert_that(Atualizacao)
 rm(Atualizacao, tb_contato_teste)
 
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Atualiza tb_localizacao: ####
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# message("Inserindo dados da tabela 'tb_localizacao'")
+# 
+# # Carrega dados RDS:
+# tb_localizacao_teste <- readRDS("backup_files/2023_01/output_files/tb_localizacao.RDS")
+# 
+# names(tb_localizacao)
+# 
+# # Executa atualização
+# Atualizacao <- AtualizaDados(Conexao = connec, 
+#                              DadosNovos = tb_localizacao_teste, 
+#                              Chave = "id_osc", 
+#                              Table_NameAntigo = "tb_localizacao_teste", 
+#                              verbose = TRUE, 
+#                              samples = TRUE)
+# 
+# assert_that(Atualizacao)
+# rm(Atualizacao, tb_localizacao_teste)
+
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Atualiza tb_area_atuacao: ####
@@ -197,26 +220,15 @@ rm(Atualizacao, tb_contato_teste)
 
 # Estou aqui!!! ####
 
-# message("Inserindo dados da tabela 'tb_area_atuacao_teste'")
-# 
-# # Carrega dados RDS:
-# tb_area_atuacao_teste <- readRDS("backup_files/2023_01/output_files/tb_area_atuacao.RDS")
-# 
-# # Corrige tipos de dado
-# tb_area_atuacao_teste[["cd_natureza_juridica_osc"]] <- as.numeric(tb_area_atuacao_teste[["cd_natureza_juridica_osc"]])
-# 
-# 
-# # Executa atualização
-# Atualizacao <- AtualizaDados(Conexao = connec, 
-#                              DadosNovos = tb_area_atuacao_teste, 
-#                              Chave = "id_osc", 
-#                              Table_NameAntigo = "tb_area_atuacao_teste", 
-#                              verbose = TRUE, 
-#                              samples = TRUE)
-# 
-# assert_that(Atualizacao)
-# rm(Atualizacao, tb_area_atuacao_teste)
+message("Inserindo dados da tabela 'tb_area_atuacao_teste'")
 
+# Carrega dados RDS:
+tb_area_atuacao_teste <- readRDS("backup_files/2023_01/output_files/tb_area_atuacao.RDS")
+
+# Executa atualização
+dbAppendTable(connec, "tb_area_atuacao_teste", tb_area_atuacao_teste)
+
+rm(tb_area_atuacao_teste)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finalização da rotina ####
