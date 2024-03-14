@@ -113,21 +113,13 @@ assert_that(is.function(AtualizaDados))
 
 message("Inserindo dados da tabela 'tb_osc_teste'")
 
-
+# Deixa, a princípio, a variável bo_osc_ativa como FALSE, voltando para TRUE na presenã dos dados novos
 dbExecute(connec, paste0("UPDATE tb_osc_teste", "\n",
                          " SET bo_osc_ativa = FALSE",
                          ";"))
 
 # Carrega dados RDS:
 tb_osc_teste <- readRDS("backup_files/2023_01/output_files/tb_osc.RDS")
-
-# Corrige tipo de dado para "cd_identificador_osc"
-# tb_osc_teste[["cd_identificador_osc"]] <- as.numeric(tb_osc_teste[["cd_identificador_osc"]])
-
-# Por algum motivo, "tx_apelido_osc" está contrangido como valor único
-# e, para solucionar isso, foi inteiro determinado como NA
-# tb_osc_teste[["tx_apelido_osc"]] <- NA_character_
-# tb_osc_teste[["ft_apelido_osc"]] <- NA_character_
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec, 
@@ -151,11 +143,11 @@ message("Inserindo dados da tabela 'tb_dados_gerais_teste'")
 tb_dados_gerais_teste <- readRDS("backup_files/2023_01/output_files/tb_dados_gerais.RDS")
 
 # Corrige tipos de dado
-# tb_dados_gerais_teste[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais_teste[["cd_natureza_juridica_osc"]])
-# tb_dados_gerais_teste[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais_teste[["dt_fundacao_osc"]])
+ tb_dados_gerais_teste[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais_teste[["cd_natureza_juridica_osc"]])
+ tb_dados_gerais_teste[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais_teste[["dt_fundacao_osc"]])
 
 # Esta variável tem um interpretação diferente no banco de dados antigo e novo (investigar!)
-# tb_dados_gerais_teste[["dt_ano_cadastro_cnpj"]] <- NA_Date_
+ tb_dados_gerais_teste[["dt_ano_cadastro_cnpj"]] <- NA_Date_
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec, 
@@ -179,10 +171,6 @@ message("Inserindo dados da tabela 'tb_contato_teste'")
 # Carrega dados RDS:
 tb_contato_teste <- readRDS("backup_files/2023_01/output_files/tb_contato.RDS")
 
-# Corrige tipos de dado
-# tb_contato_teste[["cd_natureza_juridica_osc"]] <- as.numeric(tb_contato_teste[["cd_natureza_juridica_osc"]])
-
-
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec, 
                              DadosNovos = tb_contato_teste, 
@@ -203,8 +191,6 @@ message("Inserindo dados da tabela 'tb_localizacao'")
 
 # Carrega dados RDS:
 tb_localizacao_teste <- readRDS("backup_files/2023_01/output_files/tb_localizacao.RDS")
-
-names(tb_localizacao)
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec,
@@ -230,10 +216,20 @@ message("Inserindo dados da tabela 'tb_area_atuacao_teste'")
 # Carrega dados RDS:
 tb_area_atuacao_teste <- readRDS("backup_files/2023_01/output_files/tb_area_atuacao.RDS")
 
-# Executa atualização
-dbAppendTable(connec, "tb_area_atuacao_teste", tb_area_atuacao_teste)
+# Corrige tipos de dado
+tb_area_atuacao_teste[["id_osc"]] <- as.integer(tb_area_atuacao_teste[["id_osc"]])
 
-rm(tb_area_atuacao_teste)
+
+# Executa atualização
+Atualizacao <- AtualizaDados(Conexao = connec,
+                             DadosNovos = tb_area_atuacao_teste,
+                             Chave = "id_area_atuacao",
+                             Table_NameAntigo = "tb_area_atuacao_teste",
+                             verbose = TRUE,
+                             samples = TRUE)
+
+assert_that(Atualizacao)
+rm(Atualizacao, tb_area_atuacao_teste)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finalização da rotina ####

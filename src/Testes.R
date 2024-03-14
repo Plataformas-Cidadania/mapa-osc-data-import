@@ -1,4 +1,34 @@
+DadosAntigos <- dbGetQuery(connec, 
+                           paste0("SELECT * FROM tb_area_atuacao_teste",
+                                  # Table_NameAntigo,
+                                  # " LIMIT 500", 
+                                  ";"))
 
+View(DadosAntigos)
+
+class(DadosAntigos[["id_osc"]])
+class(tb_area_atuacao_teste[["id_osc"]])
+
+names(tb_area_atuacao_teste)
+
+DadosAntigos <- dbGetQuery(connec, 
+                           paste0("SELECT * FROM tb_dados_gerais_teste",
+                                  # Table_NameAntigo,
+                                  # " LIMIT 500", 
+                                  ";"))
+
+View(DadosAntigos)
+
+
+
+DadosAntigos <- dbGetQuery(connec, 
+                           paste0("SELECT * FROM tb_osc_teste",
+                                  # Table_NameAntigo,
+                                  # " LIMIT 500", 
+                                  ";"))
+
+table(DadosAntigos$bo_osc_ativa, useNA = "always")
+View(DadosAntigos)
 
 
 DadosUpdate$temp_var[1:5]
