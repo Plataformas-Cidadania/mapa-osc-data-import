@@ -113,6 +113,11 @@ assert_that(is.function(AtualizaDados))
 
 message("Inserindo dados da tabela 'tb_osc_teste'")
 
+
+dbExecute(connec, paste0("UPDATE tb_osc_teste", "\n",
+                         " SET bo_osc_ativa = FALSE",
+                         ";"))
+
 # Carrega dados RDS:
 tb_osc_teste <- readRDS("backup_files/2023_01/output_files/tb_osc.RDS")
 
@@ -146,11 +151,11 @@ message("Inserindo dados da tabela 'tb_dados_gerais_teste'")
 tb_dados_gerais_teste <- readRDS("backup_files/2023_01/output_files/tb_dados_gerais.RDS")
 
 # Corrige tipos de dado
-tb_dados_gerais_teste[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais_teste[["cd_natureza_juridica_osc"]])
-tb_dados_gerais_teste[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais_teste[["dt_fundacao_osc"]])
+# tb_dados_gerais_teste[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais_teste[["cd_natureza_juridica_osc"]])
+# tb_dados_gerais_teste[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais_teste[["dt_fundacao_osc"]])
 
 # Esta variável tem um interpretação diferente no banco de dados antigo e novo (investigar!)
-tb_dados_gerais_teste[["dt_ano_cadastro_cnpj"]] <- NA_Date_
+# tb_dados_gerais_teste[["dt_ano_cadastro_cnpj"]] <- NA_Date_
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec, 
@@ -199,9 +204,7 @@ message("Inserindo dados da tabela 'tb_localizacao'")
 # Carrega dados RDS:
 tb_localizacao_teste <- readRDS("backup_files/2023_01/output_files/tb_localizacao.RDS")
 
-# Corrige tipos de dado
-tb_localizacao_teste[["cd_municipio"]] <- as.numeric(tb_localizacao_teste[["cd_municipio"]])
-tb_localizacao_teste[["nr_cep"]] <- as.numeric(tb_localizacao_teste[["nr_cep"]])
+names(tb_localizacao)
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec,

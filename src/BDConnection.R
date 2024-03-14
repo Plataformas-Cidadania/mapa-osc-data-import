@@ -25,7 +25,7 @@ library(RPostgres)
 
 
 AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo, 
-                          verbose = FALSE, samples = TRUE) {
+                          verbose = FALSE, samples = TRUE, deleterows = FALSE) {
   
   message("Marcação do tempo: ", now())
   
@@ -95,82 +95,87 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   }  
   
   
-  
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Remove linhas que  não estão mais em DadosNovos ####
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
-  message("Remove linhas excluídas da tabela")
-  
-  ## Cria uma cópia dos dados antigos só com os IDs e 
-  ## uma variável de se deve ou não deletar
-  DeleteData <- tibble(.rows = nrow(DadosAntigos)) 
-  DeleteData[[Chave]] <- DadosAntigos[[Chave]]
-  DeleteData[["deletar"]] <- !(DadosAntigos[[Chave]] %in% DadosNovos[[Chave]])
-  
-  if(sum(DeleteData[["deletar"]]) > 0) {
+  if(deleterows) {
     
-    if(samples) {
-      # Amostra de linhas deletadas
-      SampleDel <- sample(DeleteData[[Chave]][DeleteData$deletar], min(20, sum(DeleteData$deletar)))
-      message("Amostra de linhas deletadas: ", Chave, " == ", 
-              paste0(SampleDel, collapse = ", "))
-      rm(SampleDel)
-    }
+    message("Remove linhas excluídas da tabela")
     
-    ## Faz upload da tabela com as linhas a se deletar
-    if(dbExistsTable(Conexao, "deletedata")) dbRemoveTable(Conexao, "deletedata")
-    dbWriteTable(Conexao, "deletedata", DeleteData)
+    ## Cria uma cópia dos dados antigos só com os IDs e 
+    ## uma variável de se deve ou não deletar
+    DeleteData <- tibble(.rows = nrow(DadosAntigos)) 
+    DeleteData[[Chave]] <- DadosAntigos[[Chave]]
+    DeleteData[["deletar"]] <- !(DadosAntigos[[Chave]] %in% DadosNovos[[Chave]])
     
-    # Faz umm join desta tabela com os dados antigos
-    
-    # Deleta a coluna, se ela existir:
-    query_DropCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
-                            " DROP COLUMN IF EXISTS deletar;")
-    
-    if("deletar" %in% names(DadosAntigos)) {
+    if(sum(DeleteData[["deletar"]]) > 0) {
+      
+      if(samples) {
+        # Amostra de linhas deletadas
+        SampleDel <- sample(DeleteData[[Chave]][DeleteData$deletar], min(20, sum(DeleteData$deletar)))
+        message("Amostra de linhas deletadas: ", Chave, " == ", 
+                paste0(SampleDel, collapse = ", "))
+        rm(SampleDel)
+      }
+      
+      ## Faz upload da tabela com as linhas a se deletar
+      if(dbExistsTable(Conexao, "deletedata")) dbRemoveTable(Conexao, "deletedata")
+      dbWriteTable(Conexao, "deletedata", DeleteData)
+      
+      # Faz umm join desta tabela com os dados antigos
+      
+      # Deleta a coluna, se ela existir:
+      query_DropCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
+                              " DROP COLUMN IF EXISTS deletar;")
+      
+      if("deletar" %in% names(DadosAntigos)) {
+        dbExecute(Conexao, query_DropCol)
+      }
+      
+      # Cria coluna na tabela de dados antigos
+      query_AddCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
+                             " ADD COLUMN deletar boolean;")
+      
+      dbExecute(Conexao, query_AddCol)
+      
+      # Insere a coluna com as linhas para deletar
+      query_JoinDelete <- paste0("UPDATE ", Table_NameAntigo, "\n",
+                                 " SET deletar = deletedata.deletar", "\n",
+                                 " FROM deletedata", "\n",
+                                 " WHERE ", Table_NameAntigo, ".", Chave,
+                                 " = deletedata.", Chave,
+                                 ";")
+      # cat(query_JoinDelete)
+      
+      # query_JoinDelete
+      dbExecute(Conexao, query_JoinDelete)
+      
+      # Deleta as linhas com base na nova coluna
+      query_DeleteRows <- paste0("DELETE FROM ", Table_NameAntigo, 
+                                 " WHERE deletar;")
+      # query_DeleteRows
+      LinhasDeletadas <- dbExecute(Conexao, query_DeleteRows)
+      
+      message(LinhasDeletadas, " linhas deletadas da tabela")
+      
+      # Deleta a coluna criada
       dbExecute(Conexao, query_DropCol)
+      
+      # Remove a tabela deletedata
+      if(dbExistsTable(Conexao, "deletedata")) dbRemoveTable(Conexao, "deletedata")
+      
+      rm(query_JoinDelete, query_DropCol, query_DeleteRows, query_AddCol, 
+         LinhasDeletadas)
+      
+    } else {
+      message("Nenhuma linha deletada do banco")
     }
+    rm(DeleteData)
     
-    # Cria coluna na tabela de dados antigos
-    query_AddCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
-                           " ADD COLUMN deletar boolean;")
-    
-    dbExecute(Conexao, query_AddCol)
-    
-    # Insere a coluna com as linhas para deletar
-    query_JoinDelete <- paste0("UPDATE ", Table_NameAntigo, "\n",
-                               " SET deletar = deletedata.deletar", "\n",
-                               " FROM deletedata", "\n",
-                               " WHERE ", Table_NameAntigo, ".", Chave,
-                               " = deletedata.", Chave,
-                               ";")
-    # cat(query_JoinDelete)
-    
-    # query_JoinDelete
-    dbExecute(Conexao, query_JoinDelete)
-    
-    # Deleta as linhas com base na nova coluna
-    query_DeleteRows <- paste0("DELETE FROM ", Table_NameAntigo, 
-                               " WHERE deletar;")
-    # query_DeleteRows
-    LinhasDeletadas <- dbExecute(Conexao, query_DeleteRows)
-    
-    message(LinhasDeletadas, " linhas deletadas da tabela")
-    
-    # Deleta a coluna criada
-    dbExecute(Conexao, query_DropCol)
-    
-    # Remove a tabela deletedata
-    if(dbExistsTable(Conexao, "deletedata")) dbRemoveTable(Conexao, "deletedata")
-    
-    rm(query_JoinDelete, query_DropCol, query_DeleteRows, query_AddCol, 
-       LinhasDeletadas)
-    
-  } else {
-    message("Nenhuma linha deletada do banco")
   }
-  rm(DeleteData)
+  
+  
   
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Insere linhas novas que não estavam no banco antigo ####
