@@ -18,11 +18,11 @@ library(jsonlite)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Baixa a chave secreta do código
-assert_that(file.exists("keys/psql12-homolog_key.json"))
-keys <- jsonlite::read_json("keys/psql12-homolog_key.json")
+assert_that(file.exists("keys/rais_2019_key2.json"))
+keys <- jsonlite::read_json("keys/rais_2019_key2.json")
 
 
-# Verifica se pode conectar
+# Verifica se pode condenar
 TestConexao <- dbCanConnect(RPostgres::Postgres(), 
                             dbname = keys$dbname,
                             host = keys$host,
@@ -111,54 +111,54 @@ assert_that(is.function(AtualizaDados))
 # Atualiza tb_osc: ####
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-message("Inserindo dados da tabela 'tb_osc'")
+message("Inserindo dados da tabela 'tb_osc_teste'")
 
 # Deixa, a princípio, a variável bo_osc_ativa como FALSE, voltando para TRUE na presenã dos dados novos
-dbExecute(connec, paste0("UPDATE tb_osc", "\n",
+dbExecute(connec, paste0("UPDATE tb_osc_teste", "\n",
                          " SET bo_osc_ativa = FALSE",
                          ";"))
 
 # Carrega dados RDS:
-tb_osc <- readRDS("backup_files/2023_01/output_files/tb_osc.RDS")
+tb_osc_teste <- readRDS("backup_files/2023_01/output_files/tb_osc.RDS")
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec, 
-                             DadosNovos = tb_osc, 
+                             DadosNovos = tb_osc_teste, 
                              Chave = "id_osc", 
-                             Table_NameAntigo = "tb_osc", 
+                             Table_NameAntigo = "tb_osc_teste", 
                              verbose = TRUE, 
                              samples = TRUE)
 
 assert_that(Atualizacao)
-rm(Atualizacao, tb_osc)
+rm(Atualizacao, tb_osc_teste)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Atualiza tb_dados_gerais: ####
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-message("Inserindo dados da tabela 'tb_dados_gerais'")
+message("Inserindo dados da tabela 'tb_dados_gerais_teste'")
 
 # Carrega dados RDS:
-tb_dados_gerais <- readRDS("backup_files/2023_01/output_files/tb_dados_gerais.RDS")
+tb_dados_gerais_teste <- readRDS("backup_files/2023_01/output_files/tb_dados_gerais.RDS")
 
 # Corrige tipos de dado
- tb_dados_gerais[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais[["cd_natureza_juridica_osc"]])
- tb_dados_gerais[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais[["dt_fundacao_osc"]])
+ tb_dados_gerais_teste[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais_teste[["cd_natureza_juridica_osc"]])
+ tb_dados_gerais_teste[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais_teste[["dt_fundacao_osc"]])
 
 # Esta variável tem um interpretação diferente no banco de dados antigo e novo (investigar!)
- tb_dados_gerais[["dt_ano_cadastro_cnpj"]] <- NA_Date_
+ tb_dados_gerais_teste[["dt_ano_cadastro_cnpj"]] <- NA_Date_
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec, 
-                             DadosNovos = tb_dados_gerais, 
+                             DadosNovos = tb_dados_gerais_teste, 
                              Chave = "id_osc", 
-                             Table_NameAntigo = "tb_dados_gerais", 
+                             Table_NameAntigo = "tb_dados_gerais_teste", 
                              verbose = TRUE, 
                              samples = TRUE)
 
 assert_that(Atualizacao)
-rm(Atualizacao, tb_dados_gerais)
+rm(Atualizacao, tb_dados_gerais_teste)
 
 
 
@@ -166,21 +166,21 @@ rm(Atualizacao, tb_dados_gerais)
 # Atualiza tb_contato: ####
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-message("Inserindo dados da tabela 'tb_contato'")
+message("Inserindo dados da tabela 'tb_contato_teste'")
 
 # Carrega dados RDS:
-tb_contato <- readRDS("backup_files/2023_01/output_files/tb_contato.RDS")
+tb_contato_teste <- readRDS("backup_files/2023_01/output_files/tb_contato.RDS")
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec, 
-                             DadosNovos = tb_contato, 
+                             DadosNovos = tb_contato_teste, 
                              Chave = "id_osc", 
-                             Table_NameAntigo = "tb_contato", 
+                             Table_NameAntigo = "tb_contato_teste", 
                              verbose = TRUE, 
                              samples = TRUE)
 
 assert_that(Atualizacao)
-rm(Atualizacao, tb_contato)
+rm(Atualizacao, tb_contato_teste)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -190,18 +190,18 @@ rm(Atualizacao, tb_contato)
 message("Inserindo dados da tabela 'tb_localizacao'")
 
 # Carrega dados RDS:
-tb_localizacao <- readRDS("backup_files/2023_01/output_files/tb_localizacao.RDS")
+tb_localizacao_teste <- readRDS("backup_files/2023_01/output_files/tb_localizacao.RDS")
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec,
-                             DadosNovos = tb_localizacao,
+                             DadosNovos = tb_localizacao_teste,
                              Chave = "id_osc",
-                             Table_NameAntigo = "tb_localizacao",
+                             Table_NameAntigo = "tb_localizacao_teste",
                              verbose = TRUE,
                              samples = TRUE)
 
 assert_that(Atualizacao)
-rm(Atualizacao, tb_localizacao)
+rm(Atualizacao, tb_localizacao_teste)
 
 
 
@@ -211,25 +211,25 @@ rm(Atualizacao, tb_localizacao)
 
 # Estou aqui!!! ####
 
-message("Inserindo dados da tabela 'tb_area_atuacao'")
+message("Inserindo dados da tabela 'tb_area_atuacao_teste'")
 
 # Carrega dados RDS:
-tb_area_atuacao <- readRDS("backup_files/2023_01/output_files/tb_area_atuacao.RDS")
+tb_area_atuacao_teste <- readRDS("backup_files/2023_01/output_files/tb_area_atuacao.RDS")
 
 # Corrige tipos de dado
-tb_area_atuacao[["id_osc"]] <- as.integer(tb_area_atuacao[["id_osc"]])
+tb_area_atuacao_teste[["id_osc"]] <- as.integer(tb_area_atuacao_teste[["id_osc"]])
 
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec,
-                             DadosNovos = tb_area_atuacao,
+                             DadosNovos = tb_area_atuacao_teste,
                              Chave = "id_area_atuacao",
-                             Table_NameAntigo = "tb_area_atuacao",
+                             Table_NameAntigo = "tb_area_atuacao_teste",
                              verbose = TRUE,
                              samples = TRUE)
 
 assert_that(Atualizacao)
-rm(Atualizacao, tb_area_atuacao)
+rm(Atualizacao, tb_area_atuacao_teste)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finalização da rotina ####

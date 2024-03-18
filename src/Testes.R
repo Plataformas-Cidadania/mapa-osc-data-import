@@ -1,3 +1,8 @@
+
+
+nrow(tb_osc)
+
+
 DadosAntigos <- dbGetQuery(connec, 
                            paste0("SELECT * FROM tb_area_atuacao_teste",
                                   # Table_NameAntigo,
@@ -22,7 +27,7 @@ View(DadosAntigos)
 
 
 DadosAntigos <- dbGetQuery(connec, 
-                           paste0("SELECT * FROM tb_osc_teste",
+                           paste0("SELECT * FROM tb_osc",
                                   # Table_NameAntigo,
                                   # " LIMIT 500", 
                                   ";"))
