@@ -811,20 +811,20 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
             FileSizeMB = file.size(paste0(DirName, "output_files/tb_contato2.RDS"))/1024000 )
   
   # Tabela: tb_localizacao ####
-  
-  DB_OSC <- DB_OSC %>% 
-    mutate(cd_identificador_osc = str_pad(as.character(cnpj), 
-                                          width = 14, 
-                                          side = "left", 
-                                          pad = "0"))
-  
+
   # Dados de geolocalização:
   Galileo_data <- readRDS(paste0(DirName, 
                                  "intermediate_files/GalileoINPUT.RDS"))
   
+  # Tabela com o de/para do código municipal da Receita para o
+  # código IBGE.
   CodMunicRFB <- fread("tab_auxiliares/CodMunicRFB.csv", 
                        encoding = "Latin-1") %>% 
-    mutate(CodMuniRFB = as.character(CodMuniRFB), 
+    # Formata campos
+    mutate(CodMuniRFB = str_pad(as.character(CodMuniRFB), 
+                                width = 4, 
+                                side = "left", 
+                                pad = "0"),
            CodMunicIBGE = str_pad(as.character(CodMunicIBGE), 
                                   width = 7, 
                                   side = "left", 
@@ -844,6 +844,10 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     
     # Incorpora dados de geolocalização
     left_join(Galileo_data, by = "cd_identificador_osc") %>% 
+    
+    # Não pode ter sede no exterior nem valor nulo de município
+    dplyr::filter(CodMuniRFB != "9707", 
+                  !is.na(CodMuniRFB)) %>% 
     
     # Coloca código municipal do IBGE
     left_join(select(CodMunicRFB, CodMuniRFB, CodMunicIBGE), 
@@ -875,17 +879,23 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            ft_latlon = ifelse(is.na(tx_latitude) | is.na(tx_longitude), NA, ft_latlon),
            ft_cep = ifelse(is.na(nr_cep), NA, ft_cep))
   
-  rm(Galileo_data)
-  
   # Como o padrão da base de dados é class("cd_identificador_osc") == numeric , 
   # vou deixar assim
   tb_localizacao[["cd_identificador_osc"]] <- as.numeric(tb_localizacao[["cd_identificador_osc"]])
   tb_localizacao[["cd_municipio"]] <- as.numeric(tb_localizacao[["cd_municipio"]])
   tb_localizacao[["nr_cep"]] <- as.numeric(tb_localizacao[["nr_cep"]])
   
+  # Restrições de "cd_municipio": não pode ter nulo (nem 0)
+  assert_that(sum(is.na(tb_localizacao[["cd_municipio"]])) == 0, 
+              msg = "Valores nulos encontrados em 'cd_municipio'")
+  
+  assert_that(sum(tb_localizacao[["cd_municipio"]] == 0) == 0, 
+              msg = "Valores nulos encontrados em 'cd_municipio'")
+  
   # Salva Backup
   PathFile <- paste0(DirName, "output_files/tb_localizacao.RDS")
   saveRDS(tb_localizacao, PathFile)
+  rm(Galileo_data, CodMunicRFB)
   
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
@@ -911,7 +921,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     mutate(ft_area_atuacao = paste0("AreaAtuacaoOSC.R_", 
                                     Att_Atual$At_CodRef[1]), 
            ft_area_atuacaoPadronizado = "CNPJ/RFB",
-           bo_oficial = FALSE) %>% 
+           bo_oficial = TRUE) %>% 
     
     select(id_osc, cd_identificador_osc, tx_area_atuacao, 
            tx_subarea_atuacao, ft_area_atuacao, bo_oficial, 
