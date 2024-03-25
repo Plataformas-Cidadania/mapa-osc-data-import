@@ -700,7 +700,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     left_join(idControl, by = "cd_identificador_osc") %>% 
     
     mutate(dt_fundacao_osc = as.character(ymd(data_de_inicio_atividade)),
-           dt_ano_cadastro_cnpj = str_sub(data_de_inicio_atividade, 1, 4),
+           dt_ano_cadastro_cnpj = as.character(ymd(data_de_inicio_atividade)),
            cd_classe_atividade_economica_osc = str_sub(cnae, 1, 5), # verificar se é isso mesmo!
            ft_natureza_juridica_osc = FonteRFB, 
            ft_razao_social_osc = FonteRFB, 
