@@ -147,7 +147,7 @@ tb_dados_gerais <- readRDS("backup_files/2023_01/output_files/tb_dados_gerais.RD
  tb_dados_gerais[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais[["dt_fundacao_osc"]])
 
 # Esta variável tem um interpretação diferente no banco de dados antigo e novo (investigar!)
- tb_dados_gerais[["dt_ano_cadastro_cnpj"]] <- NA_Date_
+ # tb_dados_gerais[["dt_ano_cadastro_cnpj"]] <- NA_Date_
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec, 
