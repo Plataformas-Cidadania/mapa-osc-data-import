@@ -813,8 +813,16 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   # Tabela: tb_localizacao ####
 
   # Dados de geolocalização:
-  Galileo_data <- readRDS(paste0(DirName, 
-                                 "intermediate_files/GalileoINPUT.RDS"))
+  Galileo_file <- paste0(DirName, 
+                         "intermediate_files/GalileoINPUT.RDS")
+  
+  Galileo_data <- readRDS(Galileo_file)
+  
+  Dt_Galileo_data <- file.info(Galileo_file) %>% 
+    mutate(ctime = as.character(ctime)) %>% 
+    select(ctime) %>% 
+    unlist() %>% 
+    as.character() %>% ymd_hms()
   
   # Tabela com o de/para do código municipal da Receita para o
   # código IBGE.
@@ -850,33 +858,63 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
                   !is.na(CodMuniRFB)) %>% 
     
     # Coloca código municipal do IBGE
-    left_join(select(CodMunicRFB, CodMuniRFB, CodMunicIBGE), 
+    left_join(CodMunicRFB, 
               by = ("CodMuniRFB")) %>% 
     
     rename(tx_longitude = Longitude, 
            tx_latitude = Latitude, 
            cd_municipio = CodMunicIBGE) %>% 
-    mutate(tx_endereco = paste0(tipo_de_logradouro, " ", logradouro),
+    mutate(geo_localizacao = paste0("POINT (", tx_latitude, " ", tx_longitude, ")"),
+           geo_localizacao = ifelse(is.na(tx_latitude) | is.na(tx_longitude), 
+                                    NA, geo_localizacao),
+           ft_geo_localizacao = "Software Galileo",
+           qualidade_classificacao = case_when(cd_precisao_localizacao == 1 ~ "1 Estrela", 
+                                               cd_precisao_localizacao > 1 ~ paste(cd_precisao_localizacao, "Estrelas"),
+                                               TRUE ~ NA),
+           # Estou aqui !!!! ####
+           dt_geocodificacao = Dt_Galileo_data, 
+           tx_endereco = paste0(tipo_de_logradouro, " ", logradouro),
+           tx_endereco_corrigido = paste0(Munic_Nome2, ", ", UF),
+           tx_endereco_corrigido2 = paste(tx_endereco, nr_localizacao, ", ",
+                                         ifelse(!is.na(tx_endereco_complemento), 
+                                                paste0(tx_endereco_complemento, ", "), 
+                                                ""), 
+                                         tx_bairro, ", ", Munic_Nome2, ", ", 
+                                         UF, ", ", nr_cep),
+           ft_endereco_corrigido =  FonteRFB,
+           ft_data_geocodificacao = FonteRFB,
            ft_endereco = FonteRFB,
            ft_localizacao = FonteRFB,
+           tx_endereco_complemento = str_trim(tx_endereco_complemento), 
            ft_endereco_complemento = FonteRFB,
            ft_bairro = FonteRFB,
            ft_municipio = FonteRFB,
            ft_cep = FonteRFB,
            ft_latlon = "Software Galileo",
-           bo_oficial = TRUE) %>% 
-    select(cd_identificador_osc, id_osc, tx_latitude, tx_longitude,
-           cd_precisao_localizacao, ft_latlon, tx_endereco, ft_endereco,
+           bo_oficial = TRUE, 
+           cd_fonte_geocodificacao = NA, 
+           tx_bairro_encontrado = NA, 
+           ft_bairro_encontrado = NA) %>% 
+    select(id_osc, cd_identificador_osc, tx_endereco, ft_endereco,
            nr_localizacao, ft_localizacao, tx_endereco_complemento,
            ft_endereco_complemento, tx_bairro, ft_bairro, cd_municipio,
-           ft_municipio, nr_cep, ft_cep, bo_oficial) %>% 
+           ft_municipio, geo_localizacao, ft_geo_localizacao,
+           tx_endereco_corrigido, ft_endereco_corrigido,
+           nr_cep, ft_cep, 
+           tx_latitude, tx_longitude,
+           dt_geocodificacao, ft_data_geocodificacao, 
+           bo_oficial, qualidade_classificacao, 
+           tx_endereco_corrigido2, cd_fonte_geocodificacao, 
+           tx_bairro_encontrado, ft_bairro_encontrado) %>% 
     # Evitar dar fonte de dado missing:
     mutate(ft_endereco = ifelse(is.na(tx_endereco), NA, ft_endereco),
+           ft_data_geocodificacao = ifelse(is.na(geo_localizacao), NA, ft_data_geocodificacao),
+           ft_endereco_corrigido = ifelse(is.na(tx_endereco_corrigido), NA, ft_endereco_corrigido),
+           ft_geo_localizacao = ifelse(is.na(geo_localizacao), NA, ft_geo_localizacao),
            ft_localizacao = ifelse(is.na(nr_localizacao), NA, ft_localizacao),
            ft_endereco_complemento = ifelse(is.na(tx_endereco_complemento), NA, ft_endereco_complemento),
            ft_bairro = ifelse(is.na(tx_bairro), NA, ft_bairro),
            ft_municipio = ifelse(is.na(cd_municipio), NA, ft_municipio),
-           ft_latlon = ifelse(is.na(tx_latitude) | is.na(tx_longitude), NA, ft_latlon),
            ft_cep = ifelse(is.na(nr_cep), NA, ft_cep))
   
   # Como o padrão da base de dados é class("cd_identificador_osc") == numeric , 
@@ -895,7 +933,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   # Salva Backup
   PathFile <- paste0(DirName, "output_files/tb_localizacao.RDS")
   saveRDS(tb_localizacao, PathFile)
-  rm(Galileo_data, CodMunicRFB)
+  rm(Galileo_data, CodMunicRFB, Galileo_file)
   
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
