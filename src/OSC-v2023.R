@@ -864,7 +864,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     rename(tx_longitude = Longitude, 
            tx_latitude = Latitude, 
            cd_municipio = CodMunicIBGE) %>% 
-    mutate(geo_localizacao = paste0("POINT (", tx_latitude, " ", tx_longitude, ")"),
+    mutate(geo_localizacao = paste0("POINT (", tx_longitude, " ", tx_latitude, ")"),
            geo_localizacao = ifelse(is.na(tx_latitude) | is.na(tx_longitude), 
                                     NA, geo_localizacao),
            ft_geo_localizacao = "Software Galileo",
