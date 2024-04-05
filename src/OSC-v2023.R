@@ -874,8 +874,8 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            # Estou aqui !!!! ####
            dt_geocodificacao = Dt_Galileo_data, 
            tx_endereco = paste0(tipo_de_logradouro, " ", logradouro),
-           tx_endereco_corrigido = paste0(Munic_Nome2, ", ", UF),
-           tx_endereco_corrigido2 = paste(tx_endereco, nr_localizacao, ", ",
+           tx_endereco_corrigido2 = paste0(Munic_Nome2, ", ", UF),
+           tx_endereco_corrigido = paste(tx_endereco, nr_localizacao, ", ",
                                          ifelse(!is.na(tx_endereco_complemento), 
                                                 paste0(tx_endereco_complemento, ", "), 
                                                 ""), 
