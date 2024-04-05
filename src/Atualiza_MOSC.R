@@ -19,7 +19,7 @@ library(jsonlite)
 
 # Baixa a chave secreta do código
 assert_that(file.exists("keys/psql12-homolog_key.json"))
-keys <- jsonlite::read_json("keys/psql12-homolog_key.json")
+keys <- jsonlite::read_json("keys/psql12-homolog_keySUPER.json")
 
 
 # Verifica se pode conectar
@@ -192,11 +192,18 @@ message("Inserindo dados da tabela 'tb_localizacao'")
 # Carrega dados RDS:
 tb_localizacao <- readRDS("backup_files/2023_01/output_files/tb_localizacao.RDS")
 
+# Arrumar a classe das variáveis
+tb_localizacao[["dt_geocodificacao"]] <- as_date(tb_localizacao[["dt_geocodificacao"]])
+tb_localizacao[["cd_fonte_geocodificacao"]] <- as.integer(tb_localizacao[["cd_fonte_geocodificacao"]])
+tb_localizacao[["tx_bairro_encontrado"]] <- as.character(tb_localizacao[["tx_bairro_encontrado"]])
+tb_localizacao[["ft_bairro_encontrado"]] <- as.character(tb_localizacao[["ft_bairro_encontrado"]])
+
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec,
                              DadosNovos = tb_localizacao,
                              Chave = "id_osc",
                              Table_NameAntigo = "tb_localizacao",
+                             GeoVar = c("geo_localizacao"),
                              verbose = TRUE,
                              samples = TRUE)
 
@@ -230,6 +237,21 @@ Atualizacao <- AtualizaDados(Conexao = connec,
 
 assert_that(Atualizacao)
 rm(Atualizacao, tb_area_atuacao)
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Atualiza dos views ####
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+assert_that(file.exists("tab_auxiliares/31_refresh_views_mat.sql"))
+
+refresh_views <- read_lines("tab_auxiliares/31_refresh_views_mat.sql")
+
+for (i in seq_along(refresh_views)) {
+  dbExecute(refresh_views[i])
+}
+rm(i)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finalização da rotina ####

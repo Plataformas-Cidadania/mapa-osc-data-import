@@ -25,7 +25,8 @@ library(RPostgres)
 
 
 AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo, 
-                          verbose = FALSE, samples = TRUE, deleterows = FALSE) {
+                          verbose = FALSE, samples = TRUE, deleterows = FALSE, 
+                          GeoVar = NULL) {
   
   message("Marcação do tempo: ", now())
   
@@ -41,6 +42,14 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   ## Checa se a conexão está funcionando
   assert_that(class(Conexao)[1] == "PqConnection")
   assert_that(DBI::dbIsValid(Conexao))
+  
+  # Se tiver variável geográfica, verificar se a função do postgis está funcionando
+  if(!is.null(GeoVar)) {
+    TesteFuncGeo <- try(dbGetQuery(Conexao, "SELECT public.ST_MakePoint(-50.3482090039996,-20.7619611619996);"))
+    assert_that(!is.error(TesteFuncGeo), 
+                msg = "Função 'public.ST_MakePoint' não encontrada")
+    rm(TesteFuncGeo)
+    }
   
   ## Verifica se o nome da tabela a ser atualizada inserida está correto:
   assert_that(is.character(Table_NameAntigo) & length(Table_NameAntigo) == 1)
@@ -78,11 +87,15 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   ### Verifica coluna por coluna
   for (i in Att_Cols) {
     # i <- Att_Cols[1]
-    assert_that(all(class(DadosAntigos[[i]]) == class(DadosNovos[[i]])), 
-                msg = paste("A coluna", i, "não é do mesmo tipo nos dois", 
-                            "bancos de dados")) 
-    # class(DadosAntigos[[i]]) 
-    # class(DadosNovos[[i]])
+    
+    # Se for variável geográfica, o tratamento vai ser feito baixo
+    if(!(i %in% GeoVar)) {
+      assert_that(all(class(DadosAntigos[[i]]) == class(DadosNovos[[i]])), 
+                  msg = paste("A coluna", i, "não é do mesmo tipo nos dois", 
+                              "bancos de dados")) 
+      # class(DadosAntigos[[i]]) 
+      # class(DadosNovos[[i]])
+    }
   }
   rm(i)
   
@@ -263,7 +276,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   # Atualiza coluna a coluna, usando a estratégia da tabela
   # intermediária.
   for (col in Att_Cols) {
-    # col <- Att_Cols[7]
+    # col <- Att_Cols[11]
     # print(col)
     
     message("Atualizando coluna ", col)
@@ -277,6 +290,29 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
     DadosUpdate[[Chave]] <- DadosAntigos[[Chave]]
     DadosUpdate[["Dado_Old"]] <- DadosAntigos[[col]]
     
+    # Estou aqui !!!! ####
+    # Tratamento especial das variáveis geográficas
+    if(col %in% GeoVar) {
+      
+      # Problema de variáveis com MAIÙSCULA
+      DadosCheck[["geo_dado"]] <- DadosCheck[["Dado"]]
+      
+      ## Tabela temporária para formatar dados geográficos
+      if(dbExistsTable(Conexao, "geo_temp")) dbRemoveTable(Conexao, "geo_temp")
+      
+      dbWriteTable(Conexao, "geo_temp", 
+                   select(DadosCheck, 
+                          all_of(Chave), geo_dado))
+      
+      x <- dbGetQuery(Conexao, "SELECT public.ST_GeomFromText(geo_dado, 4674) FROM geo_temp;")
+      DadosCheck[["Dado"]] <- x$st_geomfromtext
+      
+      if(dbExistsTable(Conexao, "geo_temp")) dbRemoveTable(Conexao, "geo_temp")
+      
+      DadosCheck[["geo_dado"]] <- NULL
+      rm(x)
+    }  
+
     DadosUpdate <- DadosUpdate %>% 
       left_join(DadosCheck, by = Chave) %>% 
       mutate(Atualiza = case_when(
@@ -302,7 +338,6 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
         DadosUpdate$temp_var <- as_date(DadosUpdate$temp_var)
       }
       
-      
       # table(DadosUpdate$temp_var, useNA = "always")
       
       if(samples) {
@@ -320,7 +355,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
         rm(SampleUpdate, LinhasAtualizadas)
       }
       
-      ## Faz upload da tabela com as linhas a se deletar
+      ## Faz upload da tabela temporária com as linhas de atualização
       if(dbExistsTable(Conexao, "update_temp")) dbRemoveTable(Conexao, "update_temp")
       
       dbWriteTable(Conexao, "update_temp", 
@@ -411,8 +446,6 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   message("Marcação do tempo: ", now())
   return(TRUE)
 }
-
-# Estou aqui !!! ####
 
 # Fim ####
 

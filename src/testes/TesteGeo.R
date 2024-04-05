@@ -28,7 +28,7 @@ TestConexao <- dbCanConnect(RPostgres::Postgres(),
                             host = keys$host,
                             port = keys$port,
                             user = keys$username, 
-                            # options="-c search_path=osc"
+                            options="-c search_path=osc",
                             password = keys$password)
 
 assert_that(TestConexao, 
@@ -42,7 +42,7 @@ connec <- dbConnect(RPostgres::Postgres(),
                     host = keys$host,
                     port = keys$port,
                     user = keys$username, 
-                    # options="-c search_path=osc",
+                    options="-c search_path=osc",
                     password = keys$password)
 
 # Verifica a coneção com a base
@@ -63,6 +63,7 @@ Teste <- try(dbGetQuery(connec,
 
 id <- which(Teste$id_osc == 1155032)
 
+names(Teste)
 
 Teste$geo_localizacao[id] 
 "POINT (-49.6295582109996 -25.5808608209996)"
@@ -109,7 +110,13 @@ dbExistsTable(connec, "teste_geo")
 
 
 dbGetQuery(connec, "SELECT CURRENT_SCHEMA, CURRENT_SCHEMA();")
-dbGetQuery(connec, "SELECT PostGIS_Full_Version();")
+dbGetQuery(connec, "SELECT public.PostGIS_Full_Version();")
+
+x <- dbGetQuery(connec, "SELECT public.ST_MakePoint(-50.3482090039996,-20.7619611619996);")
+x
+
+x <- dbGetQuery(connec, "SELECT public.ST_MakePoint(-50.3482090039996,-20.7619611619996);")
+x
 
 
 x <- dbExecute(connec, "ALTER TABLE teste_geo ADD COLUMN geom geometry(point, 4674)")
