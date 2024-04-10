@@ -249,9 +249,10 @@ assert_that(file.exists("tab_auxiliares/31_refresh_views_mat.sql"))
 refresh_views <- read_lines("tab_auxiliares/31_refresh_views_mat.sql")
 
 for (i in seq_along(refresh_views)) {
-  dbExecute(refresh_views[i])
+  message(refresh_views[i])
+  dbExecute(connec, refresh_views[i])
 }
-rm(i)
+rm(i, refresh_views)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finalização da rotina ####
