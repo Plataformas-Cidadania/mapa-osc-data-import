@@ -558,7 +558,7 @@ if(!"31" %in% ProcessosAtt_Atual$Controle) {
 # "61": Processo 6 (Desmembramento da base RFB) e 1 (completo)
 if(!"61" %in% ProcessosAtt_Atual$Controle) {
   
-  message("Determinação das áreas de atuação OSC")
+  message("Desmembramento da base RFB")
   
   assert_that(file.exists(paste0(DirName, "intermediate_files/GalileoINPUT.RDS")),
               msg = "Arquivo de localização do Galileo não está presente")
@@ -846,12 +846,13 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            tx_bairro = bairro,
            CodMuniRFB = municipio,
            nr_cep = cep) %>% 
+
+    # Incorpora dados de geolocalização
+    left_join(Galileo_data, by = "cd_identificador_osc") %>% 
+    select(-matches("id_osc")) %>% 
     
     # Insere "id_osc"
     left_join(idControl, by = "cd_identificador_osc") %>% 
-    
-    # Incorpora dados de geolocalização
-    left_join(Galileo_data, by = "cd_identificador_osc") %>% 
     
     # Não pode ter sede no exterior nem valor nulo de município
     dplyr::filter(CodMuniRFB != "9707", 
@@ -871,11 +872,10 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            qualidade_classificacao = case_when(cd_precisao_localizacao == 1 ~ "1 Estrela", 
                                                cd_precisao_localizacao > 1 ~ paste(cd_precisao_localizacao, "Estrelas"),
                                                TRUE ~ NA),
-           # Estou aqui !!!! ####
            dt_geocodificacao = Dt_Galileo_data, 
            tx_endereco = paste0(tipo_de_logradouro, " ", logradouro),
            tx_endereco_corrigido2 = paste0(Munic_Nome2, ", ", UF),
-           tx_endereco_corrigido = paste(tx_endereco, nr_localizacao, ", ",
+           tx_endereco_corrigido = paste0(tx_endereco, nr_localizacao, ", ",
                                          ifelse(!is.na(tx_endereco_complemento), 
                                                 paste0(tx_endereco_complemento, ", "), 
                                                 ""), 
