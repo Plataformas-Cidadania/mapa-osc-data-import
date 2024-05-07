@@ -53,7 +53,7 @@ rm(keys, TestConexao)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Testes ####
+# Extrai tabelas selecionadas ####
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Tabelas disponíveis
@@ -73,6 +73,7 @@ if(!dir.exists(DirExtract)) {
 
 for (i in seq_along(TablesExtract)) {
   # i <- 1
+  print(TablesExtract[i])
   
   DataLoad <- dbGetQuery(connec, paste0("SELECT * FROM ", 
                                         TablesExtract[i],

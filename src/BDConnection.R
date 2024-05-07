@@ -49,6 +49,9 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
     assert_that(!is.error(TesteFuncGeo), 
                 msg = "Função 'public.ST_MakePoint' não encontrada")
     rm(TesteFuncGeo)
+    
+    assert_that(length(GeoVar) == 1, 
+                msg = "Por enquanto, somente uma variável geográfica por banco suportada.")
     }
   
   ## Verifica se o nome da tabela a ser atualizada inserida está correto:
@@ -246,6 +249,30 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
     # names(DadosAntigos) %in% names(AddData)
     # names(AddData)[names(AddData) %in% names(DadosAntigos)]
     
+    # Tratamento especial das variáveis geográficas
+    if(!is.null(GeoVar)) {
+      
+      ## Tabela temporária para formatar dados geográficos
+      if(dbExistsTable(Conexao, "geo_temp")) dbRemoveTable(Conexao, "geo_temp")
+      
+      # Problema de variáveis com MAIÙSCULA
+      AddData[["geo_dado"]] <- AddData[[GeoVar]]
+      
+      # Insere tabela temporia para executar a codificação do PostGIS
+      dbWriteTable(Conexao, "geo_temp", 
+                   select(AddData, 
+                          all_of(Chave), geo_dado))
+      
+      # Usa função do PostGis para formatar a variável geográfica:
+      x <- dbGetQuery(Conexao, "SELECT public.ST_GeomFromText(geo_dado, 4674) FROM geo_temp;")
+      AddData[[GeoVar]] <- x$st_geomfromtext
+      AddData[["geo_dado"]] <- NULL
+      rm(x)
+      
+      # Remove tabela temporária
+      if(dbExistsTable(Conexao, "geo_temp")) dbRemoveTable(Conexao, "geo_temp")
+    }  
+    
     ## Insere linhas:
     AddedRows <- dbAppendTable(Conexao, Table_NameAntigo, AddData)
     
@@ -290,7 +317,6 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
     DadosUpdate[[Chave]] <- DadosAntigos[[Chave]]
     DadosUpdate[["Dado_Old"]] <- DadosAntigos[[col]]
     
-    # Estou aqui !!!! ####
     # Tratamento especial das variáveis geográficas
     if(col %in% GeoVar) {
       
@@ -300,17 +326,21 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
       ## Tabela temporária para formatar dados geográficos
       if(dbExistsTable(Conexao, "geo_temp")) dbRemoveTable(Conexao, "geo_temp")
       
+      # Insere tabela temporia para executar a codificação do PostGIS
       dbWriteTable(Conexao, "geo_temp", 
                    select(DadosCheck, 
                           all_of(Chave), geo_dado))
       
+      # Usa função do PostGis para formatar a variável geográfica:
       x <- dbGetQuery(Conexao, "SELECT public.ST_GeomFromText(geo_dado, 4674) FROM geo_temp;")
       DadosCheck[["Dado"]] <- x$st_geomfromtext
-      
-      if(dbExistsTable(Conexao, "geo_temp")) dbRemoveTable(Conexao, "geo_temp")
-      
       DadosCheck[["geo_dado"]] <- NULL
       rm(x)
+      
+      # Remove tabela temporária
+      if(dbExistsTable(Conexao, "geo_temp")) dbRemoveTable(Conexao, "geo_temp")
+      
+      
     }  
 
     DadosUpdate <- DadosUpdate %>% 
@@ -448,4 +478,4 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
 }
 
 # Fim ####
-
+# Estou aqui !!!! ####

@@ -18,7 +18,7 @@ library(jsonlite)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Baixa a chave secreta do código
-assert_that(file.exists("keys/psql12-homolog_key.json"))
+assert_that(file.exists("keys/psql12-homolog_keySUPER.json"))
 keys <- jsonlite::read_json("keys/psql12-homolog_keySUPER.json")
 
 
@@ -87,6 +87,11 @@ if(dbExistsTable(connec, "teste")) {
 assert_that(!dbExistsTable(connec, "teste"))
 rm(Teste, Teste_verific)
 
+# Verifica PostGIS
+x <- try(dbGetQuery(connec, "select * FROM public.PostGis_Full_Version()"))
+assert_that(!is.error(x))
+rm(x)
+
 # Verifica se os arquivos existem:
 assert_that(file.exists("backup_files/2023_01/output_files/tb_osc.RDS"))
 assert_that(file.exists("backup_files/2023_01/output_files/tb_dados_gerais.RDS"))
@@ -113,7 +118,7 @@ assert_that(is.function(AtualizaDados))
 
 message("Inserindo dados da tabela 'tb_osc'")
 
-# Deixa, a princípio, a variável bo_osc_ativa como FALSE, voltando para TRUE na presenã dos dados novos
+# Deixa, a princípio, a variável bo_osc_ativa como FALSE, voltando para TRUE na presença dos dados novos
 dbExecute(connec, paste0("UPDATE tb_osc", "\n",
                          " SET bo_osc_ativa = FALSE",
                          ";"))
@@ -143,11 +148,12 @@ message("Inserindo dados da tabela 'tb_dados_gerais'")
 tb_dados_gerais <- readRDS("backup_files/2023_01/output_files/tb_dados_gerais.RDS")
 
 # Corrige tipos de dado
- tb_dados_gerais[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais[["cd_natureza_juridica_osc"]])
- tb_dados_gerais[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais[["dt_fundacao_osc"]])
+tb_dados_gerais[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais[["cd_natureza_juridica_osc"]])
+tb_dados_gerais[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais[["dt_fundacao_osc"]])
 
 # Esta variável tem um interpretação diferente no banco de dados antigo e novo (investigar!)
- # tb_dados_gerais[["dt_ano_cadastro_cnpj"]] <- NA_Date_
+# tb_dados_gerais[["dt_ano_cadastro_cnpj"]] <- NA_Date_
+tb_dados_gerais[["dt_ano_cadastro_cnpj"]] <- as_date(tb_dados_gerais[["dt_ano_cadastro_cnpj"]])
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = connec, 
