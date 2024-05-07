@@ -88,9 +88,10 @@ assert_that(!dbExistsTable(connec, "teste"))
 rm(Teste, Teste_verific)
 
 # Verifica PostGIS
-x <- try(dbGetQuery(connec, "select * FROM public.PostGis_Full_Version()"))
-assert_that(!is.error(x))
-rm(x)
+TesteFuncGeo <- try(dbGetQuery(connec, "SELECT public.ST_MakePoint(-50.3482090039996,-20.7619611619996);"))
+assert_that(!is.error(TesteFuncGeo), 
+            msg = "Função 'public.ST_MakePoint' não encontrada")
+rm(TesteFuncGeo)
 
 # Verifica se os arquivos existem:
 assert_that(file.exists("backup_files/2023_01/output_files/tb_osc.RDS"))
