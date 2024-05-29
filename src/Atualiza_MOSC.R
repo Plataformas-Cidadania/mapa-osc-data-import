@@ -18,8 +18,9 @@ library(jsonlite)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Baixa a chave secreta do código
-assert_that(file.exists("keys/psql12-homolog_keySUPER.json"))
-keys <- jsonlite::read_json("keys/psql12-homolog_keySUPER.json")
+KeyFile <- "keys/psql12-homolog_keySUPER.json"
+assert_that(file.exists(KeyFile))
+keys <- jsonlite::read_json(KeyFile)
 
 
 # Verifica se pode conectar
@@ -48,7 +49,7 @@ connec <- dbConnect(RPostgres::Postgres(),
 # Verifica a coneção com a base
 assert_that(dbIsValid(connec))
 
-rm(keys, TestConexao)
+rm(keys, TestConexao, KeyFile)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -270,6 +271,6 @@ rm(i, refresh_views)
 dbDisconnect(connec)
 
 rm(connec, Tables)
-
+rm(AtualizaDados)
 
 # Fim ####
