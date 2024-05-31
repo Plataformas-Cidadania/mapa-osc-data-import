@@ -112,10 +112,10 @@ for (h in seq_len(nrow(ArquivosAno))) {
       
       # Baixa uma amostra de 10.000 linhas.
       rawData <- dbGetQuery(connec, 
-                            paste0("SELECT * FROM tb_vinculos_2021 ",
+                            paste0("SELECT * FROM ", ArquivosAno$Arquivo[h], " ",
                                    "WHERE natureza_juridica = ", NatJurOSC[j],
                                    " and uf_ipea = ", UFs$UF_Id[i],
-                                   " LIMIT 10000",
+                                   # " LIMIT 10000",
                                    ";"))
       
       saveRDS(rawData, paste0(downloadDir, NameFile))

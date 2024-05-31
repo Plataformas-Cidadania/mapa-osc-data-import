@@ -5,3 +5,4 @@ keys/*
 .Rhistory
 data/temp/*
 .Rproj.user
+data/raw/RAIS/*
