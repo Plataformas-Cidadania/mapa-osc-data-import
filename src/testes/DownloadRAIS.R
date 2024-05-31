@@ -54,7 +54,7 @@ rm(keys, TestConexao)
 
 ArquivosAno <- tribble(
   ~Arquivo, ~Ano, 
-  "tb_vinculos_2021", 2020,
+  "tb_vinculos_2020", 2020,
   "tb_vinculos_2021", 2021)
 
 
@@ -92,9 +92,9 @@ UFs <- tribble(
 NatJurOSC <- c(3069, 3220, 3301, 3999)
 
 
-if(!dir.exists("backup_files/2023_01/input_files/RAIS")) {
-  dir.create("backup_files/2023_01/input_files/RAIS")
-}
+downloadDir <- "data/raw/RAIS/RAIS/"
+
+if(!dir.exists(downloadDir)) dir.create(downloadDir)
 
 
 for (h in seq_len(nrow(ArquivosAno))) {
@@ -118,7 +118,7 @@ for (h in seq_len(nrow(ArquivosAno))) {
                                    " LIMIT 10000",
                                    ";"))
       
-      saveRDS(rawData, paste0("backup_files/2023_01/input_files/RAIS/", NameFile))
+      saveRDS(rawData, paste0(downloadDir, NameFile))
       rm(rawData, NameFile)
     }
     rm(j)
