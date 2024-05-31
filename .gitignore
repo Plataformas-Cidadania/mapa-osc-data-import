@@ -4,3 +4,4 @@ data/backup_files/2023_01/IntermediateFiles/*
 keys/*
 .Rhistory
 data/temp/*
+.Rproj.user
