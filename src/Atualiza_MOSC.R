@@ -100,6 +100,7 @@ assert_that(file.exists("backup_files/2023_01/output_files/tb_dados_gerais.RDS")
 assert_that(file.exists("backup_files/2023_01/output_files/tb_area_atuacao.RDS"))
 assert_that(file.exists("backup_files/2023_01/output_files/tb_contato.RDS"))
 assert_that(file.exists("backup_files/2023_01/output_files/tb_localizacao.RDS"))
+assert_that(file.exists("backup_files/2023_01/output_files/tb_relacoes_trabalho.RDS"))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -224,8 +225,6 @@ rm(Atualizacao, tb_localizacao)
 # Atualiza tb_area_atuacao: ####
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Estou aqui!!! ####
-
 message("Inserindo dados da tabela 'tb_area_atuacao'")
 
 # Carrega dados RDS:
@@ -246,6 +245,32 @@ Atualizacao <- AtualizaDados(Conexao = connec,
 assert_that(Atualizacao)
 rm(Atualizacao, tb_area_atuacao)
 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Atualiza tb_relacoes_trabalho (RAIS): ####
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Estou aqui!!! ####
+
+message("Inserindo dados da tabela 'tb_relacoes_trabalho'")
+
+# Carrega dados RDS:
+tb_relacoes_trabalho <- readRDS("backup_files/2023_01/output_files/tb_relacoes_trabalho.RDS")
+
+# Corrige tipos de dado
+# tb_relacoes_trabalho[["nr_trabalhadores_voluntarios"]] <- as.integer(tb_relacoes_trabalho[["nr_trabalhadores_voluntarios"]])
+# tb_relacoes_trabalho[["ft_trabalhadores_voluntarios"]] <- as.character(tb_relacoes_trabalho[["ft_trabalhadores_voluntarios"]])
+
+# Executa atualização
+Atualizacao <- AtualizaDados(Conexao = connec,
+                             DadosNovos = tb_relacoes_trabalho,
+                             Chave = "id_osc",
+                             Table_NameAntigo = "tb_relacoes_trabalho",
+                             verbose = TRUE,
+                             samples = TRUE)
+
+assert_that(Atualizacao)
+rm(Atualizacao, tb_relacoes_trabalho)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
