@@ -492,8 +492,8 @@ if(!"31" %in% ProcessosAtt_Atual$Controle) {
   
   # Transforma Tb_OSC_Full em DB_OSC
   DB_OSC <- Tb_OSC_Full %>%
-    rename(cnae = cnae_fiscal_principal) %>% 
-    mutate(micro_area_atuacao = NA)
+    mutate(cnae = cnae_fiscal_principal, 
+           micro_area_atuacao = NA)
   
   rm(Tb_OSC_Full) # não vamos mais utilizar esses dados
   
@@ -506,6 +506,38 @@ if(!"31" %in% ProcessosAtt_Atual$Controle) {
                                                      micro_area_atuacao), 
                                               DB_SubAreaRegras, 
                                               chuck_size = 10000, verbose = FALSE)
+  
+  # Determina área de atuação secundária
+  MultiAreas <- DB_OSC %>% 
+    mutate(cnae = cnae_fiscal_secundaria) %>% 
+    select(cnpj, razao_social, cnae) %>% 
+    separate(cnae, into = letters[1:26], 
+             sep = ",", fill = "right") %>% 
+    gather(temp, cnae, 3:28) %>%  
+    dplyr::filter(!is.na(cnae)) %>% 
+    select(-temp) %>% 
+    mutate(cnae = trimws(cnae), 
+           tipo_cnae = "s") %>% 
+    group_by(cnpj) %>% 
+    mutate(OrdemArea = row_number()) %>% 
+    ungroup()
+  
+  MultiAreas$micro_area_atuacao <- NA
+
+  MultiAreas$micro_area_atuacao <- AreaAtuacaoOSC(MultiAreas, 
+                                                  DB_SubAreaRegras, 
+                                                  chuck_size = 10000, verbose = FALSE)
+  
+  names(MultiAreas)
+  View(MultiAreas)  
+  table(MultiAreas$OrdemArea)
+  table(MultiAreas$micro_area_atuacao)
+  
+  # Salva dados das atuações secundárias
+  saveRDS(MultiAreas, paste0(DirName, 
+                             "intermediate_files/MultiAreasAtuacao.RDS"))
+  
+  # Estou aqui !!! ####
   
   
   DB_OSC <- DB_OSC %>% 
@@ -1093,8 +1125,6 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   
   # Adiciona novos IDs:
   
-  # Estou aqui !!!! ####
-  
   Control_Id_AreaAtuacao <- readRDS("tab_auxiliares/Control_Id_AreaAtuacao.RDS")
   
   # Tabela para iserir os Ids
@@ -1192,6 +1222,121 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
 
 rm(DB_OSC)
 
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Insere Dados da RAIS ####
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Executa o processo se não foi feito anteriormente
+# "81": Processo 8 (Update Banco de Dados MOSC) e 1 (completo)
+if(!"81" %in% ProcessosAtt_Atual$Controle) {
+  
+  message("Insere os dados da RAIS")
+  
+  # Marca início do processo
+  DataProcessoInicio <- now()
+  
+  #  Inserir protocolo do idControl:
+  idControl <- readRDS("tab_auxiliares/idControl.RDS") %>% 
+    select(id_osc, cd_identificador_osc)
+  
+  ListRawFiles <- list.files(paste0(DirName, "input_files/RAIS/"), 
+                             pattern = "RDS$")
+  
+  # Base de dados para reunir os dados
+  GatherData <- tibble()
+  
+  for (i in seq_along(ListRawFiles)) {
+    # i <- 1
+    
+    message("Inserindo dados de ", 
+            str_sub(ListRawFiles[i], 6, 7), ", Ano: ", 
+            str_sub(ListRawFiles[i], 1, 4), ", natureza jurídica: ",
+            str_sub(ListRawFiles[i], 9, 12))
+    
+    # Lê dados brutos
+    rawdata <- readRDS(paste0(DirName, "input_files/RAIS/", ListRawFiles[i]))
+    # names(rawdata)
+    names(idControl)
+
+    # Processa os dados
+    new_rows <- rawdata %>% 
+      rename(cd_identificador_osc = id_estab) %>% 
+      group_by(ano, cd_identificador_osc) %>% 
+      summarise(nr_trabalhadores_vinculo = n(),
+                ft_trabalhadores_vinculo = NA,
+                nr_trabalhadores_deficiencia = sum(ind_defic, na.rm = TRUE),
+                ft_trabalhadores_deficiencia = NA,
+                nr_trabalhadores_voluntarios = NA,
+                ft_trabalhadores_voluntarios = NA) %>% 
+      mutate(ft_trabalhadores_vinculo = paste("RAIS/MTE", ano), 
+             ft_trabalhadores_deficiencia = paste("RAIS/MTE", ano)) %>% 
+      left_join(idControl, by = "cd_identificador_osc") %>% 
+      select(-cd_identificador_osc) %>% 
+      select(ano, id_osc, everything())
+    
+    # Insire os dados extraidos na base
+    GatherData <- bind_rows(GatherData, new_rows)
+    
+    rm(rawdata, new_rows)
+  }
+  rm(i)
+  
+  table(GatherData$ano)
+  
+  # Versão dos dados 1 (igual no MOSC, sem o ano)
+  tb_relacoes_trabalho <- GatherData %>% 
+    group_by(id_osc) %>% 
+    dplyr::filter(ano == max(ano)) %>% 
+    slice(1) %>% 
+    ungroup() %>% 
+    select(-ano)
+  
+  # Versão dos dados 1 (adicionando o ano)
+  tb_relacoes_trabalho2 <- GatherData %>% 
+    group_by(id_osc, ano) %>% 
+    dplyr::filter(ano == max(ano)) %>% 
+    slice(1) %>% 
+    ungroup()
+  
+  
+  # Salva Backup
+  PathFile <- paste0(DirName, "output_files/tb_relacoes_trabalho.RDS")
+  saveRDS(tb_relacoes_trabalho, PathFile)
+  
+  PathFile <- paste0(DirName, "output_files/tb_relacoes_trabalho2.RDS")
+  saveRDS(tb_relacoes_trabalho2, PathFile)
+  
+  # Registra novo arquivo salvo
+  BackupsFiles <- BackupsFiles %>% 
+    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_8"), 
+            FileFolder = paste0(DirName, "output_files/"), 
+            FileName = "tb_relacoes_trabalho.RDS", 
+            FileSizeMB = file.size(paste0(DirName, "output_files/tb_relacoes_trabalho.RDS"))/1024000 ) %>% 
+    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_8"), 
+            FileFolder = paste0(DirName, "output_files/"), 
+            FileName = "tb_relacoes_trabalho2.RDS", 
+            FileSizeMB = file.size(paste0(DirName, "output_files/tb_relacoes_trabalho2.RDS"))/1024000 )
+  
+  # Atualiza realização de processos:
+  ProcessosAtt_Atual <- ProcessosAtt_Atual %>% 
+    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_8"), 
+            At_id = Att_Atual$At_id[1],
+            Data = today(),
+            Processo_id = 6,
+            Processo_Nome = "Insere Dados da RAIS",
+            Completo = 1,
+            DataInicio = DataProcessoInicio,
+            DataFim = now(),
+            Controle = "81")
+  
+  rm(tb_relacoes_trabalho, tb_relacoes_trabalho2, GatherData)  
+  rm(DataProcessoInicio, ListRawFiles)
+  # ls()
+}
+
+# Estou aqui !!!! ####
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Registra Controles de Atualização ####
