@@ -537,9 +537,6 @@ if(!"31" %in% ProcessosAtt_Atual$Controle) {
   saveRDS(MultiAreas, paste0(DirName, 
                              "intermediate_files/MultiAreasAtuacao.RDS"))
   
-  # Estou aqui !!! ####
-  
-  
   DB_OSC <- DB_OSC %>% 
     # Se não foi indentificado pelo sistema, colocar "Outras"
     mutate(micro_area_atuacao = ifelse(is.na(micro_area_atuacao), 
@@ -1268,8 +1265,8 @@ if(!"81" %in% ProcessosAtt_Atual$Controle) {
                 ft_trabalhadores_vinculo = NA,
                 nr_trabalhadores_deficiencia = sum(ind_defic, na.rm = TRUE),
                 ft_trabalhadores_deficiencia = NA,
-                nr_trabalhadores_voluntarios = NA,
-                ft_trabalhadores_voluntarios = NA) %>% 
+                nr_trabalhadores_voluntarios = NA_integer_,
+                ft_trabalhadores_voluntarios = NA_character_) %>% 
       mutate(ft_trabalhadores_vinculo = paste("RAIS/MTE", ano), 
              ft_trabalhadores_deficiencia = paste("RAIS/MTE", ano)) %>% 
       left_join(idControl, by = "cd_identificador_osc") %>% 
@@ -1283,7 +1280,10 @@ if(!"81" %in% ProcessosAtt_Atual$Controle) {
   }
   rm(i)
   
-  table(GatherData$ano)
+  # Remove caso de id_osc nulo
+  GatherData <- GatherData[!is.na(GatherData$id_osc), ]
+  
+  # table(GatherData$ano)
   
   # Versão dos dados 1 (igual no MOSC, sem o ano)
   tb_relacoes_trabalho <- GatherData %>% 
