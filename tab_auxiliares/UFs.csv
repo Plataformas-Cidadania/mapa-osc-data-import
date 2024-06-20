@@ -1,0 +1,28 @@
+UF_Id;UF_Nome;UF_Sigla;UF_Regiao
+11;Rondônia;RO;N
+12;Acre;AC;N
+13;Amazonas;AM;N
+14;Roraima;RR;N
+15;Pará;PA;N
+16;Amapá;AP;N
+17;Tocantins;TO;N
+21;Maranhão;MA;NE
+22;Piauí;PI;NE
+23;Ceará;CE;NE
+24;Rio Grande do Norte;RN;NE
+25;Paraíba;PB;NE
+26;Pernambuco;PE;NE
+27;Alagoas;AL;NE
+28;Sergipe;SE;NE
+29;Bahia;BA;NE
+31;Minas Gerais;MG;SE
+32;Espírito Santo;ES;SE
+33;Rio de Janeiro;RJ;SE
+35;São Paulo;SP;SE
+41;Paraná;PR;S
+42;Santa Catarina;SC;S
+43;Rio Grande do Sul;RS;S
+50;Mato Grosso do Sul;MS;CO
+51;Mato Grosso;MT;CO
+52;Goiás;GO;CO
+53;Distrito Federal;DF;CO
