@@ -49,6 +49,8 @@ connec <- dbConnect(RPostgres::Postgres(),
 # Verifica a coneção com a base
 assert_that(dbIsValid(connec))
 
+Tables <- dbListTables(connec) %>% sort()
+
 rm(keys, TestConexao)
 
 
