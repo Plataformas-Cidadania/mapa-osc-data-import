@@ -65,14 +65,14 @@ Tables
 
 TablesExtract <- c("tb_dados_gerais", "tb_osc", "tb_area_atuacao", "tb_localizacao")
 
-DirExtract <- "data/temp/2024-04-09 extract/"
+DirExtract <- "data/temp/2024-07-08 extract/"
 
 if(!dir.exists(DirExtract)) {
   dir.create(DirExtract)
 }
 
 for (i in seq_along(TablesExtract)) {
-  # i <- 1
+  # i <- 3
   print(TablesExtract[i])
   
   DataLoad <- dbGetQuery(connec, paste0("SELECT * FROM ", 
