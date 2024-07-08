@@ -7,6 +7,13 @@
 
 # Data de Criação do Scrip: 2024-06-27
 
+# To do: ####
+
+## Verificcar erros e inconsistências nas variáveis ao longo dos anos.
+## Corrigir os nomes das variáveis
+## Inserir o id_osc
+
+
 # Setup ####
 
 library(magrittr)

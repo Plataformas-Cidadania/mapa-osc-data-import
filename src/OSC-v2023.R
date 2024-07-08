@@ -995,8 +995,8 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            ft_area_atuacaoPadronizado) 
   
   # Identifica área de atuação via CNES/MS
-  if(file.exists("data/raw/MS/InputCNES.RDS")) {
-    InputCNES <- readRDS("data/raw/MS/InputCNES.RDS")
+  if(file.exists(paste0(DirName, "input_files/InputCNES.RDS"))) {
+    InputCNES <- readRDS(paste0(DirName, "input_files/InputCNES.RDS"))
     
     # names(InputCNES)
     
@@ -1028,10 +1028,11 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     # table(tb_area_atuacao$ft_area_atuacao)
     rm(InputCNES, newRows)
   }
-  
+ 
   # Identifica área de atuação via CEBAS/MS
-  if(file.exists("data/raw/MS/InputCEBAS.xlsx")) {
-    InputCEBAS <- read_xlsx("data/raw/MS/InputCEBAS.xlsx", sheet = 1)
+  if(file.exists(paste0(DirName, "input_files/InputCEBAS.xlsx"))) {
+    InputCEBAS <- read_xlsx(paste0(DirName, "input_files/InputCEBAS.xlsx"), 
+                            sheet = 1)
     
     # Usa CEBAS/MS para identificar OSC como da área da saúde
     newRows <- InputCEBAS %>% 
@@ -1063,8 +1064,9 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   }
   
   # Identifica área de atuação via CNEAS/MDS
-  if(file.exists("data/raw/MDS/InputCNEAS.xlsx")) {
-    InputCNEAS <- read_xlsx("data/raw/MDS/InputCNEAS.xlsx", sheet = 1)
+  if(file.exists(paste0(DirName, "input_files/InputCNEAS.xlsx"))) {
+    InputCNEAS <- read_xlsx(paste0(DirName, "input_files/InputCNEAS.xlsx"), 
+                            sheet = 1)
     
     # Formata base InputCNEAS
     names(InputCNEAS)[1] <- "cnpj"
@@ -1101,7 +1103,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     # table(tb_area_atuacao$ft_area_atuacao)
     rm(InputCNEAS, newRows)
   }
- 
+  
   # Insere os códigos das áreas
   
   ## Tabelas auxiliares:
@@ -1115,14 +1117,44 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     select(id_osc, cd_area_atuacao, cd_subarea_atuacao,
            ft_area_atuacao, bo_oficial, 
            ft_area_atuacaoPadronizado)
-  # table(tb_area_atuacao2$tx_area_atuacao[is.na(tb_area_atuacao2$cd_area_atuacao)])
-  # table(tb_area_atuacao2$tx_subarea_atuacao[is.na(tb_area_atuacao2$cd_subarea_atuacao)])
   
   rm(dc_area_atuacao, dc_subarea_atuacao)
   
-  # Adiciona novos IDs:
+  # Remove duplicatas da chave "id_osc & cd_area_atuacao & cd_subarea_atuacao"
   
-  Control_Id_AreaAtuacao <- readRDS("tab_auxiliares/Control_Id_AreaAtuacao.RDS")
+  tb_area_atuacao <- tb_area_atuacao %>% 
+    # Agrupa pela chave múltipla
+    group_by(id_osc, cd_area_atuacao, cd_subarea_atuacao) %>% 
+    # Ordena pela área de atuação (para evitar que a ordem importe)
+    arrange(ft_area_atuacao) %>% 
+    # Mescla as diferentes fontes dos dados:
+    mutate(ft_area_atuacao = paste0(unique(ft_area_atuacao), 
+                                     collapse = ", "), 
+           ft_area_atuacaoPadronizado = paste0(unique(ft_area_atuacaoPadronizado), 
+                                                collapse = ", ")) %>% 
+    # Remove as duplicatas
+    distinct(id_osc, cd_area_atuacao, cd_subarea_atuacao, 
+             .keep_all = TRUE) %>% 
+    # Finaliza
+    ungroup() %>% 
+    select(everything())
+  
+  # Estou aqui!!! ####
+  
+  # To do:
+  
+  # Limpar os dados colocados na atualização antiga (fazer um script só para isso)
+  ## Baixar a base atual de tb_areas_atualizacao
+  ## Ver pela fonte de atualização os dados que foram inseridos na última att e limpar.
+  
+  # Criar um novo idAreaAtuacaoControl.RDS, a partir da última extração.
+  ## Encontrar última extração antes da atualização
+  
+  # Inserir uma nova dinâmica de criação de IDs por aqui.
+  # (usar a chave: "id_osc & cd_area_atuacao & cd_subarea_atuacao")
+  
+  # Adiciona novos IDs:
+  Control_Id_AreaAtuacao <- readRDS("tab_auxiliares/idAreaAtuacaoControl.RDS")
   
   # Tabela para iserir os Ids
   tb_area_atuacao2 <- tb_area_atuacao %>% 
