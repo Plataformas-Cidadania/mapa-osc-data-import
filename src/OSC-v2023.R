@@ -1139,38 +1139,22 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     ungroup() %>% 
     select(everything())
   
-  # Estou aqui!!! ####
-  
-  # To do:
-  
-  # Limpar os dados colocados na atualização antiga (fazer um script só para isso)
-  ## Baixar a base atual de tb_areas_atualizacao
-  ## Ver pela fonte de atualização os dados que foram inseridos na última att e limpar.
-  
-  # Criar um novo idAreaAtuacaoControl.RDS, a partir da última extração.
-  ## Encontrar última extração antes da atualização
-  
-  # Inserir uma nova dinâmica de criação de IDs por aqui.
-  # (usar a chave: "id_osc & cd_area_atuacao & cd_subarea_atuacao")
-  
   # Adiciona novos IDs:
   Control_Id_AreaAtuacao <- readRDS("tab_auxiliares/idAreaAtuacaoControl.RDS")
   
+  names(Control_Id_AreaAtuacao)
+  
   # Tabela para iserir os Ids
-  tb_area_atuacao2 <- tb_area_atuacao %>% 
-    # Variáveis necessárias para o left_join com o controle de id
-    mutate(has_area = !is.na(cd_area_atuacao), 
-           has_subarea = !is.na(cd_subarea_atuacao)) %>% 
+  tb_area_atuacao <- tb_area_atuacao %>% 
     # Insere os controle das últimas atualizações
     left_join(Control_Id_AreaAtuacao, 
-              by = c("id_osc", "ft_area_atuacaoPadronizado",
-                     "has_area", "has_subarea")) %>% 
-    mutate(ft_area_atuacao = ifelse(is.na(id_area_atuacao), 
-                                    NA, ft_area_atuacao)) %>% 
+              by = c("id_osc", "cd_area_atuacao",
+                     "cd_subarea_atuacao")) %>% 
     select(everything())
+  # sum(is.na(tb_area_atuacao$id_area_atuacao))
   
   # Coloca novos IDs:
-  if(sum(is.na(tb_area_atuacao2$id_area_atuacao)) > 0) {
+  if(sum(is.na(tb_area_atuacao$id_area_atuacao)) > 0) {
     
     # Linhas que são missing:
     MissID <- is.na(tb_area_atuacao2$id_area_atuacao)
@@ -1179,38 +1163,39 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     NewID <- seq_len(sum(MissID)) + max(Control_Id_AreaAtuacao$id_area_atuacao)
     
     # Insere novos Ids
-    tb_area_atuacao2$id_area_atuacao[MissID] <- NewID
+    tb_area_atuacao$id_area_atuacao[MissID] <- NewID
+    # sum(is.na(tb_area_atuacao$id_area_atuacao))
     
     # Update do controle de IDs
-    idAreaAtuacaoControl_Up <-  tb_area_atuacao2 %>% 
+    idAreaAtuacaoControl_Up <-  tb_area_atuacao %>% 
       # Seleciona apenas as linhas com IDs novos
       add_column(JaPresente = MissID) %>% 
       dplyr::filter(JaPresente) %>% 
       # Apenas colunas do Controle ID
-      select(id_area_atuacao, id_osc, ft_area_atuacaoPadronizado, 
-             has_area, has_subarea) %>% 
+      select(id_area_atuacao, id_osc, cd_area_atuacao, cd_subarea_atuacao) %>% 
       # Insere novas linhas
       bind_rows(Control_Id_AreaAtuacao) %>% 
       arrange(id_area_atuacao) %>% 
       select(everything())
+    
     # sum(is.na(idAreaAtuacaoControl_Up$id_area_atuacao))
     
     # saveRDS(idAreaAtuacaoControl_Up, 
-    #         "tab_auxiliares/idAreaAtuacaoControl.RDS")
-    rm(idAreaAtuacaoControl_Up)
+    #          "tab_auxiliares/idAreaAtuacaoControl.RDS")
+    rm(idAreaAtuacaoControl_Up, MissID, NewID)
   }
+  
+  names(tb_area_atuacao)
+  
+  # table(tb_area_atuacao$ft_area_atuacao, useNA = "always")
+  # table(tb_area_atuacao$ft_area_atuacaoPadronizado, useNA = "always")
   
   # Finaliza o banco
   tb_area_atuacao <- tb_area_atuacao %>% 
-    # Adiciona as colunas
-    add_column(id_area_atuacao = tb_area_atuacao2[["id_area_atuacao"]], 
-               ft_area_atuacao2 = tb_area_atuacao2[["ft_area_atuacao"]]) %>% 
-    # Garante que ft_area_atuacao será NA nos id novos
-    mutate(ft_area_atuacao = ft_area_atuacao2) %>% 
   select(id_area_atuacao, id_osc, cd_area_atuacao, cd_subarea_atuacao,
          ft_area_atuacao, bo_oficial, ft_area_atuacaoPadronizado)
   
-  rm(Control_Id_AreaAtuacao, tb_area_atuacao2)
+  rm(Control_Id_AreaAtuacao)
 
   assert_that(sum(is.na(tb_area_atuacao$id_area_atuacao)) == 0, 
               msg = "Valores nulos da chave-primária de 'tb_area_atuacao'")
@@ -1221,6 +1206,8 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   # Salva Backup
   PathFile <- paste0(DirName, "output_files/tb_area_atuacao.RDS")
   saveRDS(tb_area_atuacao, PathFile)
+  
+  rm(tb_area_atuacao)
   
   # Registra novo arquivo salvo
   BackupsFiles <- BackupsFiles %>% 
