@@ -7,13 +7,6 @@
 
 # Data de Criação do Scrip: 2024-06-27
 
-# To do: ####
-
-## Verificcar erros e inconsistências nas variáveis ao longo dos anos.
-## Corrigir os nomes das variáveis
-## Inserir o id_osc
-
-
 # Setup ####
 
 library(magrittr)
@@ -64,6 +57,14 @@ NatJurOSC <- c(3069, 3220, 3301, 3999)
 # Conecção à chave MOSC
 connecMOSC <- postCon(ChaveMOSC, "-c search_path=osc")
 
+## Controle do ID colocado pelo último usuário
+assert_that(file.exists("tab_auxiliares/idControl.RDS"), 
+            msg = "O arquivo de ID das OSC da última versão não está disponível")
+
+#  Inserir protocolo do idControl:
+idControl <- readRDS("tab_auxiliares/idControl.RDS") %>% 
+  select(id_osc, cd_identificador_osc)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Incorpora Estabelecimentos ####
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -108,13 +109,13 @@ CamposEstabelecimentosNEW <- CodeBook$campo_mosc[
 
 ## Baixa os dados por UF e natureza jurídica - Estabelecimentos ####
 for (h in seq_len(nrow(ArquivosAno))) {
-  # h <- 1
+  # h <- 9
   
   for (i in seq_len(nrow(UFs))) {
-    # i <- 1
+    # i <- 12
     
     for (j in seq_along(NatJurOSC)) {
-      # j <- 3
+      # j <- 4
       
       # Nome do arquivo baixado
       NameFile <- paste0("Estabs_", ArquivosAno$Ano[h], "_", 
@@ -158,6 +159,7 @@ for (h in seq_len(nrow(ArquivosAno))) {
         if(SaveBackup){
           saveRDS(rawData, paste0(estabelecimentosDir, NameFile))
         }
+        rm(UFVar)
       }
       
       # Corrige nomes de variáveis
@@ -174,9 +176,16 @@ for (h in seq_len(nrow(ArquivosAno))) {
       TidyData <- rawData %>% 
         # Corrige inconsistências com a UF
         mutate(cd_uf_ipea = UFs$UF_Id[i]) %>% 
-        select(everything())
-      
-      assert_that(class(TidyData$cd_uf_ipea) == "integer")
+        # Insere id_osc:
+        mutate(cd_identificador_osc = str_pad(as.character(cd_cnpj_cei), 
+                                              width = 14, 
+                                              side = "left", 
+                                              pad = "0")) %>% 
+        left_join(idControl, by = "cd_identificador_osc") %>% 
+        # Filtra quem não é OSC
+        dplyr::filter(!is.na(id_osc)) %>% 
+        # Arruma a ordem das variáveis
+        select(id_osc, cd_identificador_osc, everything())
       
       ## Colocar aqui upload do banco:
       if(!dbExistsTable(connecMOSC, "tb_osc_estabelecimentos_rais")) {
@@ -187,7 +196,7 @@ for (h in seq_len(nrow(ArquivosAno))) {
                       TidyData)
       }
       
-      rm(rawData, TidyData, NameFile, UFVar)
+      rm(rawData, TidyData, NameFile)
       
       # Vou fazer as buscas dormirem um pouco para não ser confundido
       # com um ataque ao servidor
@@ -246,10 +255,10 @@ for (h in seq_len(nrow(ArquivosAno))) {
   # h <- 8
   
   for (i in seq_len(nrow(UFs))) {
-    # i <- 1
+    # i <- 11
     
     for (j in seq_along(NatJurOSC)) {
-      # j <- 1
+      # j <- 4
       
       NameFile <- paste0("Vinculos_", ArquivosAno$Ano[h], "_", 
                          UFs$UF_Sigla[i], "_", NatJurOSC[j], ".RDS")
@@ -290,6 +299,7 @@ for (h in seq_len(nrow(ArquivosAno))) {
         if(SaveBackup){
           saveRDS(rawData, paste0(VinculosDir, NameFile))
         } 
+        rm(UFVar)
       }
       
       # Corrige nomes de variáveis
@@ -305,10 +315,16 @@ for (h in seq_len(nrow(ArquivosAno))) {
       TidyData <- rawData %>% 
         # Corrige inconsistências com a UF
         mutate(cd_uf_ipea = UFs$UF_Id[i]) %>% 
-        select(everything())
-      
-      assert_that(class(TidyData$cd_uf_ipea) == "integer")
-      
+        # Insere id_osc:
+        mutate(cd_identificador_osc = str_pad(as.character(cd_id_estab), 
+                                              width = 14, 
+                                              side = "left", 
+                                              pad = "0")) %>% 
+        left_join(idControl, by = "cd_identificador_osc") %>% 
+        # Filtra quem não é OSC
+        dplyr::filter(!is.na(id_osc)) %>% 
+        # Arruma a ordem das variáveis
+        select(id_osc, cd_identificador_osc, everything())
       
       ## Colocar aqui upload do banco:
       if(!dbExistsTable(connecMOSC, "tb_osc_vinculos_rais")) {
@@ -319,7 +335,7 @@ for (h in seq_len(nrow(ArquivosAno))) {
                       TidyData)
       }
       
-      rm(rawData, TidyData, NameFile, UFVar)
+      rm(rawData, TidyData, NameFile)
       
       # Vou fazer as buscas dormirem um pouco para não ser confundido
       # com um ataque ao servidor
