@@ -1,6 +1,7 @@
 # Instituto de Economia Aplicada - IPEA
 
-# Objetivo do Script: carrega bibliotecas e funções usadas em toda a atualização
+# Objetivo do Script: carrega bibliotecas e funções usadas em toda a atualização, 
+# bem como coloca definições que raramente mudam.
 
 # Autor do Script: Murilo Junqueira 
 # (m.junqueira@yahoo.com.br; murilo.junqueira@ipea.gov.br)
@@ -75,7 +76,8 @@ definicoes$campo_rfb_natureza_juridica <- "natureza_juridica" # nome do campo da
 definicoes$campo_rfb_cnae_principal <- "cnae_fiscal_principal"
 definicoes$campo_rfb_razao_social <- "razao_social"
 
-definicoes$natjur_nao_lucarivo <- c(3069, 3220, 3301, 3999) # naturesas jurídicas não lucrativas
+# naturesas jurídicas não lucrativas
+definicoes$natjur_nao_lucarivo <- c(3069, 3220, 3301, 3999) 
 
 
 # Caminho para o arquivo mestre de atualização (esse arquivo aqui)
