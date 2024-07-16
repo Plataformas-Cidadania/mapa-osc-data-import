@@ -283,7 +283,7 @@ assert_that("credenciais_rfb" %in% names(definicoes),
             msg = "O objeto 'credenciais_rfb', não foi carregado!")
 
 conexao_rfb <- postCon(definicoes$credenciais_rfb, 
-                       Con_options = glue("-c search_path={schema_receita}"))
+                       Con_options = glue("-c search_path={definicoes$schema_receita}"))
 if(dbIsValid(conexao_rfb)) message("Conectado ao BD 'rais_2019'")
 
 # Testa extrair dados do banco

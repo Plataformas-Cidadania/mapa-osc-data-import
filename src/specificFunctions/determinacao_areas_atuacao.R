@@ -113,12 +113,14 @@ if(!(31 %in% processos_att_atual)) {
   DB_AreaSubaria <- fread("tab_auxiliares/Areas&Subareas.csv",
                           encoding = "Latin-1")
   
+  message(agora(), "   Início da rotina de determinação das áreas")
+  
   # Função para determinar as áreas de atuação
   source("src/specificFunctions/AreaAtuacaoOSC.R")
   
   # Transforma Tb_OSC_Full em DB_OSC
   DB_OSC <- Tb_OSC_Full %>%
-    mutate(cnae = cnae_fiscal_principal, 
+    mutate(cnae = .data[[definicoes$campo_rfb_cnae_principal]], 
            micro_area_atuacao = NA)
   
   rm(Tb_OSC_Full) # não vamos mais utilizar esses dados
@@ -140,6 +142,8 @@ if(!(31 %in% processos_att_atual)) {
                                        micro_area_atuacao)) %>% 
     # Insere Macro áreas de atuação
     left_join(DB_AreaSubaria, by = "micro_area_atuacao")
+  
+  message(agora(), "   Final da rotina de terminação das áreas")
   
   # Salva Backup - CNAE Principal ####
   path_file_backup <- glue("{diretorio_att}intermediate_files/DB_OSC.RDS")
@@ -190,6 +194,8 @@ if(!(31 %in% processos_att_atual)) {
     }
     
   }
+  
+  message(agora(), "   Rotida de determinação das áreas usando a CNAE secundária")
 
   # Determina área de atuação secundária  - Multi áreas ####
   MultiAreas <- DB_OSC %>% 
@@ -213,6 +219,8 @@ if(!(31 %in% processos_att_atual)) {
   MultiAreas$micro_area_atuacao <- AreaAtuacaoOSC(MultiAreas, 
                                                   DB_SubAreaRegras, 
                                                   chuck_size = 10000, verbose = FALSE)
+  
+  message(agora(), "   Fim da determinação das áreas usando a CNAE secundária")
   
   # names(MultiAreas)
   # View(MultiAreas)  

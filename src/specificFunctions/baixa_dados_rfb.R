@@ -96,6 +96,7 @@ if(!(11 %in% processos_att_atual)) {
   }
   
   # Conecta à nase de dados da Receita Federal:
+  source("src/generalFunctions/postCon.R") 
   conexao_rfb <- postCon(definicoes$credenciais_rfb, 
                          Con_options = 
                            glue(
@@ -118,9 +119,9 @@ if(!(11 %in% processos_att_atual)) {
 
   # Por algum motivo, o glue não funciona bem com listas:
   tabela_empresas_rfb <- definicoes$tabela_empresas_rfb[[1]]
-  tabela_estabelecimentos_rfb <- definicoes$tabela_empresas_rfb[[1]]
-  campo_cnpj <- definicoes$tabela_empresas_rfb[[1]]
-  campo_natureza_juridica <- definicoes$tabela_empresas_rfb[[1]]
+  tabela_estabelecimentos_rfb <- definicoes$tabela_estabelecimentos_rfb[[1]]
+  campo_cnpj <- definicoes$campo_rfb_cnpj[[1]]
+  campo_natureza_juridica <- definicoes$campo_rfb_natureza_juridica[[1]]
   
   # Query para resgatar ao mesmo tempo dados de empresas e estabelecimentos
   # filtrando por naturezas jurídicas não lucraticas, na Receita Federal:
@@ -201,6 +202,9 @@ if(!(11 %in% processos_att_atual)) {
   }
   
   rm(path_file_backup, horario_processo_inicio)
+  
+  dbDisconnect(conexao_rfb)
+  rm(conexao_rfb)
   
 } else {
   

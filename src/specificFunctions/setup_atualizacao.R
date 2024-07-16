@@ -69,11 +69,11 @@ assert_that(Sys.timezone() == "America/Sao_Paulo")
 
 # Modelo de dados da da Receita federal:
 # (somente atualizar se mudar o modelo de dados)
-definicoes$tabela_empresas_rfb <- "tb_rfb_empresas"
-definicoes$tabela_estabelecimentos_rfb <- "tb_rfb_estabelecimentos"
+definicoes$tabela_empresas_rfb <- "empresas"
+definicoes$tabela_estabelecimentos_rfb <- "estabelecimento"
 definicoes$campo_rfb_cnpj <- "cnpj_basico" # campo CNPJ da Receita
 definicoes$campo_rfb_natureza_juridica <- "natureza_juridica" # nome do campo da natureza jurídica
-definicoes$campo_rfb_cnae_principal <- "cnae_fiscal_principal"
+definicoes$campo_rfb_cnae_principal <- "cnae_fiscal"
 definicoes$campo_rfb_razao_social <- "razao_social"
 
 # naturesas jurídicas não lucrativas

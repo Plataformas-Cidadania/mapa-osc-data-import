@@ -36,7 +36,7 @@ if(!(exists("conexao_mosc") && dbIsValid(conexao_mosc))) {
   
   # Credenciais de acesso ao banco de dados:
   # credenciais_mosc <- "keys/psql12-homolog_keySUPER.json"
-  credenciais_mosc <- "keys/localhost_key.json"
+  credenciais_mosc <- "keys/psql12-homolog_keySUPER.json"
   
   # Função para facilitar a conexão com os bancos de dados PostgreSQL:
   source("src/generalFunctions/postCon.R") 

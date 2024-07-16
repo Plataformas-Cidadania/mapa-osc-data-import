@@ -161,6 +161,8 @@ if(!(21 %in% processos_att_atual)) {
   tb_JoinOSC$IsOSC <- tb_JoinOSC$IsOSC & 
     find_OSC(tb_JoinOSC$razao_social, NonOSCNames, verbose = FALSE)
   
+  message(agora(), "   Fim da execução de find_OSC")
+  
   rm(NonOSCNames, find_OSC)
   
   #  Inserindo OSCs que estavam na última versão do Banco ####
@@ -175,6 +177,7 @@ if(!(21 %in% processos_att_atual)) {
   
   # Resgatar as OSC da última atualização
   osc_ultima_att <- tb_osc %>% 
+    dplyr::filter(bo_osc_ativa) %>% 
     select(cd_identificador_osc) %>% 
     collect() %>% 
     # Corrigir cd_identificador_osc (pad)
@@ -183,7 +186,7 @@ if(!(21 %in% processos_att_atual)) {
                                           pad = 0)) %>% 
     unlist() %>% as.character()
   
-  table(tb_JoinOSC$era_osc_ultima_att)
+  # table(tb_JoinOSC$era_osc_ultima_att)
   
   # Colocar em tb_JoinOSC a variável de se ela estava ativa na última
   # atualização:

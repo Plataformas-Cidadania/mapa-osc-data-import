@@ -24,18 +24,18 @@ definicoes <- list()
 
 #~~~~~~~~~~~~ MUITO IMPORTANTE: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Schema da Receita Federal de onde iremos retirar os dados:
-definicoes$schema_receita <- "rfb_2023" # ATUALIZAR AQUI QUANDO CHEGAR NOVOS DADOS
+definicoes$schema_receita <- "rfb_2024" # ATUALIZAR AQUI QUANDO CHEGAR NOVOS DADOS
 
 # Colocar aqui a data de referência do dos dados originais (Receita Federal)
-definicoes$data_dados_referencia <- ymd("2023-06-07") # ATUALIZAR AQUI TAMBÉM
+definicoes$data_dados_referencia <- ymd("2024-04-13") # ATUALIZAR AQUI TAMBÉM
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Arquivo JSON com as chave de acesso ao banco de dados MOSC
 # credenciais_mosc <- "keys/psql12-homolog_keySUPER.json"
-definicoes$credenciais_mosc <- "keys/localhost_key.json"
+definicoes$credenciais_mosc <- "keys/psql12-homolog_keySUPER.json"
 
 # Arquivo JSON com as chaves de acesso ao banco de dados da RFB e da RAIS:
-definicoes$credenciais_rfb <- "keys/rais_2019_key2.json"
+definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"
 
 # Essa atualização é teste? 
 # (não registra processos novos nos controles)
