@@ -1,28 +1,57 @@
-# Função para selecionar as OSC dentro dos CNPJ da Receita Federal do Brasil  (RFB)
+# Instituto de Economia Aplicada - IPEA
 
-# Autor do Script: Murilo Junqueira (m.junqueira@yahoo.com.br; murilo.junqueira@ipea.gov.br)
+# Objetivo do Script: criar uma função  para selecionar as OSC dentro dos 
+# CNPJ da Receita Federal do Brasil (RFB), excluindo organizações que obviamente,
+# não são OSC com base em uma lista de expressões regulares. 
+
+# Cria um procedimento para não esgotar a memória do computador, através de uma
+# estratégia de "dividir e conquistar".
+
+# Autor do Script: Murilo Junqueira 
+# (m.junqueira@yahoo.com.br; murilo.junqueira@ipea.gov.br)
 
 # Data de Criação do Scrip: 2023-10-19
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Setup ####
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## Inputs:
+# x: vetor de texto da razão social das OSC
+# NonOSCNames: banco de dados com as regras para se excluir razões sociais não OSC
+
+# Parâmetros opcionais:
+# chuck_size: tamanho de grupos de x a ser avaliados por vez
+# size_detect: tamanho de expressões regulares a ser avaliadas por vez
+# verbose: para a função mostrar mais informações durante a execução
+
+## Funções auxiliares:
+# "src/generalFunctions/str_detect_split.R"
+
+## Outputs:
+# vetor lógico (TRUE, FALSE), sendo FALSE identificada como não OSC.
+
+# bibliotecas necessárias:
 library(tidyverse)
 library(stringr)
 library(stringi)
 library(assertthat)
 library(lubridate)
 
-# Debug:
-# x <- cadastro_natjur$razao_social
+# Debug: ####
+# x <- tb_JoinOSC$razao_social
 # verbose = TRUE
+# chuck_size = 5000
+# size_detect = 20
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# find_OSC ####
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 find_OSC <- function(x, NonOSCNames, 
                      chuck_size = 5000, size_detect = 20, verbose = FALSE){
-  
-  # x: vetor de texto da razão social das OSC
-  # NonOSCNames: banco de dados com as regras para se excluir razões sociais não OSC
-  # chuck_size: tamanho de grupos de x a ser avaliados por vez
-  # size_detect: tamanho de expressões regulares a ser avaliadas por vez
-  # verbose: para a função mostrar mais informações durante a execução
-  
+
   # Garante que x é texto
   assert_that(is.character(x))
   assert_that(length(x) > 0)
@@ -168,6 +197,7 @@ find_OSC <- function(x, NonOSCNames,
   
   rm(i, split_CNPJ, ExcludeName, GrupoMultiplos)
   rm(str_detect_split, gatherCheck)
+  rm(chuck_size, verbose, size_detect)
 }
 
 # Fim

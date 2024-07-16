@@ -1,7 +1,5 @@
-# Função para economizar linhas ao PostgressSQL
-
+# Função para facilitar acesso ao banco de dados PostgreSQL:
 # By Murilo Junqueira (m.junqueira@yahoo.com.br)
-
 # Created at 2024-06-28
 
 # Setup ####
@@ -37,7 +35,6 @@ postCon <- function(KeyFile, Con_options = NULL) {
               msg = paste("Seguintes elementos faltando no arquivo de chaves:",
                           paste(KeyRequiredNames[!(KeyRequiredNames %in% names(keys))], 
                                 collapse = ", ")))
-  rm(KeyRequiredNames)
   
   # Verifica se pode conectar
   TestConexao <- dbCanConnect(RPostgres::Postgres(), 
@@ -66,8 +63,8 @@ postCon <- function(KeyFile, Con_options = NULL) {
   assert_that(dbIsValid(connec))
   
   return(connec)
-  rm(keys, TestConexao)
+  rm(keys, TestConexao, KeyRequiredNames)
+  rm(KeyFile, Con_options, connec)
 }
-# rm(KeyFile, Con_options, connec)
 
 # Fim ####

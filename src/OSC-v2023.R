@@ -1,580 +1,84 @@
-# Script para atualizar as informações do Mapa das Organizações da Sociedade Civil (MOSC)
-# Script voltado para extração dos dados da Receita Federal (base dos CNPJs)
-
 # Instituto de Economia Aplicada - IPEA
 
-# Autor do Script: Murilo Junqueira (m.junqueira@yahoo.com.br; murilo.junqueira@ipea.gov.br)
+# Objetivo do Script: atualizar as informações do Mapa das Organizações da 
+# Sociedade Civil (MOSC), utilizando sobre tudo dados da Receita Federal 
+# (base dos CNPJs) e da RAIS (MTE). Esse é um script mestre que controla 
+# várias partes da atualização, que foram transformadas em funções e rotinas 
+# específicas e colocadas em arquivos separados discriminados abaixo. 
+
+# Autor do Script: Murilo Junqueira 
+# (m.junqueira@yahoo.com.br; murilo.junqueira@ipea.gov.br)
 
 # Data de Criação do Scrip: 2023-10-19
 
-# Setup ####
-
-message("Iniciando Atualização...")
-
-message("Carregando bibliotecas...")
-library(magrittr)
-library(tidyverse)
-library(data.table)
-library(lubridate)
-library(stringr)
-library(assertthat)
-library(readxl)
-library(jsonlite)
-
-# Variáveis importantes
-
-message("Carregando controle de atualizações")
-
-# Nome deste arquivo
-ArquivoAtualizacao <- "src/OSC-v2023.R"
-assert_that(file.exists(ArquivoAtualizacao), 
-            msg = "Atualize caminho do arquivo de atualização!")
-
-# Periodicidade das Atualizações (em dias)
-ValidadeAtts <- 365
-
-# Verifica a senha dos bancos de dados:
-assert_that(file.exists("keys/rais_2019_key2.json"), 
-            msg = "Não encontrado chave secreta do banco 'rais_2019'")
-
-# Verifica se os arquivos necessários estão em tab_auxiliares
-
-## Controle do ID colocado pelo último usuário
-assert_that(file.exists("tab_auxiliares/idControl.RDS"), 
-            msg = "O arquivo de ID das OSC da última versão não está disponível")
-
-## Controle do ID colocado pelo último usuário
-assert_that(file.exists("tab_auxiliares/idAreaAtuacaoControl.RDS"), 
-            msg = "O arquivo de ID das área de atuação das OSC da última versão não está disponível")
-
-## Nomes que indicam que determinado CNPJ não é OSC
-assert_that(file.exists("tab_auxiliares/NonOSCNames.csv"), 
-            msg = "O arquivo de ID das OSC da última versão não está disponível")
-
-## Relação entre áreas e subáreas de atuação
-assert_that(file.exists("tab_auxiliares/Areas&Subareas.csv"), 
-            msg = "O arquivo de ID das OSC da última versão não está disponível")
-
-## Critérios para determinar as áreas de atuação
-assert_that(file.exists("tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv"), 
-            msg = "O arquivo de ID das OSC da última versão não está disponível")
-
-## Veja se os descritórios dos códigos das áreas estão das tabelas auxiliares
-assert_that(file.exists("tab_auxiliares/dc_area_atuacao.csv"), 
-            msg = "O arquivo de 'dc_area_atuacao.csv' não está disponível")
-
-## Veja se os descritórios dos códigos das áreas estão das tabelas auxiliares
-assert_that(file.exists("tab_auxiliares/dc_subarea_atuacao.csv"), 
-            msg = "O arquivo de 'dc_subarea_atuacao.csv' não está disponível")
-
-## Veja se o "de/para" do código municipal da receita para o IBGE está presente.
-assert_that(file.exists("tab_auxiliares/CodMunicRFB.csv"), 
-            msg = "O arquivo de 'CodMunicRFB.csv' não está disponível")
-
-# Baixa dados do controle de atualização
-ControleAtualizacao <- read_xlsx("data/dataset/ControleAtualizacaoOSC.xlsx", 
-                                 sheet = "ControleAtualizacao")
-
-# Processos da Atualização
-ProcessosAtualizacao <- read_xlsx("data/dataset/ControleAtualizacaoOSC.xlsx", 
-                                  sheet = "ProcessosAtualizacao")
-
-# Backups Gerados
-BackupsFiles <- read_xlsx("data/dataset/ControleAtualizacaoOSC.xlsx", 
-                          sheet = "BackupsFiles") %>% 
-  # Evita problemas de consistência
-  mutate(ControleAt_Id = as.character(ControleAt_Id), 
-         FileFolder = as.character(FileFolder), 
-         FileName = as.character(FileName), 
-         FileSizeMB = as.numeric(FileSizeMB))
-
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Controle das Atualizações ####
+# Definições importantes ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-message("Controle das Atualizações")
+# Nessa seção fazemos a definições de alguns parâmetros importantes que
+# vão controlar toda a atualização
 
-# Caso estqa for a primeira atualização
-if(nrow(ControleAtualizacao) == 0) {
-  Att_Atual <- tibble(At_id = 1,
-                      At_CodRef = NA,
-                      At_Situacao = "Iniciada", 
-                      At_DataRef = today(), 
-                      At_DataInicio = now(), 
-                      At_ValidadeDias = ValidadeAtts,
-                      At_DtFimValidade = today() + days(ValidadeAtts))
-  
-}
+# para não poluir o ambiente de trabalho do R, colocarei todas as definições
+# importantes em uma lista:
+definicoes <- list()
 
-# Caso não for a primeira atualização
-if(nrow(ControleAtualizacao) > 0) {
-  # Controle da atualização atual
-  UltimaSituacao <- ControleAtualizacao %>% 
-    dplyr::filter(At_DataInicio == max(At_DataInicio)) %>% 
-    slice(1) %>% 
-    select(At_Situacao) %>% unlist() %>% as.character() 
-  
-  if(UltimaSituacao == "Finalizada") {
-    # Se a última atualização estiver finalizada, criar uma nova
-    # base que no final será adiconada em ControleAtualizacao
-    Att_Atual <- tibble(At_id = max(ControleAtualizacao$At_id) + 1,
-                        At_CodRef = NA,
-                        At_Situacao = "Iniciada", 
-                        At_DataRef = today(), 
-                        At_DataInicio = now(), 
-                        At_ValidadeDias = ValidadeAtts, 
-                        At_DtFimValidade = today() + days(ValidadeAtts))
-    
-  } else {
-    # Caso a última atualização já tiver sido iniciada, mas não finalizada,
-    # usar a última linha de ControleAtualizacao
-    Att_Atual <- ControleAtualizacao %>% 
-      dplyr::filter(At_DataInicio == max(At_DataInicio)) %>% 
-      slice(1)
-  }
-  rm(UltimaSituacao)
-}
+#~~~~~~~~~~~~ MUITO IMPORTANTE: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Schema da Receita Federal de onde iremos retirar os dados:
+definicoes$schema_receita <- "rfb_2023" # ATUALIZAR AQUI QUANDO CHEGAR NOVOS DADOS
 
-# Controle dos processo da atualização atual
-ProcessosAtt_Atual <- ProcessosAtualizacao %>% 
-  # Seleciona apenas os processos da seleção atual
-  dplyr::filter(At_id == Att_Atual$At_id[1]) %>% 
-  # Cria uma variável que une o processo e se está completo ou não
-  mutate(Controle = as.character(paste0(Processo_id, Completo))) %>% 
-  # Ordena os processos por data
-  arrange(desc(DataInicio)) %>% 
-  # Garante consistência nos tipos de variáveis
-  mutate(ControleAt_Id = as.character(ControleAt_Id), 
-         At_id = as.integer(At_id),
-         Data = as.Date(Data),
-         Processo_id = as.integer(Processo_id),
-         Processo_Nome = as.character(Processo_Nome),
-         Completo = as.integer(Completo),
-         DataInicio = as_datetime(DataInicio),
-         DataFim = as_datetime(DataInicio),
-         Controle = as.character(Controle))
+# Colocar aqui a data de referência do dos dados originais (Receita Federal)
+definicoes$data_dados_referencia <- ymd("2023-06-07") # ATUALIZAR AQUI TAMBÉM
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Se não existir um folder de atualização, criar um...
-# "51": Processo 5 (Criação do diretório Backup) e 1 (completo)
-if(!"51" %in% ProcessosAtt_Atual$Controle) {
-  
-  # Marca início do processo
-  DataProcessoInicio <- now()
-  
-  # Loop para criar um diretório
-  for (i in 1:99) {
-    # i <- 1
-    DirName <- paste0("backup_files/",
-                      year(today()), "_", 
-                      str_pad(i, 2, pad = "0"), "/")
-    
-    if(!dir.exists(DirName)) {
-      
-      # Cria novo diretório
-      dir.create(DirName)
-      
-      # usa diretório dos backups para criar o código da atualização
-      Att_Atual$At_CodRef <- DirName %>% 
-        str_remove(DirBackupFiles) %>% 
-        str_remove("/")
-      
-      break # Interrompe Loop
-    }
-    
-    # Se o diretório não conseguir ser criado, stop!
-    if (i == 99) {
-      stop("Excesso de tentativas de criação de diretório backup")
-    }
-  }
-  rm(i)
-  
-  # Atualiza controle de processos:
-  ProcessosAtt_Atual <- ProcessosAtt_Atual %>% 
-    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_5"), 
-            At_id = Att_Atual$At_id[1],
-            Data = today(),
-            Processo_id = 5,
-            Processo_Nome = "baixar bases de dados brutas SRF",
-            Completo = 1,
-            DataInicio = DataProcessoInicio,
-            DataFim = now(),
-            Controle = "51")
-  
-  rm(DataProcessoInicio)
-}
+# Arquivo JSON com as chave de acesso ao banco de dados MOSC
+# credenciais_mosc <- "keys/psql12-homolog_keySUPER.json"
+definicoes$credenciais_mosc <- "keys/localhost_key.json"
 
-# Diretório de backup
-DirName <- paste0("backup_files/", Att_Atual$At_CodRef[1], "/")
-assert_that(dir.exists(DirName), 
-            msg = "Diretório de Backup não existe")
+# Arquivo JSON com as chaves de acesso ao banco de dados da RFB e da RAIS:
+definicoes$credenciais_rfb <- "keys/rais_2019_key2.json"
 
-rm(ValidadeAtts)
+# Essa atualização é teste? 
+# (não registra processos novos nos controles)
+definicoes$att_teste <- FALSE
 
+# Essa atualização vai salvar os arquivos intermediários no diretório de backup?
+definicoes$salva_backup <- TRUE
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Carrega Dados da RFB ####
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Outras definições importantes, mas que raramente precisam ser mudada
+# estão na rotina de Setup (abaixo) ('src/specificFunctions/setup_atualizacao.R')
 
-# Baixa os dados da Receita, se não tiver sido feito ainda
-# "11": Processo 1 (baixar bases de dados brutas RFB) e 1 (completo)
-if(!"11" %in% ProcessosAtt_Atual$Controle) {
-  
-  message("Carrega Dados da RFB")
-  
-  # Marca início do processo
-  DataProcessoInicio <- now()
-  
-  library(DBI)
-  library(RODBC)
-  library(RPostgres)
-  
-  # Baixa dados da Receita Federal no Posgres do IPEA.
-  
-  # Baixa a chave secreta do código
-  keys <- jsonlite::read_json("keys/rais_2019_key.json")
-  
-  # Verifica se pode condenar
-  CanConnect <- dbCanConnect(RPostgres::Postgres(), 
-                             dbname = keys$dbname,
-                             host = keys$host,
-                             port = keys$port,
-                             user = keys$username, 
-                             password = keys$password,
-                             options="-c search_path=rfb_2023")
-  
-  assert_that(CanConnect, 
-              msg = "Teste de coneção a 'rais_2019' falhou.")
-  
-  # conencta à base
-  connec <- dbConnect(RPostgres::Postgres(), 
-                      dbname = keys$dbname,
-                      host = keys$host,
-                      port = keys$port,
-                      user = keys$username, 
-                      password = keys$password,
-                      options="-c search_path=rfb_2023")
-  
-  rm(keys)
-  assert_that(dbIsValid(connec))
-  
-  # Query para buscar as informações nas tabelas "tb_rfb_empresas" e 
-  # "tb_rfb_estabelecimentos". Já faz o Join entre as tabelas e também 
-  # filtra pela natureza jurídica das organizações sem fins lucrativos
-  # ('3069', '3220', '3301', '3999')
-  
-  # Filtra naturezas jurídicas:
-  # grupo 3: Entidades sem fins lucrativos
-  ## 306-9	Fundação Privada
-  ## 322-0	Organização Religiosa
-  ## 330-1	Organização Social (OS)
-  ## 399-9	Associação Privada
-  # Fonte: https://concla.ibge.gov.br/estrutura/natjur-estrutura/natureza-juridica-2021
-  
-  tb_JoinOSC <- dbGetQuery(connec, 
-                           paste0("SELECT * FROM tb_rfb_empresas", 
-                                  " RIGHT JOIN tb_rfb_estabelecimentos ", 
-                                  "ON tb_rfb_estabelecimentos.cnpj_basico ",
-                                  "= tb_rfb_empresas.cnpj_basico", 
-                                  " WHERE natureza_juridica ",
-                                  "IN ('3069', '3220', '3301', '3999')",
-                                  # " LIMIT 1000", 
-                                  ";"))
-  
-  # Debug:
-  # tb_JoinOSC <- readRDS("backup_files/2023_01/intermediate_files/tb_JoinOSC.RDS")
-  
-  # Desconecta da base
-  dbDisconnect(connec)
-  
-  rm(connec, CanConnect)
-  
-  # Caminho do arquivo Backup
-  PathFile <- paste0(DirName, "tb_JoinOSC.RDS")
-  
-  # Salva Backup
-  saveRDS(tb_JoinOSC, PathFile)
-  
-  # Atualiza realização de processos:
-  ProcessosAtt_Atual <- ProcessosAtt_Atual %>% 
-    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_1"), 
-            At_id = Att_Atual$At_id[1],
-            Data = today(),
-            Processo_id = 1,
-            Processo_Nome = "baixar bases de dados brutas SRF",
-            Completo = 1,
-            DataInicio = DataProcessoInicio,
-            DataFim = now(),
-            Controle = "11")
-  
-  # Registra novo arquivo salvo
-  BackupsFiles <- BackupsFiles %>% 
-    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_1"), 
-            FileFolder = DirName, 
-            FileName = "tb_JoinOSC.RDS", 
-            FileSizeMB = file.size(paste0(DirName, "tb_JoinOSC.RDS"))/1024000)
-  
-  rm(PathFile, DataProcessoInicio)
-} else {message("Dados da RFB já carregados anteriormente")}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Atualização MOSC: Leitura e Transformação dos Dados ####
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# Carrega bibliotecas e funções usadas em toda a atualização:
+source("src/specificFunctions/setup_atualizacao.R")
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Identificação OSC ####
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Antes de realizar a atualização propriamente dita, melhor fazer uma 
+# série de checagens para saber se todos os dados e as tabelas auxiliares 
+# estão disponíveis e se a conexão com o banco de dados está operacional e com
+# as permissões necessárias.
+source("src/specificFunctions/checagem_inicial_att_mosc.R")
 
+# Cria ou resgata (caso já criada) os controle de atualização, registrando data 
+# e horário de cada etapa da atualização. Se os bancos de dados de controle de 
+# atualizações não estiverem sido criados, utilizar a o 
+# script "src/uso_unico/cria_controle_att.R"
+source("src/specificFunctions/inicia_controle_atualizacao.R")
 
-# Executa o processo se não foi feito
-# "21": Processo 2 (Identificação OSC via Razão Social) e 1 (completo)
-if(!"21" %in% ProcessosAtt_Atual$Controle) {
-  
-  message("Identificação OSC via Razão Social")
-  
-  # Marca início do processo
-  DataProcessoInicio <- now()
-  
-  # Se o arquivo não estiver carregado, carrega ele.
-  if(!exists("tb_JoinOSC")) {
-    
-    PathFile <- paste0(DirName, "intermediate_files/tb_JoinOSC.RDS")
-    
-    # Garante que o arquivo existe.
-    assert_that(file.exists(PathFile), 
-                msg = paste0("Arquivo '", PathFile, "' não encontrado."))
-    
-    # Carrega o arquivo com os dados da busca SQL base SRF
-    tb_JoinOSC <- readRDS(PathFile)
-    # names(tb_JoinOSC)
-    # nrow(tb_JoinOSC)
-    rm(PathFile)
-  }
-  
-  # Filtra por CNAE
-  # 8550301	- Administração de caixas escolares
-  # 94201 - Atividades de organizações sindicais
-  # 8112500 - Condomínios prediais
-  # 9492800 (em conjunto com certos nomes de razão social) - Atividades de organizações políticas
-  # Fonte: https://concla.ibge.gov.br/busca-online-cnae.html?view=estrutura
-  
-  # Expressões regulares que indicam grupos partidários:
-  IndicadoresPartidos <- paste(c("^COLIGACAO", "^COLIGAO", "^COMISSAO EXECUTIVA", 
-                                 "^COMISSAO MUNICIPAL", "^COMISSAO PROVISORIA", 
-                                 "^COMITE DA COLIGACAO", "^COMITE DE GASTOS E PROPAGANDA", 
-                                 "^DIRETORIO REG", "^DIRETORIO TRAB", "^COMITE DE PROPAGANDA", 
-                                 "^COMITE FINAANCEIRO", "^DIRETORIO TRABALHISTA", 
-                                 "^DIRETORIO REGIONAL", "^DIRETORIO EXECUTIVO", 
-                                 "^DIRETORIO DA FRENTE LIBERAL", 
-                                 "^DIRETORIO DA SOCIAL DEMOCRACIA", 
-                                 "^DIRETORIO DA COLIGACAO", "^DIRETORIO DA MUNICIPAL DA FRENTE", 
-                                 "^DIRETORIO LIBERAL", "^DIRETORIO PROGRESSISTA", "^DORETORIO MUNICIPAL", 
-                                 "MUNIC DO PART DA FREN"), collapse = "|")
-  
-  # Descobre OSC com base no CNAE e expressões regulares partidárias
-  tb_JoinOSC <- tb_JoinOSC %>% 
-    mutate(IsOSC = case_when(cnae_fiscal_principal %in% c("8112500", "8550301") ~ FALSE, 
-                             str_sub(cnae_fiscal_principal, 1, 5) == "94201" ~ FALSE,
-                             str_detect(razao_social, IndicadoresPartidos) &
-                               cnae_fiscal_principal == "9492800" ~ FALSE, 
-                             TRUE ~ TRUE))
-  
-  rm(IndicadoresPartidos)
-  
-  # Usa função find_OSC para determinar se um estabelecimento é OSC:
-  
-  # Expressões usadas em findosc
-  NonOSCNames <- fread("data/dataset/NonOSCNames.csv") %>% 
-    as_tibble()
-  # names(NonOSCNames)
-  
-  # Uso da função find_OSC:
-  source("src/findosc-v2023.R")
-  tb_JoinOSC$IsOSC <- tb_JoinOSC$IsOSC & 
-    find_OSC(tb_JoinOSC$razao_social, NonOSCNames, verbose = FALSE)
-  
-  rm(NonOSCNames, find_OSC)
-  
-  #  Inserindo OSCs que estavam na última versão do Banco 
-  # (princípio de não deletar OSC do banco exclusivamente pelo find_OSC)
-  # bkp <- tb_JoinOSC
-  idControl <- readRDS("tab_auxiliares/idControl.RDS")
-  
-  # Somente trazer para o banco novo OSCs ativas na última versão
-  idControl_ativa <- idControl[idControl$bo_osc_ativa, ]
+# Se não existir um diretório para guardar os arquivos da atualização, criar um...
+source("src/specificFunctions/cria_diretorio_atualizacao.R")
 
-  tb_JoinOSC <- tb_JoinOSC %>% 
-    # fonte da identificação da OSC
-    mutate(ft_IsOSC = ifelse(IsOSC, paste0("findOSC.R_", Att_Atual$At_CodRef[1]), 
-                                      NA), 
-           IsOSC = ifelse(cnpj %in% idControl_ativa$cd_identificador_osc, 
-                          TRUE, IsOSC), 
-           # Marca quem foi adicionado pelo legado do passado.
-           ft_IsOSC = ifelse(IsOSC & is.na(ft_IsOSC), "findOSC_legado", ft_IsOSC))
-  # table(tb_JoinOSC2[["ft_IsOSC"]], useNA = "always")
-  rm(idControl, idControl_ativa)
-  
-  # Muda nome do objeto para marcar mudança de processamento:
-  Tb_OSC_Full <- tb_JoinOSC %>% 
-    # Mantem apenas OSCs ativas no banco:
-    mutate(situacao = as.integer(situacao_cadastral), 
-           bo_osc_ativa = situacao %in% c(2, 3, 4)) %>%
-    dplyr::filter(IsOSC, bo_osc_ativa)
-  
-  # Salva Backup
-  PathFile <- paste0(DirName, "intermediate_files/Tb_OSC_Full.RDS")
-  
-  saveRDS(Tb_OSC_Full, PathFile)
-  
-  # Atualiza realização de processos:
-  ProcessosAtt_Atual <- ProcessosAtt_Atual %>% 
-    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_2"), 
-            At_id = Att_Atual$At_id[1],
-            Data = today(),
-            Processo_id = 2,
-            Processo_Nome = "Identificação OSC",
-            Completo = 1,
-            DataInicio = DataProcessoInicio,
-            DataFim = now(),
-            Controle = "21")
-  
-  # Registra novo arquivo salvo
-  BackupsFiles <- BackupsFiles %>% 
-    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_2"), 
-            FileFolder = str_remove(PathFile, "Tb_OSC_Full.RDS$"), 
-            FileName = "Tb_OSC_Full.RDS", 
-            FileSizeMB = file.size(PathFile)/1024000)
-  
-  rm(DataProcessoInicio, PathFile)
-  rm(tb_JoinOSC) # não vamos mais utilizar esses dados
-} else {message("Identificação OSC via Razão Social já feita anteriormente")}
+# Baixa os dados brutos da Receita Federal
+source("src/specificFunctions/baixa_dados_rfb.R")
 
+# Identificação OSC na ba da Receita Federal (usando a função 'findosc-v2023')
+source("src/specificFunctions/identificacao_osc_nabase_rfb.R")
 
+# Determinação das áreas de atuação OSC
+source("src/specificFunctions/determinacao_areas_atuacao.R")
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Determinação das áreas de atuação OSC ####
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-# Executa o processo se não foi feito
-# "31": Processo 2 (Determinação das áreas de atuação OSC) e 1 (completo)
-if(!"31" %in% ProcessosAtt_Atual$Controle) {
-  
-  message("Determinação das áreas de atuação OSC")
-  
-  # Marca início do processo
-  DataProcessoInicio <- now()
-  
-  # Se o arquivo não estiver carregado, carrega ele.
-  if(!(exists("Tb_OSC_Full") && "data.frame" %in% class(Tb_OSC_Full)) ) {
-    
-    # Se o arquivo já tiver sido baixado, vamos direto para carregar ele.
-    PathFile <- paste0(DirName, "intermediate_files/Tb_OSC_Full.RDS")
-    
-    # Garante que o arquivo existe.
-    assert_that(file.exists(PathFile), 
-                msg = paste0("Arquivo '", PathFile, "' não encontrado."))
-    
-    # Carrega ele
-    Tb_OSC_Full <- readRDS(PathFile)
-    # names(Tb_OSC_Full)
-    # nrow(Tb_OSC_Full)
-    rm(PathFile)
-  }
-  
-  # Regras para determinar as subáreas de atuação
-  DB_SubAreaRegras <- fread("data/dataset/IndicadoresAreaAtuacaoOSC.csv",
-                            encoding = "Latin-1")
-  
-  # Relação entre micro áreas e macro áreas
-  DB_AreaSubaria <- fread("data/dataset/Areas&Subareas.csv",
-                          encoding = "Latin-1")
-  
-  # Função para determinar as áreas de atuação
-  source("src/specifcFuntions/AreaAtuacaoOSC.R")
-  
-  # Transforma Tb_OSC_Full em DB_OSC
-  DB_OSC <- Tb_OSC_Full %>%
-    mutate(cnae = cnae_fiscal_principal, 
-           micro_area_atuacao = NA)
-  
-  rm(Tb_OSC_Full) # não vamos mais utilizar esses dados
-  
-  # Usa função "AreaAtuacaoOSC" para determinar qual a área de atuação
-  # das OSCs
-  DB_OSC$micro_area_atuacao <- AreaAtuacaoOSC(select(DB_OSC, 
-                                                     cnpj_basico, 
-                                                     razao_social, 
-                                                     cnae, 
-                                                     micro_area_atuacao), 
-                                              DB_SubAreaRegras, 
-                                              chuck_size = 10000, verbose = FALSE)
-  
-  # Determina área de atuação secundária
-  MultiAreas <- DB_OSC %>% 
-    mutate(cnae = cnae_fiscal_secundaria) %>% 
-    select(cnpj, razao_social, cnae) %>% 
-    separate(cnae, into = letters[1:26], 
-             sep = ",", fill = "right") %>% 
-    gather(temp, cnae, 3:28) %>%  
-    dplyr::filter(!is.na(cnae)) %>% 
-    select(-temp) %>% 
-    mutate(cnae = trimws(cnae), 
-           tipo_cnae = "s") %>% 
-    group_by(cnpj) %>% 
-    mutate(OrdemArea = row_number()) %>% 
-    ungroup()
-  
-  MultiAreas$micro_area_atuacao <- NA
-
-  MultiAreas$micro_area_atuacao <- AreaAtuacaoOSC(MultiAreas, 
-                                                  DB_SubAreaRegras, 
-                                                  chuck_size = 10000, verbose = FALSE)
-  
-  names(MultiAreas)
-  View(MultiAreas)  
-  table(MultiAreas$OrdemArea)
-  table(MultiAreas$micro_area_atuacao)
-  
-  # Salva dados das atuações secundárias
-  saveRDS(MultiAreas, paste0(DirName, 
-                             "intermediate_files/MultiAreasAtuacao.RDS"))
-  
-  DB_OSC <- DB_OSC %>% 
-    # Se não foi indentificado pelo sistema, colocar "Outras"
-    mutate(micro_area_atuacao = ifelse(is.na(micro_area_atuacao), 
-                                       "Outras organizações da sociedade civil", 
-                                       micro_area_atuacao)) %>% 
-    # Insere Macro áreas de atuação
-    left_join(DB_AreaSubaria, by = "micro_area_atuacao")
-    
-  
-  rm(AreaAtuacaoOSC, DB_SubAreaRegras, DB_AreaSubaria)
-
-  # Salva Backup
-  PathFile <- paste0(DirName, "intermediate_files/DB_OSC.RDS")
-  saveRDS(DB_OSC, PathFile)
-
-  # Atualiza realização de processos:
-  ProcessosAtt_Atual <- ProcessosAtt_Atual %>% 
-    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_3"), 
-            At_id = Att_Atual$At_id[1],
-            Data = today(),
-            Processo_id = 3,
-            Processo_Nome = "Determinação das áreas de atuação OSC",
-            Completo = 1,
-            DataInicio = DataProcessoInicio,
-            DataFim = now(),
-            Controle = "31")
-  
-  # Registra novo arquivo salvo
-  BackupsFiles <- BackupsFiles %>% 
-    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_3"), 
-            FileFolder = str_remove(PathFile, "DB_OSC.RDS$"), 
-            FileName = "DB_OSC.RDS", 
-            FileSizeMB = file.size(PathFile)/1024000)
-  
-  rm(DataProcessoInicio, PathFile)
-  # ls()
-} else {message("Determinação das áreas de atuação OSC já feita anteriormente")}
-
+# Estou aqui!!!! ####
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Desmembramento da base RFB ####
