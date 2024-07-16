@@ -267,10 +267,10 @@ for (h in seq_len(nrow(ArquivosAno))) {
               str_sub(as.character(lubridate::now()), 1, 19))
       
       if(UsaBackup && 
-         file.exists(paste0(estabelecimentosDir, NameFile))) {
+         file.exists(paste0(VinculosDir, NameFile))) {
         
         # Carrega dados do arquivo Backup
-        rawData <- readRDS(paste0(estabelecimentosDir, NameFile))
+        rawData <- readRDS(paste0(VinculosDir, NameFile))
         
       } else {
        
