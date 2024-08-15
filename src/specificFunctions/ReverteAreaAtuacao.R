@@ -19,13 +19,13 @@ library(RPostgres)
 
 # Variável para indicar que a atualização é teste
 
-isTest <- TRUE
+isTest <- FALSE
 
 # Conexão ####
 
 source("src/generalFunctions/postCon.R")
 
-connec <- postCon("keys/psql12-homolog_keySUPER.json", 
+connec <- postCon("keys/psql12-prod_key.json", 
                   Con_options = "-c search_path=osc")
 
 rm(postCon)
@@ -53,6 +53,9 @@ if(isTest) {
   
   NomeTabelaAtt <- "tb_area_atuacao_teste"
 } else {
+  if(dbExistsTable(connec, "tb_area_atuacao_backup")) dbRemoveTable(connec, "tb_area_atuacao_backup")
+  dbWriteTable(connec, "tb_area_atuacao_backup", OldData)
+  
   NomeTabelaAtt <- "tb_area_atuacao"
 }
 
@@ -72,7 +75,7 @@ DeleteRow <- OldData %>%
   select(everything())
 
 # Checa os dados:
-## table(DeleteRow$deleterow)
+table(DeleteRow$deleterow)
 
 # Deleta os dados usando uma entidade de dados temporária
 if(dbExistsTable(connec, "update_temp")) dbRemoveTable(connec, "update_temp")
@@ -122,7 +125,7 @@ teste3 <- try(dbGetQuery(connec,
                                 ";")))
 
 names(teste3)
-head(teste3)
+# head(teste3)
 table(teste3$deleterow, useNA = "always")
 rm(teste3)
 
