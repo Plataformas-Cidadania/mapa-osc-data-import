@@ -32,8 +32,10 @@ library(assertthat)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Debug ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# TipoAtt <- "fim"
-# id_att <- 1
+# TipoAtt <- "inicio"
+# id_att <- id_presente_att
+# id_processo = 5
+# processo_nome = "criação do diretório backup"
 # path_file_backup = NULL
 # path_file_backup <- "backup/2024_01/input_files/tb_JoinOSC.RDS"
 
@@ -54,7 +56,7 @@ atualiza_processos_att <- function(
   assert_that(any(c("inicio", "fim") %in% TipoAtt))
   assert_that(exists("tb_processos_atualizacao")) 
   # colocar aqui checagem dos objetos "dbplyr":
-  assert_that(class(tb_processos_atualizacao) %in% "bla") # TO DO
+  assert_that(any(class(tb_processos_atualizacao) %in% "tbl_PqConnection")) # TO DO
   
   if(!is.null(path_file_backup)) assert_that(file.exists(path_file_backup)) 
   if(TipoAtt == "inicio") assert_that(!is.null(processo_nome)) 
