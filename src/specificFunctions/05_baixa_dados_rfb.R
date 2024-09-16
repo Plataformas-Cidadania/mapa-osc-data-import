@@ -63,37 +63,14 @@ if(!(11 %in% processos_att_atual)) {
   Sys.sleep(2) # Dar um tempo apenas para o usuário ler as mensagens da atualização
   
   # Início do processo ####
-  horario_processo_inicio <- now()
   processos_att_atual <- c(processos_att_atual[processos_att_atual != 11], 10)
   
-  # Registra início do processo no controle de atualização:
-  if(!definicoes$att_teste) {
-    
-    # Evita repetição de linha:
-    processo_nao_inserido <- tb_processos_atualizacao %>% 
-      dplyr::filter(att_id == id_presente_att, processo_id == 1) %>% 
-      collect() %>% nrow() %>% 
-      magrittr::equals(0)
-    
-    if(processo_nao_inserido) {
-      
-      rows_append(tb_processos_atualizacao, 
-                  copy_inline(conexao_mosc, 
-                              tibble(att_id = id_presente_att,
-                                     processo_id = 1,
-                                     tx_processo_nome = "criação do diretório backup",
-                                     bo_processo_att_completo = FALSE,
-                                     dt_processo_att_inicio = horario_processo_inicio,
-                                     dt_processo_att_fim = as_datetime(NA),   
-                                     nr_processo_att_controle = 10,
-                                     
-                                     .rows = 1)), 
-                  in_place = TRUE)
-      
-    }
-    rm(processo_nao_inserido)
-    
-  }
+  # Atualiza controle de processos (tb_processos_atualizacao)  
+  if(!definicoes$att_teste) atualiza_processos_att(
+    TipoAtt = "inicio", 
+    id_att = id_presente_att, 
+    id_processo = 1, 
+    processo_nome = "baixa dados da Receita Federal")
   
   # Conecta à nase de dados da Receita Federal:
   source("src/generalFunctions/postCon.R") 
@@ -157,51 +134,14 @@ if(!(11 %in% processos_att_atual)) {
   # Atualiza controle de processos ####
   processos_att_atual <- c(processos_att_atual[processos_att_atual != 10], 11)
   
-  # Atualiza controle de atualização:
-  if(!definicoes$att_teste) {
-    
-    # Atualiza realização de processos:
-    rows_update(tb_processos_atualizacao, 
-                copy_inline(conexao_mosc, 
-                            tibble(att_id = id_presente_att,
-                                   processo_id = 1,
-                                   tx_processo_nome = "baixar bases de dados brutas RFB",
-                                   bo_processo_att_completo = TRUE,
-                                   dt_processo_att_inicio = horario_processo_inicio,
-                                   dt_processo_att_fim = now(),   
-                                   nr_processo_att_controle = 11,
-                                   
-                                   .rows = 1)), 
-                by = c("att_id", "processo_id"), 
-                unmatched = "ignore",
-                in_place = TRUE)
-    
-    # Registra arquivo intermediário criado:
-    if(definicoes$salva_backup) {
-      
-      new_file_id <- ifelse(length(pull(tb_backups_files, file_id)) == 0, 1, 
-                            max(pull(tb_backups_files, file_id), na.rm = TRUE) + 1)
-      
-      rows_append(tb_backups_files, 
-                  copy_inline(conexao_mosc, 
-                              tibble(
-                                file_id = new_file_id,
-                                att_id = id_presente_att,
-                                processo_id = 1,
-                                tx_file_folder = glue("{diretorio_att}input_files/"),
-                                tx_file_name = "tb_JoinOSC.RDS",
-                                nr_file_size_mb = file.size(path_file_backup)/1024000,
-                                
-                                .rows = 1)), 
-                  in_place = TRUE)
-      
-      rm(new_file_id)
-      
-    }
-    
-  }
+  # Atualiza controle de processos (tb_processos_atualizacao)  
+  if(!definicoes$att_teste) atualiza_processos_att(
+    TipoAtt = "fim", 
+    id_att = id_presente_att, 
+    id_processo = 1, 
+    path_file_backup = ifelse(definicoes$salva_backup, path_file_backup, NULL))
   
-  rm(path_file_backup, horario_processo_inicio)
+  rm(path_file_backup)
   
   dbDisconnect(conexao_rfb)
   rm(conexao_rfb)

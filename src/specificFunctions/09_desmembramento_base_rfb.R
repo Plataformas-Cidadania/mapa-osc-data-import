@@ -74,7 +74,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   if(!(exists("DB_OSC") && "data.frame" %in% class(DB_OSC)) ) {
     
     # Se o arquivo já tiver sido baixado, vamos direto para carregar ele.
-    PathFile <- paste0(DirName, "intermediate_files/DB_OSC.RDS")
+    PathFile <- paste0(diretorio_att, "intermediate_files/DB_OSC.RDS")
     
     # Garante que o arquivo existe.
     assert_that(file.exists(PathFile), 
@@ -88,7 +88,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   }
   
   # Código da fonte de dados RFB
-  FonteRFB <- paste0("CNPJ/SRF/MF/", Att_Atual$At_CodRef[1])
+  FonteRFB <- paste0("CNPJ/SRF/MF/", codigo_presente_att)
   
   # Formata o CNPJ, usado aqui como chave-primária das OSC:
   DB_OSC <- DB_OSC %>% 

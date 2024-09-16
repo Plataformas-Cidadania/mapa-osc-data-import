@@ -52,9 +52,14 @@ library(RODBC)
 library(RPostgres) 
 library(dbplyr) 
 
-# Carrega essa função facilitadora da marcação do tempo:
 assert_that(file.exists("src/generalFunctions/agora.R"))
+assert_that(file.exists("src/specificFunctions/atualiza_processos_att.R"))
+
+# Carrega essa função facilitadora da marcação do tempo:
 source("src/generalFunctions/agora.R")
+
+# Atualiza processos de atualização
+source("src/specificFunctions/atualiza_processos_att.R")
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Mais definições importantes ! ####

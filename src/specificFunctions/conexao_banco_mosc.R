@@ -39,7 +39,7 @@ assert_that(file.exists("src/generalFunctions/postCon.R"))
 source("src/generalFunctions/postCon.R") 
 assert_that(is.function(postCon))
 
-message(agora(), "  Concectando aos Bancos de Dados MOSC")
+message(agora(), "  Conectando aos Bancos de Dados MOSC")
 Sys.sleep(1) # Dar um tempo apenas para o usuário ler as mensagens da atualização
 
 # Primeiro vamos checar se conseguimos nos conectar ao banco de dados:

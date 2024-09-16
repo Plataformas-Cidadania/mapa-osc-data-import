@@ -1,6 +1,10 @@
 # Instituto de Economia Aplicada - IPEA
 
-# Objetivo do Script: 
+# Objetivo do Script: cria linhas de controle da atualização na 
+# tabela tb_controle_atualizacao. Cria uma conexão dbplyr com as tabelas
+# tb_processos_atualizacao e tb_backups_files. Se houver uma atualização
+# iniciada e não concluída, resgara os dados delas para sabermos de
+# onde ela parou.
 
 # Autor do Script: Murilo Junqueira 
 # (m.junqueira@yahoo.com.br; murilo.junqueira@ipea.gov.br)
@@ -66,9 +70,8 @@ if(!any(pull(tb_controle_atualizacao, tx_att_situacao) == "Iniciada")) {
   # Determina o ID da atualização:
   id_presente_att <- ifelse(length(pull(tb_controle_atualizacao, att_id)) == 0, 
                             1, 
-                            max(
-                              pull(tb_controle_atualizacao, att_id), 
-                              na.rm = TRUE) + 1)
+                            max(pull(tb_controle_atualizacao, att_id), 
+                                na.rm = TRUE) + 1)
   
   # Código de referência da atualização (ano_<número da atualiação no ano>):
   codigo_presente_att <- 
@@ -91,7 +94,6 @@ if(!any(pull(tb_controle_atualizacao, tx_att_situacao) == "Iniciada")) {
                                  dt_att_ref = definicoes$data_dados_referencia, 
                                  dt_att_inicio = lubridate::now(), 
                                  dt_att_fim = NA_Date_,
-                                 
                                  .rows = 1)), 
               in_place = TRUE)
   

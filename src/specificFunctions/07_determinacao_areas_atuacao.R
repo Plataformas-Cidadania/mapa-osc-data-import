@@ -1,6 +1,7 @@
 # Instituto de Economia Aplicada - IPEA
 
-# Objetivo do Script: 
+# Objetivo do Script: fazer uma estimativa das áreas de atuação das OSC
+# com base na CNAE
 
 # Autor do Script: Murilo Junqueira 
 # (m.junqueira@yahoo.com.br; murilo.junqueira@ipea.gov.br)
@@ -55,38 +56,14 @@ if(!(31 %in% processos_att_atual)) {
   Sys.sleep(2) # Dar um tempo apenas para o usuário ler as mensagens da atualização
   
   ## Início do processo ####
-  horario_processo_inicio <- now()
   processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 31], 30))
-
-  # Registra início do processo no controle de atualização:
-  if(!definicoes$att_teste) {
-    
-    # Evita repetição de linha:
-    processo_nao_inserido <- tb_processos_atualizacao %>% 
-      dplyr::filter(att_id == id_presente_att, processo_id == 3) %>% 
-      collect() %>% nrow() %>% 
-      magrittr::equals(0)
-    
-    if(processo_nao_inserido) {
-      
-      rows_append(tb_processos_atualizacao, 
-                  copy_inline(conexao_mosc, 
-                              tibble(att_id = id_presente_att,
-                                     processo_id = 3,
-                                     tx_processo_nome = "Determinação das áreas de atuação OSC",
-                                     bo_processo_att_completo = FALSE,
-                                     dt_processo_att_inicio = horario_processo_inicio,
-                                     dt_processo_att_fim = as_datetime(NA),   
-                                     nr_processo_att_controle = 30,
-                                     
-                                     .rows = 1)), 
-                  in_place = TRUE) 
-      
-    }
-    
-    rm(processo_nao_inserido)
-    
-  }
+  
+  # Atualiza controle de processos (tb_processos_atualizacao)  
+  if(!definicoes$att_teste) atualiza_processos_att(
+    TipoAtt = "inicio", 
+    id_att = id_presente_att, 
+    id_processo = 3, 
+    processo_nome = "Determinação das áreas de atuação OSC")
   
   # Se os dados não estiverem carregados, carrega eles. ####
   if(!(exists("Tb_OSC_Full") && "data.frame" %in% class(Tb_OSC_Full))) {
@@ -153,51 +130,23 @@ if(!(31 %in% processos_att_atual)) {
   # Atualiza controle de processos - CNAE Principal ####
   processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 30], 31))
   
-  if(!definicoes$att_teste) {
-  
-    # Atualiza realização de processos:
-    rows_update(tb_processos_atualizacao, 
-                copy_inline(conexao_mosc, 
-                            tibble(att_id = id_presente_att,
-                                   processo_id = 3,
-                                   tx_processo_nome = "Determinação das áreas de atuação OSC",
-                                   bo_processo_att_completo = TRUE,
-                                   dt_processo_att_inicio = horario_processo_inicio,
-                                   dt_processo_att_fim = now(),   
-                                   nr_processo_att_controle = 31,
-                                   
-                                   .rows = 1)), 
-                by = c("att_id", "processo_id"), 
-                unmatched = "ignore",
-                in_place = TRUE)
-    
-    # Registra arquivo intermediário criado:
-    if(definicoes$salva_backup) {
-      
-      new_file_id <- ifelse(length(pull(tb_backups_files, file_id)) == 0, 1, 
-                            max(pull(tb_backups_files, file_id), na.rm = TRUE) + 1)
-      
-      rows_append(tb_backups_files, 
-                  copy_inline(conexao_mosc, 
-                              tibble(
-                                file_id = new_file_id,
-                                att_id = id_presente_att,
-                                processo_id = 1,
-                                tx_file_folder = glue("{diretorio_att}intermediate_files/"),
-                                tx_file_name = "DB_OSC.RDS",
-                                nr_file_size_mb = file.size(path_file_backup)/1024000,
-                                
-                                .rows = 1)), 
-                  in_place = TRUE)
-      
-      rm(new_file_id)
-    }
-    
-  }
+  # Atualiza controle de processos (tb_processos_atualizacao)  
+  if(!definicoes$att_teste) atualiza_processos_att(
+    TipoAtt = "fim", 
+    id_att = id_presente_att, 
+    id_processo = 3, 
+    path_file_backup = ifelse(definicoes$salva_backup, path_file_backup, NULL))
   
   message(agora(), "   Rotida de determinação das áreas usando a CNAE secundária")
 
   # Determina área de atuação secundária  - Multi áreas ####
+  
+  if(!definicoes$att_teste) atualiza_processos_att(
+    TipoAtt = "inicio", 
+    id_att = id_presente_att, 
+    id_processo = 8, 
+    processo_nome = "Determinação das áreas de atuação com a CNAE secundária (multiáreas)")
+  
   MultiAreas <- DB_OSC %>% 
     mutate(cnae = cnae_fiscal_secundaria) %>% 
     select(cnpj, razao_social, cnae) %>% 
@@ -227,63 +176,19 @@ if(!(31 %in% processos_att_atual)) {
   # table(MultiAreas$OrdemArea)
   # table(MultiAreas$micro_area_atuacao)
   
+  
   # Salva arquivo Backup - Multi áreas ####
   
   processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 90], 91))
   
-  if(definicoes$salva_backup) {
-    
-    path_file_backup <- glue("{diretorio_att}intermediate_files/MultiAreasAtuacao.RDS")
-    
-    # Salva dados das atuações secundárias
-    saveRDS(MultiAreas, path_file_backup)
-    
-    if(!definicoes$att_teste) {
-      
-      # Evita repetição de linha:
-      processo_nao_inserido <- tb_processos_atualizacao %>% 
-        dplyr::filter(att_id == id_presente_att, processo_id == 9) %>% 
-        collect() %>% nrow() %>% 
-        magrittr::equals(0)
-      
-      if(processo_nao_inserido) {
-        
-        rows_append(tb_processos_atualizacao, 
-                    copy_inline(conexao_mosc, 
-                                tibble(att_id = id_presente_att,
-                                       processo_id = 9,
-                                       tx_processo_nome = "Determinação das áreas de atuação com a CNAE secundária (multiáreas)",
-                                       bo_processo_att_completo = TRUE,
-                                       dt_processo_att_inicio = horario_processo_inicio,
-                                       dt_processo_att_fim = now(),   
-                                       nr_processo_att_controle = 91,
-                                       
-                                       .rows = 1)), 
-                    in_place = TRUE) 
-        
-      }
-      
-      new_file_id <- ifelse(length(pull(tb_backups_files, file_id)) == 0, 1, 
-                            max(pull(tb_backups_files, file_id), na.rm = TRUE) + 1)
-      
-      rows_append(tb_backups_files, 
-                  copy_inline(conexao_mosc, 
-                              tibble(
-                                file_id = new_file_id,
-                                att_id = id_presente_att,
-                                processo_id = 3,
-                                tx_file_folder = glue("{diretorio_att}intermediate_files/"),
-                                tx_file_name = "MultiAreasAtuacao.RDS",
-                                nr_file_size_mb = file.size(path_file_backup)/1024000,
-                                
-                                .rows = 1)), 
-                  in_place = TRUE)
-      
-      rm(new_file_id)
-      
-    }
-    
-  }
+  # Atualiza controle de processos (tb_processos_atualizacao) 
+  if(!definicoes$att_teste) atualiza_processos_att(
+    TipoAtt = "fim", 
+    id_att = id_presente_att, 
+    id_processo = 8, 
+    path_file_backup = ifelse(definicoes$salva_backup, 
+                              glue("{diretorio_att}intermediate_files/MultiAreasAtuacao.RDS"),
+                              NULL))
   
   rm(AreaAtuacaoOSC, DB_SubAreaRegras, DB_AreaSubaria)
   rm(horario_processo_inicio, path_file_backup)

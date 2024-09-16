@@ -54,38 +54,14 @@ if(!(21 %in% processos_att_atual)) {
   Sys.sleep(2) # Dar um tempo apenas para o usuário ler as mensagens da atualização
   
   ## Início do processo ####
-  horario_processo_inicio <- now()
   processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 21], 20))
   
-  # Registra início do processo no controle de atualização:
-  if(!definicoes$att_teste) {
-    
-    # Evita repetição de linha:
-    processo_nao_inserido <- tb_processos_atualizacao %>% 
-      dplyr::filter(att_id == id_presente_att, processo_id == 2) %>% 
-      collect() %>% nrow() %>% 
-      magrittr::equals(0)
-    
-    if(processo_nao_inserido) {
-      
-      rows_append(tb_processos_atualizacao, 
-                  copy_inline(conexao_mosc, 
-                              tibble(att_id = id_presente_att,
-                                     processo_id = 2,
-                                     tx_processo_nome = "Identificação OSC",
-                                     bo_processo_att_completo = FALSE,
-                                     dt_processo_att_inicio = horario_processo_inicio,
-                                     dt_processo_att_fim = as_datetime(NA),   
-                                     nr_processo_att_controle = 20,
-                                     
-                                     .rows = 1)), 
-                  in_place = TRUE) 
-      
-    }
-    
-    rm(processo_nao_inserido)
-    
-  }
+  # Atualiza controle de processos (tb_processos_atualizacao)  
+  if(!definicoes$att_teste) atualiza_processos_att(
+    TipoAtt = "inicio", 
+    id_att = id_presente_att, 
+    id_processo = 2, 
+    processo_nome = "Identificação OSC")
   
   # Se os dados da Receita Federal não estiverem carregados, carrega eles. ####
   if(!(exists("tb_JoinOSC") && class(tb_JoinOSC) == "data.frame")) {
@@ -100,7 +76,6 @@ if(!(21 %in% processos_att_atual)) {
     message(agora(), "   Carregando dados previamente baixados da RFB...")
     tb_JoinOSC <- readRDS(path_file_backup)
     rm(path_file_backup)
-    
   }
   
   # Filtra por CNAE ####
@@ -253,48 +228,14 @@ if(!(21 %in% processos_att_atual)) {
   # Atualiza controle de processos ####
   processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 20], 21))
   
-  if(!definicoes$att_teste) {
-    
-    # Atualiza realização de processos:
-    rows_update(tb_processos_atualizacao, 
-                copy_inline(conexao_mosc, 
-                            tibble(att_id = id_presente_att,
-                                   processo_id = 2,
-                                   tx_processo_nome = "Identificação OSC",
-                                   bo_processo_att_completo = TRUE,
-                                   dt_processo_att_inicio = horario_processo_inicio,
-                                   dt_processo_att_fim = now(),   
-                                   nr_processo_att_controle = 21,
-                                   
-                                   .rows = 1)), 
-                by = c("att_id", "processo_id"), 
-                unmatched = "ignore",
-                in_place = TRUE)
-
-    # Registra arquivo intermediário criado:
-    if(definicoes$salva_backup) {
-      
-      new_file_id <- ifelse(length(pull(tb_backups_files, file_id)) == 0, 1, 
-                            max(pull(tb_backups_files, file_id), na.rm = TRUE) + 1)
-      
-      rows_append(tb_backups_files, 
-                  copy_inline(conexao_mosc, 
-                              tibble(
-                                file_id = new_file_id,
-                                att_id = id_presente_att,
-                                processo_id = 1,
-                                tx_file_folder = glue("{diretorio_att}intermediate_files/"),
-                                tx_file_name = "Tb_OSC_Full.RDS",
-                                nr_file_size_mb = file.size(path_file_backup)/1024000,
-                                
-                                .rows = 1)), 
-                  in_place = TRUE)
-      
-      rm(new_file_id)
-    }
-  }
+  # Atualiza controle de processos (tb_processos_atualizacao)  
+  if(!definicoes$att_teste) atualiza_processos_att(
+    TipoAtt = "fim", 
+    id_att = id_presente_att, 
+    id_processo = 2, 
+    path_file_backup = ifelse(definicoes$salva_backup, path_file_backup, NULL))
   
-  rm(horario_processo_inicio, path_file_backup)
+  rm(path_file_backup)
   rm(tb_JoinOSC) # não vamos mais utilizar esses dados
   
   } else {

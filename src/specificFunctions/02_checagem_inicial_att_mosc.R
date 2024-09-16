@@ -59,9 +59,7 @@ assert_that(dir.exists(definicoes$dir_backup_files),
 
 # Aproveito para corrigir eventuais problemas de falta de "/":
 if(str_sub(definicoes$dir_backup_files, -1, -1) != "/") {
-  
   dir_backup_files <- paste0(dir_backup_files, "/")
-  
 }
 
 Sys.sleep(2)
