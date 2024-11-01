@@ -67,6 +67,16 @@ AreaAtuacaoOSC <- function(DB_OSC, DB_SubAreaRegras,
   # Coloca as colunas em ordem
   DB_SubAreaRegras <- arrange(DB_SubAreaRegras, Ordem)
   
+  names(DB_SubAreaRegras)
+  
+  # Retira problemas de formatação:
+  DB_SubAreaRegras <- DB_SubAreaRegras %>% 
+    mutate(Valor = as.character(Valor), 
+           Valor = str_trim(Valor), 
+           Valor = toupper(Valor), 
+           # remove acentos:
+           Valor = stringi::stri_trans_general(Valor, id = "Latin-ASCII"))
+  
   # output
   output <- tibble()
   

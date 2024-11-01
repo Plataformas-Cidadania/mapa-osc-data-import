@@ -85,7 +85,7 @@ source("src/specificFunctions/07_determinacao_areas_atuacao.R")
 # como o GALILEO ou outro, possa gerar a latitude e longitude)
 source("src/specificFunctions/08_gera_geolocalizacao.R")
 
-# Neste ponto aqui o arquivo "intermediate_files/GalileoINPUT.RDS" deve estar
+# Neste ponto aqui o arquivo "intermediate_files/LatLonOSC.RDS" deve estar
 # presente e atualizado:
 Confirmation <- readline("O arquivo de geolocalização está atualizado? (s/n) ")
 assert_that(Confirmation == "s")

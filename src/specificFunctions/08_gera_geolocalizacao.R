@@ -98,7 +98,13 @@ if(!(91 %in% processos_att_atual)) {
     mutate(cnpj = str_pad(as.character(cd_identificador_osc), 
                           width = 14, 
                           side = "left", 
-                          pad = "0"))
+                          pad = "0"), 
+           nr_cep = str_pad(as.character(nr_cep), 
+                            width = 8, 
+                            side = "left", 
+                            pad = "0"))
+  
+  rm(tb_osc_old)
   
   # Evita problemas de formatação no CNPJ:
   DB_OSC <- DB_OSC %>% 
@@ -116,6 +122,7 @@ if(!(91 %in% processos_att_atual)) {
     sum(
       tb_localizacao_old$cnpj[ sample(seq_len(nrow(tb_localizacao_old)), 20) ] %in% 
         DB_OSC$cnpj) > 3 )
+
   
   novos_enderecos_osc <- DB_OSC %>% 
     select(cnpj, cep, numero) %>% 
@@ -135,9 +142,43 @@ if(!(91 %in% processos_att_atual)) {
     dplyr::filter(flag_new)
   
   
+  source("src/generalFunctions/clean_adrs_number.R")
+  
+  # Insere variável de número de endereço limpa
+  tb_localizacao_old$nr_clean <- clean_adrs_number(tb_localizacao_old$nr_localizacao)
+  novos_enderecos_osc$nr_clean <- clean_adrs_number(novos_enderecos_osc$numero)
+  
+  # Cria lista de endereços aproximados em 'tb_localizacao_old':
+  enderecos_existentes <- tb_localizacao_old %>% 
+    select(nr_cep, nr_clean) %>% 
+    mutate(numero_aproximado = ifelse(
+      ( nr_clean == "SN" | nr_clean == "KM" | is.na(nr_clean) ),
+                                      "SN", 
+      as.character( floor(as.numeric(nr_clean)/500) ) ), 
+      
+      endereco_aproximado = paste0(str_sub(nr_cep, 1, 5), "-",
+                                   str_sub(nr_cep, 6, 8),
+                                   "_", numero_aproximado)
+      ) %>% 
+    distinct(endereco_aproximado)
+  
+  
+  novos_enderecos_osc2 <- novos_enderecos_osc %>% 
+    select(cnpj, nr_cep, nr_clean) %>% 
+    mutate(numero_aproximado = ifelse(
+      ( nr_clean == "SN" | nr_clean == "KM" | is.na(nr_clean) ),
+      "SN", as.character( floor(as.numeric(nr_clean)/500) ) ), 
+      
+      endereco_aproximado = paste0(str_sub(nr_cep, 1, 5), "-",
+                                   str_sub(nr_cep, 6, 8),
+                                   "_", numero_aproximado),
+      Ja_Existe = endereco_aproximado %in% enderecos_existentes[["endereco_aproximado"]]) %>% 
+    dplyr::filter(!Ja_Existe)
+  
+  
   # Extrai as informações necessárias:
   input_busca_geo <- DB_OSC %>%
-    dplyr::filter(cnpj %in% novos_enderecos_osc$cnpj) %>% 
+    dplyr::filter(cnpj %in% novos_enderecos_osc2$cnpj) %>% 
     # Variáveis de endereço:
     select(cnpj, razao_social, tipo_logradouro, logradouro, 
            numero, bairro, cep, municipio, pais) %>% 
@@ -178,8 +219,9 @@ if(!(91 %in% processos_att_atual)) {
                               "data/raw/Galileo/GalileoINPUT.RDS", 
                               NULL))
   
-    rm(input_busca_geo, novos_enderecos_osc, tb_localizacao_old, tb_osc_old)
+    rm(input_busca_geo, novos_enderecos_osc, tb_localizacao_old)
     rm(CodMunicRFB)
+    rm(clean_adrs_number, enderecos_existentes, novos_enderecos_osc2)
     # ls()
   
 } else {

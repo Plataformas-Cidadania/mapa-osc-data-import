@@ -1,0 +1,6 @@
+^p::Pause
+^e::ExitApp
+^#r::
+ MsgBox Rotina Recarregada - Macros Cotidiano
+ Reload
+return
