@@ -13,7 +13,7 @@ library(RODBC)
 library(RPostgres) 
 
 
-# Conecta à nase de dados da Receita Federal:
+# Conecta à base de dados da Receita Federal:
 source("src/generalFunctions/postCon.R") 
 
 read_json("keys/rais_2019_MuriloJunqueira.json")
