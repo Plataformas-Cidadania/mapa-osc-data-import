@@ -32,32 +32,38 @@ library(assertthat)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Debug ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# TipoAtt <- "inicio"
-# id_att <- id_presente_att
-# id_processo = 5
+TipoAtt <- "arquivo backup"
+id_att <- id_presente_att
+id_processo <- 6
 # processo_nome = "criação do diretório backup"
 # path_file_backup = NULL
-# path_file_backup <- "backup/2024_01/input_files/tb_JoinOSC.RDS"
+path_file_backup <- path_file
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Função ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 atualiza_processos_att <- function(
-    TipoAtt = c("inicio", "fim"), # Determina se o processo está se iniciando ou finalizando
+    # Determina se o processo está se iniciando ou finalizando:
+    TipoAtt = c("inicio", "fim", "arquivo backup", "remove linha backups_files"), 
     id_att, # id da atualização
     id_processo, # id do processo
     processo_nome = NULL, # nome do processo
-    path_file_backup = NULL) {
+    path_file_backup = NULL # Arquivo de backup de atualização:
+    ) {
+  
+  # Tipos implementados de atualização:
+  tipos_atualizacao <- c("inicio", "fim", "arquivo backup", 
+                         "remove linha backups_files")
   
   # Checagens:
   assert_that(exists("conexao_mosc"))
   assert_that(dbIsValid(conexao_mosc))
   assert_that(length(TipoAtt) == 1)
-  assert_that(any(c("inicio", "fim") %in% TipoAtt))
+  assert_that(TipoAtt  %in% tipos_atualizacao)
   assert_that(exists("tb_processos_atualizacao")) 
-  # colocar aqui checagem dos objetos "dbplyr":
-  assert_that(any(class(tb_processos_atualizacao) %in% "tbl_PqConnection")) # TO DO
+  assert_that(any(class(tb_processos_atualizacao) %in% "tbl_PqConnection"))
   
+  if(TipoAtt == "arquivo backup") assert_that(!is.null(path_file_backup))
   if(!is.null(path_file_backup)) assert_that(file.exists(path_file_backup)) 
   if(TipoAtt == "inicio") assert_that(!is.null(processo_nome)) 
 
@@ -114,9 +120,7 @@ atualiza_processos_att <- function(
                 in_place = TRUE)
     
     # Registra arquivo intermediário criado:
-    if(is.null(path_file_backup)) {
-      
-      assert_that(file.exists(path_file_backup))
+    if(!is.null(path_file_backup)) {
       
       # id do backup (se a tabela está zerada, coloca 1)
       new_file_id <- ifelse(length(pull(tb_backups_files, file_id)) == 0, 1, 
@@ -147,6 +151,64 @@ atualiza_processos_att <- function(
       rm(new_file_id)
     }
   }
+  
+  if(TipoAtt == "arquivo backup") {
+    
+    # id do backup (se a tabela está zerada, coloca 1)
+    new_file_id <- ifelse(length(pull(tb_backups_files, file_id)) == 0, 1, 
+                          max(pull(tb_backups_files, file_id), na.rm = TRUE) + 1)
+    
+    # Separa nome e diretório do arquivo
+    file_name <- path_file_backup %>% 
+      str_split("/") %>% 
+      magrittr::extract2(1) %>% 
+      magrittr::extract2(str_count(path_file_backup, "/") + 1)
+    
+    file_folder <- str_remove(path_file_backup, file_name)
+    
+    
+    rows_append(tb_backups_files, 
+                copy_inline(conexao_mosc, 
+                            tibble(
+                              file_id = new_file_id,
+                              att_id = id_att,
+                              processo_id = id_processo,
+                              tx_file_folder = file_name,
+                              tx_file_name = file_folder,
+                              nr_file_size_mb = file.size(path_file_backup)/1024000,
+                              
+                              .rows = 1)), 
+                in_place = TRUE)
+    
+    rm(new_file_id, file_name, file_folder)
+    
+  }
+  
+  if(TipoAtt == "remove linha backups_files") {
+    
+    # Separa nome e diretório do arquivo
+    file_name <- path_file_backup %>% 
+      str_split("/") %>% 
+      magrittr::extract2(1) %>% 
+      magrittr::extract2(str_count(path_file_backup, "/") + 1)
+    
+    file_folder <- str_remove(path_file_backup, file_name)
+    
+    rows_delete(tb_backups_files, 
+                copy_inline(conexao_mosc, 
+                            tibble(
+                              att_id = id_att,
+                              processo_id = id_processo,
+                              tx_file_folder = file_name,
+                              tx_file_name = file_folder,
+                              
+                              .rows = 1)),
+                by = c("att_id", "processo_id", "tx_file_folder", 
+                       "tx_file_name"),
+                unmatched = "ignore",
+                in_place = TRUE) 
+  }
+  
   return(TRUE)
 }
 

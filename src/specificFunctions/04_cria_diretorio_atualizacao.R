@@ -47,6 +47,13 @@ if(!51 %in% processos_att_atual) {
   # Marca início do processo
   horario_processo_inicio <- now()
   
+  # Atualiza controle de processos (tb_processos_atualizacao)  
+  if(!definicoes$att_teste) atualiza_processos_att(
+    TipoAtt = "inicio", 
+    id_att = id_presente_att, 
+    id_processo = 5, 
+    processo_nome = "criação do diretório backup")
+  
   if(!dir.exists(diretorio_att)) {
     
     message(agora(), ": Criando diretório de backup da atualização.")
@@ -65,10 +72,9 @@ if(!51 %in% processos_att_atual) {
 
   # Atualiza controle de processos (tb_processos_atualizacao)  
   if(!definicoes$att_teste) atualiza_processos_att(
-    TipoAtt = "inicio", 
+    TipoAtt = "fim", 
     id_att = id_presente_att, 
-    id_processo = 5, 
-    processo_nome = "criação do diretório backup")
+    id_processo = 5)
   
   message("Diretório Backup dos arquivos criado") 
   

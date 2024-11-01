@@ -59,32 +59,40 @@ library(RPostgres)
 
 # Executa o processo se não foi feito anteriormente
 # "61": Processo 6 (Desmembramento da base RFB) e 1 (completo)
-if(!"61" %in% ProcessosAtt_Atual$Controle) {
+if(!(61 %in% processos_att_atual)) {
   
   message("Desmembramento da base RFB")
   Sys.sleep(2) # Dar um tempo apenas para o usuário ler as mensagens da atualização
   
-  assert_that(file.exists(paste0(DirName, "intermediate_files/GalileoINPUT.RDS")),
-              msg = "Arquivo de localização do Galileo não está presente")
+  assert_that(file.exists(glue("{diretorio_att}intermediate_files/LatLonOSC.RDS")),
+              msg = glue("Arquivo de geolocalização ", 
+                         "'intermediate_files/LatLonOSC.RDS' não está presente"))
   
-  # Marca início do processo
-  DataProcessoInicio <- now()
+  ## Início do processo ####
+  processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 61], 60))
+  
+  # Atualiza controle de processos (tb_processos_atualizacao)  
+  if(!definicoes$att_teste) atualiza_processos_att(
+    TipoAtt = "inicio", 
+    id_att = id_presente_att, 
+    id_processo = 6, 
+    processo_nome = "Desmembramento da base RFB")
   
   # Se o arquivo não estiver carregado, carrega ele.
   if(!(exists("DB_OSC") && "data.frame" %in% class(DB_OSC)) ) {
     
     # Se o arquivo já tiver sido baixado, vamos direto para carregar ele.
-    PathFile <- paste0(diretorio_att, "intermediate_files/DB_OSC.RDS")
+    path_file_backup <- glue("{diretorio_att}intermediate_files/DB_OSC.RDS")
     
     # Garante que o arquivo existe.
-    assert_that(file.exists(PathFile), 
-                msg = paste0("Arquivo '", PathFile, "' não encontrado."))
+    assert_that(file.exists(path_file_backup), 
+                msg = paste0("Arquivo '", path_file_backup, "' não encontrado."))
     
-    # Carrega ele
-    DB_OSC <- readRDS(PathFile)
+    # Carrega os dados:
+    DB_OSC <- readRDS(path_file_backup)
     # names(DB_OSC)
     # nrow(DB_OSC)
-    rm(PathFile)
+    rm(path_file_backup)
   }
   
   # Código da fonte de dados RFB
@@ -102,9 +110,21 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     select(id_osc, cd_identificador_osc)
   
   
-  ## Tabela: tb_osc ####
+  # Resgata o ID já existente das OSC
+  idControl <- tbl(conexao_mosc, "tb_osc") %>% 
+    select(id_osc, cd_identificador_osc) %>% 
+    collect() %>% 
+    mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
+                                          width = 14, 
+                                          side = "left", 
+                                          pad = "0"))
+  
+  # Tabela: tb_osc ####
   
   # Resgata o "id_osc" antigo
+  
+  names(DB_OSC)
+  table(DB_OSC$matriz_filial)
   
   # Formata base:
   tb_osc <- DB_OSC %>% 
@@ -118,13 +138,11 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            ft_identificador_osc = FonteRFB,
            ft_osc_ativa = FonteRFB, 
            bo_osc_ativa = TRUE, 
-           bo_Filial = identificador_matrizfilial == "2", 
+           bo_Filial = matriz_filial == "2", # No outro banco o nome do campo era 'identificador_matrizfilial ' # TO DO: uniformizar nomes dos campos
            ft_Filial = FonteRFB) %>% 
     
-    arrange(id_osc, data_de_inicio_atividade) %>% 
-    select(id_osc, 
-           # ft_IsOSC, # rodar etapa anterior para inserir essa variável
-           tx_apelido_osc, ft_apelido_osc, cd_identificador_osc,
+    arrange(id_osc) %>% 
+    select(id_osc,tx_apelido_osc, ft_apelido_osc, cd_identificador_osc,
            ft_identificador_osc, bo_osc_ativa, ft_osc_ativa, bo_Filial,
            ft_Filial, cd_situacao_cadastral) %>% 
     # Evitar dar fonte de dado missing:
@@ -134,7 +152,6 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            ft_Filial = ifelse(is.na(bo_Filial), NA, ft_Filial))
   
   # Cria id_osc dos novos CNPJs:
-  
   if(sum(is.na(tb_osc$id_osc)) > 0) {
     # id máximo antigo
     Max_OldID <- max(tb_osc$id_osc, na.rm = TRUE)
@@ -147,20 +164,17 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     # Adiciona novos IDs
     tb_osc$id_osc[is.na(tb_osc$id_osc)] <- NewID
     
+    assert_that(sum(is.na(tb_osc$id_osc)) == 0)
+    
+    # atualiza idControl
+    idControl <- tb_osc %>% 
+      select(id_osc, cd_identificador_osc) %>% 
+      mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
+                                            width = 14, 
+                                            side = "left", 
+                                            pad = "0"))
+    
     rm(Max_OldID, NewID)
-    
-    # Guarda os novos IDs em idControl
-    NewId <- tb_osc %>% 
-      distinct(id_osc, cd_identificador_osc) %>% 
-      select(everything())
-    
-    # Update idControl
-    idControl <- bind_rows(idControl, NewId) %>% 
-      distinct(id_osc, cd_identificador_osc) %>% 
-      select(everything())
-    
-    saveRDS(idControl, "tab_auxiliares/idControl.RDS")
-    rm(NewId)
   }
   
   # Garante chaves primárias únicas
@@ -173,7 +187,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
               msg = "Criação de nulos em chaves primárias em tb_osc.")
   
   # Por enquanto, vou anular os valores de tx_apelido_osc, até entender
-  # melhor essa variável
+  # melhor essa variável # TO DO
   tb_osc[["tx_apelido_osc"]] <- NA_character_
   tb_osc[["ft_apelido_osc"]] <- NA_character_
   
@@ -181,16 +195,24 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   # vou deixar assim
   tb_osc[["cd_identificador_osc"]] <- as.numeric(tb_osc[["cd_identificador_osc"]])
   
-  # Salva Backup
-  PathFile <- paste0(DirName, "output_files/tb_osc.RDS")
-  saveRDS(tb_osc, PathFile)
+  # Salva Backup:
+  if(definicoes$salva_backup) {
+    
+    path_file <- glue("{diretorio_att}intermediate_files/tb_osc.RDS")
+    saveRDS(tb_osc, path_file)
+    
+    # Atualiza controle de processos (tb_processos_atualizacao)  
+    if(!definicoes$att_teste) atualiza_processos_att(
+      TipoAtt = "arquivo backup", 
+      id_att = id_presente_att, 
+      id_processo = 6, 
+      path_file_backup = ifelse(definicoes$salva_backup, 
+                                path_file, 
+                                NULL))
+    
+    rm(path_file)
+  }
   
-  # Registra novo arquivo salvo
-  BackupsFiles <- BackupsFiles %>% 
-    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = str_remove(PathFile, "tb_osc.RDS$"), 
-            FileName = "tb_osc.RDS", 
-            FileSizeMB = file.size(PathFile)/1024000 )
   
   
   # Tabela: tb_dados_gerais ####
@@ -203,8 +225,11 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     # Insere "id_osc"
     left_join(idControl, by = "cd_identificador_osc") %>% 
     
-    mutate(dt_fundacao_osc = as.character(ymd(data_de_inicio_atividade)),
-           dt_ano_cadastro_cnpj = as.character(ymd(data_de_inicio_atividade)),
+    mutate(# uniformizar os campos da RFB logo no início da atualização # TO DO
+           # dt_fundacao_osc = as.character(ymd(data_de_inicio_atividade)),
+           # dt_ano_cadastro_cnpj = as.character(ymd(data_de_inicio_atividade)), 
+      dt_fundacao_osc = as.character(ymd(data_inicio_atividades)),
+           dt_ano_cadastro_cnpj = as.character(ymd(data_inicio_atividades)),
            cd_classe_atividade_economica_osc = str_sub(cnae, 1, 5), # verificar se é isso mesmo!
            ft_natureza_juridica_osc = FonteRFB, 
            ft_razao_social_osc = FonteRFB, 
@@ -229,7 +254,6 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            cd_classe_atividade_economica_osc, ft_classe_atividade_economica_osc, 
            situacao)
   
-  
   assert_that(sum(is.na(tb_dados_gerais$id_osc)) == 0)
   assert_that(nrow(tb_dados_gerais) == length(unique(tb_dados_gerais$id_osc)))
   
@@ -237,16 +261,27 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   # vou deixar assim
   tb_dados_gerais[["cd_identificador_osc"]] <- as.numeric(tb_dados_gerais[["cd_identificador_osc"]])
   
-  # Salva Backup
-  PathFile <- paste0(DirName, "output_files/tb_dados_gerais.RDS")
-  saveRDS(tb_dados_gerais, PathFile)
   
-  # Registra novo arquivo salvo
-  BackupsFiles <- BackupsFiles %>% 
-    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = str_remove(PathFile, "tb_dados_gerais.RDS$"), 
-            FileName = "tb_dados_gerais.RDS", 
-            FileSizeMB = file.size(PathFile)/1024000 )
+  # Salva Backup:
+  if(definicoes$salva_backup) {
+    
+    path_file <- glue("{diretorio_att}intermediate_files/tb_dados_gerais.RDS")
+    saveRDS(tb_dados_gerais, path_file)
+    
+    # Atualiza controle de processos (tb_processos_atualizacao)  
+    if(!definicoes$att_teste) atualiza_processos_att(
+      TipoAtt = "arquivo backup", 
+      id_att = id_presente_att, 
+      id_processo = 6, 
+      path_file_backup = ifelse(definicoes$salva_backup, 
+                                path_file, 
+                                NULL))
+    
+    rm(path_file)
+  }
+  
+  
+  
   
   # Tabela: tb_contato ####
   
@@ -256,8 +291,11 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     # Insere "id_osc"
     left_join(idControl, by = "cd_identificador_osc") %>% 
     
-    mutate(tx_telefone = ifelse(is.na(telefone_1), NA, 
-                                paste0(ddd_1, " ", telefone_1)),
+    mutate(tx_telefone = ifelse(is.na(telefone1), NA, 
+                                paste0(ddd1, " ", telefone1)),
+           # Uniformizar campos # TO DO
+           # tx_telefone = ifelse(is.na(telefone_1), NA, 
+           #                           paste0(ddd_1, " ", telefone_1)),
            ft_telefone = FonteRFB, 
            ft_email = FonteRFB,
            bo_nao_possui_email = is.na(tx_email)) %>% 
@@ -277,8 +315,12 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     # Insere "id_osc"
     left_join(idControl, by = "cd_identificador_osc") %>% 
     
-    mutate(tx_telefone = ifelse(is.na(telefone_1), NA, 
-                                paste0(ddd_1, " ", telefone_1))) %>% 
+    # Uniformizar campos # TO DO
+    # mutate(tx_telefone = ifelse(is.na(telefone_1), NA, 
+    #                             paste0(ddd_1, " ", telefone_1))
+    mutate(tx_telefone = ifelse(is.na(telefone1), NA, 
+                                paste0(ddd1, " ", telefone1))
+    ) %>% 
     
     select(id_osc, tx_telefone, tx_email) %>% 
     gather(key = tx_tipo_contato, value = tx_contato, tx_telefone, tx_email) %>% 
@@ -296,33 +338,62 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
   assert_that(nrow(tb_contato2) == 
                 length(unique(paste(tb_contato2$id_osc, tb_contato2$tx_tipo_contato))))
   
-  # Salva Backup
-  PathFile <- paste0(DirName, "output_files/tb_contato.RDS")
-  saveRDS(tb_contato, PathFile)
+  # Salva Backup:
+  if(definicoes$salva_backup) {
+    
+    path_file <- glue("{diretorio_att}intermediate_files/tb_contato.RDS")
+    saveRDS(tb_contato, path_file)
+    
+    # Atualiza controle de processos (tb_processos_atualizacao)  
+    if(!definicoes$att_teste) atualiza_processos_att(
+      TipoAtt = "arquivo backup", 
+      id_att = id_presente_att, 
+      id_processo = 6, 
+      path_file_backup = ifelse(definicoes$salva_backup, 
+                                path_file, 
+                                NULL))
+    
+    path_file <- glue("{diretorio_att}intermediate_files/tb_contato2.RDS")
+    saveRDS(tb_contato2, path_file)
+    
+    # Atualiza controle de processos (tb_processos_atualizacao)  
+    if(!definicoes$att_teste) atualiza_processos_att(
+      TipoAtt = "arquivo backup", 
+      id_att = id_presente_att, 
+      id_processo = 6, 
+      path_file_backup = ifelse(definicoes$salva_backup, 
+                                path_file, 
+                                NULL))
+    
+    rm(path_file)
+  }
   
-  PathFile <- paste0(DirName, "output_files/tb_contato2.RDS")
-  saveRDS(tb_contato2, PathFile)
   
-  # Registra novo arquivo salvo
-  BackupsFiles <- BackupsFiles %>% 
-    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = paste0(DirName, "output_files/"), 
-            FileName = "tb_contato.RDS", 
-            FileSizeMB = file.size(paste0(DirName, "output_files/tb_contato.RDS"))/1024000 ) %>% 
-    add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
-            FileFolder = paste0(DirName, "output_files/"), 
-            FileName = "tb_contato2.RDS", 
-            FileSizeMB = file.size(paste0(DirName, "output_files/tb_contato2.RDS"))/1024000 )
+  
+  # Estou aqui!!! ####
+  
+  names(DB_OSC)
+  names(LatLon_data)
   
   # Tabela: tb_localizacao ####
   
   # Dados de geolocalização:
-  Galileo_file <- paste0(DirName, 
-                         "intermediate_files/GalileoINPUT.RDS")
+  LatLon_file <- glue("{diretorio_att}intermediate_files/LatLonOSC.RDS")
   
-  Galileo_data <- readRDS(Galileo_file)
+  LatLon_data <- readRDS(LatLon_file)
   
-  Dt_Galileo_data <- file.info(Galileo_file) %>% 
+  LatLon_data <- LatLon_data %>% 
+    # Uniformiza o campo CPF:
+    mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
+                                          width = 14, 
+                                          side = "left", 
+                                          pad = "0")) %>% 
+    # Insere "id_osc"
+    left_join(idControl, by = "cd_identificador_osc")
+  
+  # sum(is.na(LatLon_data$id_osc)) # Ver o caso dessas OSC sem CNPJ # TO DO
+  
+  Dt_LatLon_data <- file.info(LatLon_file) %>% 
     mutate(ctime = as.character(ctime)) %>% 
     select(ctime) %>% 
     unlist() %>% 
@@ -351,17 +422,15 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
            CodMuniRFB = municipio,
            nr_cep = cep) %>% 
     
-    # Incorpora dados de geolocalização
-    left_join(Galileo_data, by = "cd_identificador_osc") %>% 
-    select(-matches("id_osc")) %>% 
-    
     # Insere "id_osc"
     left_join(idControl, by = "cd_identificador_osc") %>% 
     
-    # Não pode ter sede no exterior nem valor nulo de município
-    dplyr::filter(CodMuniRFB != "9707", 
-                  !is.na(CodMuniRFB)) %>% 
+    # Incorpora dados de geolocalização
+    left_join(LatLon_data, by = "id_osc") %>% 
     
+    # Não pode ter valor nulo de município
+    dplyr::filter(!is.na(CodMuniRFB)) %>% 
+
     # Coloca código municipal do IBGE
     left_join(CodMunicRFB, 
               by = ("CodMuniRFB")) %>% 
@@ -369,36 +438,52 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     rename(tx_longitude = Longitude, 
            tx_latitude = Latitude, 
            cd_municipio = CodMunicIBGE) %>% 
-    mutate(geo_localizacao = paste0("POINT (", tx_longitude, " ", tx_latitude, ")"),
-           geo_localizacao = ifelse(is.na(tx_latitude) | is.na(tx_longitude), 
-                                    NA, geo_localizacao),
-           ft_geo_localizacao = "Software Galileo",
-           qualidade_classificacao = case_when(cd_precisao_localizacao == 1 ~ "1 Estrela", 
-                                               cd_precisao_localizacao > 1 ~ paste(cd_precisao_localizacao, "Estrelas"),
-                                               TRUE ~ NA),
-           dt_geocodificacao = Dt_Galileo_data, 
-           tx_endereco = paste0(tipo_de_logradouro, " ", logradouro),
-           tx_endereco_corrigido2 = paste0(Munic_Nome2, ", ", UF),
-           tx_endereco_corrigido = paste0(tx_endereco, nr_localizacao, ", ",
-                                          ifelse(!is.na(tx_endereco_complemento), 
-                                                 paste0(tx_endereco_complemento, ", "), 
-                                                 ""), 
-                                          tx_bairro, ", ", Munic_Nome2, ", ", 
-                                          UF, ", ", nr_cep),
-           ft_endereco_corrigido =  FonteRFB,
-           ft_data_geocodificacao = FonteRFB,
-           ft_endereco = FonteRFB,
-           ft_localizacao = FonteRFB,
-           tx_endereco_complemento = str_trim(tx_endereco_complemento), 
-           ft_endereco_complemento = FonteRFB,
-           ft_bairro = FonteRFB,
-           ft_municipio = FonteRFB,
-           ft_cep = FonteRFB,
-           ft_latlon = "Software Galileo",
-           bo_oficial = TRUE, 
-           cd_fonte_geocodificacao = NA, 
-           tx_bairro_encontrado = NA, 
-           ft_bairro_encontrado = NA) %>% 
+    
+    mutate(
+      # Processa OSC com sede no exterior
+      cd_municipio = ifelse(CodMuniRFB == "9707", 0, cd_municipio),
+      
+      geo_localizacao = paste0("POINT (", tx_longitude, " ", tx_latitude, ")"),
+      geo_localizacao = ifelse(is.na(tx_latitude) | is.na(tx_longitude), 
+                               NA, geo_localizacao),
+      
+      ft_latlon = "Software ArcGIS", # tornar essa fonte dinâmica, de acordo com a atualização! # TO DO
+      
+      # Classificação do GALILEO:
+      # qualidade_classificacao = case_when(cd_precisao_localizacao == 1 ~ "1 Estrela", 
+      #                                     cd_precisao_localizacao > 1 ~ paste(cd_precisao_localizacao, "Estrelas"),
+      #                                     TRUE ~ NA),
+      
+      # Classificação do ArcGIS
+      qualidade_classificacao = paste0(Status, "_", Score, "_ ", Match_type),
+      
+      )
+  
+      
+      dt_geocodificacao = Dt_LatLon_data, 
+      tx_endereco = paste0(tipo_de_logradouro, " ", logradouro),
+      tx_endereco_corrigido2 = paste0(Munic_Nome2, ", ", UF),
+      tx_endereco_corrigido = paste0(tx_endereco, nr_localizacao, ", ",
+                                     ifelse(!is.na(tx_endereco_complemento), 
+                                            paste0(tx_endereco_complemento, ", "), 
+                                            ""), 
+                                     tx_bairro, ", ", Munic_Nome2, ", ", 
+                                     UF, ", ", nr_cep),
+      ft_endereco_corrigido =  FonteRFB,
+      ft_data_geocodificacao = FonteRFB,
+      ft_endereco = FonteRFB,
+      ft_localizacao = FonteRFB,
+      tx_endereco_complemento = str_trim(tx_endereco_complemento), 
+      ft_endereco_complemento = FonteRFB,
+      ft_bairro = FonteRFB,
+      ft_municipio = FonteRFB,
+      ft_cep = FonteRFB,
+      ft_latlon = "Software ArcGIS", # tornar essa fonte dinâmica, de acordo com a atualização! # TO DO
+      bo_oficial = TRUE, 
+      cd_fonte_geocodificacao = NA, 
+      tx_bairro_encontrado = NA, 
+      ft_bairro_encontrado = NA) %>% 
+    
     select(id_osc, cd_identificador_osc, tx_endereco, ft_endereco,
            nr_localizacao, ft_localizacao, tx_endereco_complemento,
            ft_endereco_complemento, tx_bairro, ft_bairro, cd_municipio,
@@ -435,8 +520,8 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
               msg = "Valores nulos encontrados em 'cd_municipio'")
   
   # Salva Backup
-  PathFile <- paste0(DirName, "output_files/tb_localizacao.RDS")
-  saveRDS(tb_localizacao, PathFile)
+  path_file <- paste0(DirName, "output_files/tb_localizacao.RDS")
+  saveRDS(tb_localizacao, path_file)
   rm(Galileo_data, CodMunicRFB, Galileo_file)
   
   # Registra novo arquivo salvo
@@ -444,7 +529,7 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
             FileFolder = paste0(DirName, "output_files/"), 
             FileName = "tb_localizacao.RDS", 
-            FileSizeMB = file.size(PathFile)/1024000 )
+            FileSizeMB = file.size(path_file)/1024000 )
   
   
   
@@ -679,8 +764,8 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
               msg = "Chave-primárias duplicadas em 'tb_area_atuacao'")
   
   # Salva Backup
-  PathFile <- paste0(DirName, "output_files/tb_area_atuacao.RDS")
-  saveRDS(tb_area_atuacao, PathFile)
+  path_file <- paste0(DirName, "output_files/tb_area_atuacao.RDS")
+  saveRDS(tb_area_atuacao, path_file)
   
   rm(tb_area_atuacao)
   
@@ -689,10 +774,15 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
             FileFolder = paste0(DirName, "output_files/"), 
             FileName = "tb_area_atuacao.RDS", 
-            FileSizeMB = file.size(PathFile)/1024000 )
+            FileSizeMB = file.size(path_file)/1024000 )
   
   
   # Atualiza realização de processos:
+  
+  
+  # Atualiza controle de processos ####
+  processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 60], 61))
+  
   ProcessosAtt_Atual <- ProcessosAtt_Atual %>% 
     add_row(ControleAt_Id = paste0(Att_Atual$At_id[1], "_6"), 
             At_id = Att_Atual$At_id[1],
@@ -704,11 +794,16 @@ if(!"61" %in% ProcessosAtt_Atual$Controle) {
             DataFim = now(),
             Controle = "61")
   
-  rm(DataProcessoInicio, FonteRFB, PathFile)
+  rm(DataProcessoInicio, FonteRFB, path_file)
   rm(tb_osc, tb_dados_gerais, tb_contato, tb_contato2, 
      tb_localizacao, tb_area_atuacao)
   rm(tb_area_atuacao2, tb_area_atuacao3)
-} else {message("Desmembramento da base RFB já feito anteriormente")}
+  
+  } else {
+    
+    message("Desmembramento da base RFB já feito anteriormente")
+  
+  }
 
 
 rm(DB_OSC)

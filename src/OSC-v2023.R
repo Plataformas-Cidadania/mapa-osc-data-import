@@ -31,8 +31,8 @@ definicoes$data_dados_referencia <- ymd("2024-04-13") # ATUALIZAR AQUI TAMBÉM
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Arquivo JSON com as chave de acesso ao banco de dados MOSC
-definicoes$credenciais_mosc <- "keys/localhost_key.json"
-# definicoes$credenciais_mosc <- "keys/psql12-homolog_keySUPER.json"
+# definicoes$credenciais_mosc <- "keys/localhost_key.json"
+definicoes$credenciais_mosc <- "keys/psql12-homolog_keySUPER.json"
 
 # Arquivo JSON com as chaves de acesso ao banco de dados da RFB e da RAIS:
 definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"
