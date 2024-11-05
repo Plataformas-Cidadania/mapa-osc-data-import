@@ -1,3 +1,13 @@
 To do List:
 
--
+	*-Erro na atualização em tb_localicacao
+
+	-Verificar erro em tb_contato.tx_telefone
+	-Colocar NA ao invés de "" em tb_dados_gerais.tx_nome_fantasia (e verificar se existe outros casos assim).
+		-Verificar se existe outros casos em que existe "" ao invés de NA nos dados (ex: tb_contato.tx_email)
+
+	-Colocar Log de atualização
+		-Novos registros
+		-Mudanças em campos
+		-Apagados
+	
