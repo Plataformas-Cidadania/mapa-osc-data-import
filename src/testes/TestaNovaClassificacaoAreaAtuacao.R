@@ -10,17 +10,17 @@
 library(readxl)
 library(lubridate)
 
-Tb_OSC_Full <- readRDS("backup_files/2023_01/intermediate_files/Tb_OSC_Full.RDS")
+Tb_OSC_Full <- readRDS("backup_files/2024_01/intermediate_files/Tb_OSC_Full.RDS")
 
 # Regras para determinar as subáreas de atuação
-DB_SubAreaRegras <- read_xlsx("data/temp/codigos-classificacao-defesa-direitos/IndicadoresAreaAtuacaoOSC.xlsx", 
+DB_SubAreaRegras <- read_xlsx("tab_auxiliares/IndicadoresAreaAtuacaoOSC.xlsx", 
                               sheet = 1)
 
 # DB_AreaSubaria <- fread("tab_auxiliares/Areas&Subareas.csv",
 #                         encoding = "Latin-1")
 
 # Relação entre micro áreas e macro áreas
-DB_AreaSubaria <- read_xlsx("data/temp/codigos-classificacao-defesa-direitos/IndicadoresAreaAtuacaoOSC.xlsx", 
+DB_AreaSubaria <- read_xlsx("tab_auxiliares/IndicadoresAreaAtuacaoOSC.xlsx", 
                             sheet = "Areas&Subareas")
 
 message(as.character(now()), "   Início da rotina de determinação das áreas")
@@ -28,12 +28,14 @@ message(as.character(now()), "   Início da rotina de determinação das áreas"
 # Função para determinar as áreas de atuação
 source("src/specificFunctions/AreaAtuacaoOSC.R")
 
-names(DB_OSC)
+names(Tb_OSC_Full)
 
 # Transforma Tb_OSC_Full em DB_OSC
 DB_OSC <- Tb_OSC_Full %>%
-  mutate(cnae = .data[["cnae_fiscal_principal"]], 
+  mutate(cnae = .data[["cnae_fiscal"]], 
          micro_area_atuacao = NA)
+
+names(DB_OSC)
 
 # rm(Tb_OSC_Full) # não vamos mais utilizar esses dados
 

@@ -475,7 +475,7 @@ if(!(61 %in% processos_att_atual)) {
       # tx_endereco = paste0(tipo_de_logradouro, " ", logradouro), # Uniformizar campor # TO DO
       tx_endereco = paste0(tipo_logradouro, " ", logradouro),
       tx_endereco_corrigido2 = paste0(Munic_Nome2, ", ", UF),
-      tx_endereco_corrigido = paste0(tx_endereco, nr_localizacao, ", ",
+      tx_endereco_corrigido = paste0(tx_endereco, ", ", nr_localizacao, ", ",
                                      ifelse(!is.na(tx_endereco_complemento), 
                                             paste0(tx_endereco_complemento, ", "), 
                                             ""), 
