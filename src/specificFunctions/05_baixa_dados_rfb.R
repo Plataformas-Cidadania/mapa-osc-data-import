@@ -72,7 +72,7 @@ if(!(11 %in% processos_att_atual)) {
     id_processo = 1, 
     processo_nome = "baixa dados da Receita Federal")
   
-  # Conecta à nase de dados da Receita Federal:
+  # Conecta à base de dados da Receita Federal:
   source("src/generalFunctions/postCon.R") 
   conexao_rfb <- postCon(definicoes$credenciais_rfb, 
                          Con_options = 

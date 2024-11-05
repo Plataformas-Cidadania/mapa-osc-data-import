@@ -47,17 +47,37 @@ library(RPostgres)
 
 # Executa o processo se não foi feito anteriormente
 # "81": Processo 8 (Update Banco de Dados MOSC) e 1 (completo)
-if(!"81" %in% ProcessosAtt_Atual$Controle) {
+if(!(81 %in% processos_att_atual)) {
   
   message("Insere os dados da RAIS")
   Sys.sleep(2) # Dar um tempo apenas para o usuário ler as mensagens da atualização
   
-  # Marca início do processo
-  DataProcessoInicio <- now()
+  # Atualiza controle de processos (tb_processos_atualizacao)  
+  if(!definicoes$att_teste) atualiza_processos_att(
+    TipoAtt = "inicio", 
+    id_att = id_presente_att, 
+    id_processo = 8, 
+    processo_nome = "Insere Dados RAIS")
   
-  #  Inserir protocolo do idControl:
-  idControl <- readRDS("tab_auxiliares/idControl.RDS") %>% 
-    select(id_osc, cd_identificador_osc)
+  # Resgata o ID já existente das OSC
+  idControl <- tbl(conexao_mosc, "tb_osc") %>% 
+    select(id_osc, cd_identificador_osc) %>% 
+    collect() %>% 
+    mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
+                                          width = 14, 
+                                          side = "left", 
+                                          pad = "0"))
+  
+  # Estou aqui !!!! #####
+  
+  # Conecta à base de dados da RAIS:
+  source("src/generalFunctions/postCon.R") 
+  conexao_rfb <- postCon(definicoes$credenciais_rfb, 
+                         Con_options = 
+                           glue(
+                             "-c search_path={definicoes$schema_receita}"))
+  if(dbIsValid(conexao_rfb)) message("Conectado ao BD 'rais_2019'")
+  rm(postCon)
   
   ListRawFiles <- list.files(paste0(DirName, "input_files/RAIS/"), 
                              pattern = "RDS$")

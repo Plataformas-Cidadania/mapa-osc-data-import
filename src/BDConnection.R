@@ -12,21 +12,28 @@ library(RODBC)
 library(RPostgres)
 
 # Debug:
-# DadosNovos <- tb_osc_New
+# DadosNovos <- tb_localizacao
 # DadosNovos <- slice(tb_osc_New, 1:500)
 # DadosNovos[["cd_identificador_osc"]] <- as.numeric(DadosNovos[["cd_identificador_osc"]])
 # Chave <- "id_osc"
 # Conexao <- connec
-# Table_NameAntigo <- names(ArquivosAtualizacao)[i] 
+# Table_NameAntigo <- "tb_localizacao"
+# GeoVar = c("geo_localizacao")
 # verbose = TRUE
 # samples = TRUE
 # # rm(DadosNovos, Chave, Conexao, Table_NameAntigo)
 # ls()
 
 
-AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo, 
-                          verbose = FALSE, samples = TRUE, deleterows = FALSE, 
-                          GeoVar = NULL) {
+AtualizaDados <- function(Conexao, 
+                          DadosNovos, 
+                          Chave, 
+                          Table_NameAntigo, 
+                          verbose = FALSE, 
+                          samples = TRUE, 
+                          deleterows = FALSE, 
+                          GeoVar = NULL
+                          ) {
   
   message("Marcação do tempo: ", now())
   
@@ -105,7 +112,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   ## Avisa das colunas que não serão atualizadas:
   if(!all(names(DadosNovos) %in% names(DadosAntigos))) {
     message(paste0("Os campos '", 
-                   paste0(names(DadosAntigos)[!names(DadosNovos) %in% names(DadosAntigos)],
+                   paste0(names(DadosAntigos)[!names(DadosAntigos) %in% names(DadosNovos)],
                           collapse = "', '"),
                    "' não estão na tabela de atualização."))  
   }  
@@ -255,7 +262,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
       ## Tabela temporária para formatar dados geográficos
       if(dbExistsTable(Conexao, "geo_temp")) dbRemoveTable(Conexao, "geo_temp")
       
-      # Problema de variáveis com MAIÙSCULA
+      # Problema de variáveis com MAIÚSCULA
       AddData[["geo_dado"]] <- AddData[[GeoVar]]
       
       # Insere tabela temporia para executar a codificação do PostGIS
@@ -266,7 +273,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
       # Usa função do PostGis para formatar a variável geográfica:
       x <- dbGetQuery(Conexao, "SELECT public.ST_GeomFromText(geo_dado, 4674) FROM geo_temp;")
       AddData[[GeoVar]] <- x$st_geomfromtext
-      AddData[["geo_dado"]] <- NULL
+      AddData[["geo_dado"]] <- NULL # Remove a coluna de georeferenciamento em texto
       rm(x)
       
       # Remove tabela temporária
@@ -275,12 +282,14 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
     
     ## Insere linhas:
     AddedRows <- dbAppendTable(Conexao, Table_NameAntigo, AddData)
-    
+
     message(AddedRows, " linhas novas inseridas na tabela")
     
     rm(AddData, MissingCols, AddedRows)
   } else {
+    
     message("Nenhuma linha nova inserida no banco")
+    
   }
   
   
@@ -289,11 +298,11 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   # Atualiza linhas existentes no banco ####
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
-  # Atualiza o banco em blocos de 1000 linhas:
   message("Iniciando atualização no banco: ")
   
   # Atualiza a tabela, para evitar problemas:
   message("Atualizando novamente os dados da tabela do BD")
+  
   DadosAntigos <- dbGetQuery(Conexao, 
                              paste0("SELECT * FROM ",
                                     Table_NameAntigo,
@@ -303,7 +312,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   # Atualiza coluna a coluna, usando a estratégia da tabela
   # intermediária.
   for (col in Att_Cols) {
-    # col <- Att_Cols[11]
+    # col <- Att_Cols[5]
     # print(col)
     
     message("Atualizando coluna ", col)
@@ -474,6 +483,7 @@ AtualizaDados <- function(Conexao, DadosNovos, Chave, Table_NameAntigo,
   
   message("Atualização Concluída!")
   message("Marcação do tempo: ", now())
+  gc()
   return(TRUE)
 }
 

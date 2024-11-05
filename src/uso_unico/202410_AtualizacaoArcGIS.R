@@ -19,40 +19,55 @@ library(assertthat)
 library(readxl)
 
 
+# Defasado:
+# input_busca_geo <- fread("data/raw/IBGE/CNEFE_ArcGIS/input_busca_geo.csv", 
+#                          encoding = "UTF-8")
+# 
+# latlonArcGIS <- readxl::read_xlsx("data/backup_files/2024_01/IntermediateFiles/mapaosc_20241029_202410291739.xlsx",
+#                                   sheet = "mapaosc_20241029_202410291739")
 
-input_busca_geo <- fread("data/raw/IBGE/CNEFE_ArcGIS/input_busca_geo.csv", 
-                         encoding = "UTF-8")
 
-latlonArcGIS <- readxl::read_xlsx("data/backup_files/2024_01/IntermediateFiles/mapaosc_20241029_202410291739.xlsx",
-                                  sheet = "mapaosc_20241029_202410291739")
+source("src/generalFunctions/postCon.R") 
+assert_that(is.function(postCon))
+
+# Concecta aos bancos de dados do MOSC:
+conexao_spat <- postCon("keys/rais_2019_MuriloJunqueira.json", 
+                        Con_options = "-c search_path=spat")
+
+tables <- dbListTables(conexao_spat)
+
+tables
+
+latlonArcGIS <- try(dbGetQuery(conexao_spat, 
+                               glue("SELECT * FROM mapaosc_202410",
+                                    #" LIMIT 500", 
+                                    ";")))
+
+nrow(latlonArcGIS)
+
+length(latlonArcGIS$cnpj) == length(unique(latlonArcGIS$cnpj))
+sum(is.na(latlonArcGIS$cnpj))
 
 names(latlonArcGIS)
 
 output_df <- latlonArcGIS %>% 
-  select(cnpj, tx_enderec, geom, Status, Score, Match_type) %>% 
-  rename(tx_endereco = tx_enderec) %>% 
-  rename(cd_identificador_osc = cnpj) %>% 
-  mutate(cd_identificador_osc = ifelse(cd_identificador_osc == "NA", NA, cd_identificador_osc))
+  select(cnpj, x, y, status, score, match_type, addr_type) %>% 
+  rename(cd_identificador_osc = cnpj, 
+         Longitude = x, 
+         Latitude = y) %>% 
+  mutate(cd_identificador_osc = ifelse(cd_identificador_osc == "NA", 
+                                       NA, 
+                                       cd_identificador_osc))
 
+length(output_df$cd_identificador_osc) == length(unique(output_df$cd_identificador_osc))
 sum(is.na(output_df$cd_identificador_osc))
 
+saveRDS(output_df, "backup_files/2024_01/intermediate_files/LatLonOSC.RDS")
 
-output_df[["Longitude"]] <- output_df$geom %>% 
-  str_remove(fixed("POINT (")) %>% 
-  str_remove(fixed(")")) %>% 
-  str_remove(" .*")
+file.exists("backup_files/2024_01/intermediate_files/LatLonOSC.RDS")
 
-output_df[["Latitude"]] <- output_df$geom %>% 
-  str_remove(fixed("POINT (")) %>% 
-  str_remove(fixed(")")) %>% 
-  str_extract(" .*") %>% 
-  str_trim()
+dbDisconnect(conexao_spat)
 
-
-
-saveRDS(output_df, "data/backup_files/2024_01/IntermediateFiles/LatLonOSC.RDS")
-
-
-
+rm(postCon, tables, latlonArcGIS, conexao_spat, output_df)
 
 # Fim

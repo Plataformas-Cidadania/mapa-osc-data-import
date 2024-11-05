@@ -78,8 +78,6 @@ source("src/specificFunctions/06_identificacao_osc_nabase_rfb.R")
 # Determinação das áreas de atuação OSC
 source("src/specificFunctions/07_determinacao_areas_atuacao.R")
 
-# Estou aqui!!!! ####
-
 # Gera o arquivo de INPUT de Geolocalização:
 # (extrai as informações de endereços das OSC para que o software de localização
 # como o GALILEO ou outro, possa gerar a latitude e longitude)
@@ -96,6 +94,18 @@ source("src/specificFunctions/09_desmembramento_base_rfb.R")
 
 # Insere Dados da RAIS
 source("src/specificFunctions/10_insere_dados_rais.R")
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Atualização MOSC: Update dos dados no Banco de Dados MOSC ####
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Estou aqui!!!! ####
+
+
+source("src/specificFunctions/11_atualiza_mosc.R")
+
+
 
 
 # Limpa memória

@@ -32,12 +32,12 @@ library(assertthat)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Debug ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TipoAtt <- "arquivo backup"
-id_att <- id_presente_att
-id_processo <- 6
+# TipoAtt <- "arquivo backup"
+# id_att <- id_presente_att
+# id_processo <- 6
 # processo_nome = "criação do diretório backup"
 # path_file_backup = NULL
-path_file_backup <- path_file
+# path_file_backup <- path_file
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Função ####

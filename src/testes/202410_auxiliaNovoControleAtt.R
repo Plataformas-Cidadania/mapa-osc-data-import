@@ -36,6 +36,16 @@ if(definicoes$salva_backup) {
 
 tb_backups_files
 
+tb_processos_atualizacao
+
+
+names(tb_localizacao)
+
+
+sum(!is.na(tb_localizacao$geom))
+
+nrow(LatLon_data) - 30574
+
 
 atualiza_processos_att(
   TipoAtt = "remove linha backups_files", 
@@ -44,6 +54,12 @@ atualiza_processos_att(
   path_file_backup = ifelse(definicoes$salva_backup, 
                             path_file, 
                             NULL))
+
+
+
+tb_relacoes_trabalho <- tbl(conexao_mosc, "tb_relacoes_trabalho") %>% 
+  collect() 
+
 
 
 sum(is.na(tb_osc$id_osc))
