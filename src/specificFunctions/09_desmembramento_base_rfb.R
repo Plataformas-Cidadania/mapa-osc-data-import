@@ -579,121 +579,54 @@ if(!(61 %in% processos_att_atual)) {
   
   fontes_alterativas_atuacao <- list.files(glue( "{diretorio_att}input_files/"),
                                            "^tb_area_atuacao")
-                                                  
   
-  for (j in seq_along(fontes_alterativas_atuacao)) {
-    # TO DO    
+  for (g in seq_along(fontes_alterativas_atuacao)) {
+    # g <- 1
     
-    # Identifica área de atuação via CNES/MS
-    # if(file.exists(paste0(DirName, "input_files/tb_area_atuacao_cnes.RDS"))) {
-    #   InputCNES <- readRDS(paste0(DirName, "input_files/tb_area_atuacao_cnes.RDS"))
-    #   
-    #   # names(InputCNES)
-    #   
-    #   # Usa CEBAS/MS para identificar OSC como da área da saúde
-    #   newRows <- InputCNES %>% 
-    #     rename(cd_identificador_osc = cpf_cnpj) %>% 
-    #     
-    #     # Insere "id_osc"
-    #     left_join(idControl, by = "cd_identificador_osc") %>% 
-    #     
-    #     dplyr::filter(!is.na(id_osc)) %>% 
-    #     
-    #     # Evita duplicação dos campos
-    #     distinct(id_osc, .keep_all = TRUE) %>% 
-    #     
-    #     mutate(tx_area_atuacao = "Saúde", 
-    #            ft_area_atuacao = paste0("CNES/MS/", Att_Atual$At_CodRef[1]), 
-    #            ft_area_atuacaoPadronizado = "CNES/MS",
-    #            tx_subarea_atuacao = NA, 
-    #            bo_oficial = TRUE) %>% 
-    #     select(id_osc, cd_identificador_osc, tx_area_atuacao, 
-    #            tx_subarea_atuacao, ft_area_atuacao, bo_oficial, 
-    #            ft_area_atuacaoPadronizado)
-    #   
-    #   tb_area_atuacao <- tb_area_atuacao %>% 
-    #     bind_rows(newRows) %>% 
-    #     arrange(id_osc)
-    #   
-    #   # table(tb_area_atuacao$ft_area_atuacao)
-    #   rm(InputCNES, newRows)
-    # }
-    # 
-    # # Identifica área de atuação via CEBAS/MS
-    # if(file.exists(paste0(DirName, "input_files/InputCEBAS.xlsx"))) {
-    #   InputCEBAS <- read_xlsx(paste0(DirName, "input_files/InputCEBAS.xlsx"), 
-    #                           sheet = 1)
-    #   
-    #   # Usa CEBAS/MS para identificar OSC como da área da saúde
-    #   newRows <- InputCEBAS %>% 
-    #     rename(cd_identificador_osc = NU_CNPJ) %>% 
-    #     
-    #     # Insere "id_osc"
-    #     left_join(idControl, by = "cd_identificador_osc") %>% 
-    #     
-    #     dplyr::filter(!is.na(id_osc)) %>%
-    #     
-    #     # Evita duplicação dos campos
-    #     distinct(id_osc, .keep_all = TRUE) %>% 
-    #     
-    #     mutate(tx_area_atuacao = "Saúde", 
-    #            ft_area_atuacao = paste0("CEBAS/MS/", Att_Atual$At_CodRef[1]), 
-    #            ft_area_atuacaoPadronizado = "CEBAS/MS",
-    #            tx_subarea_atuacao = NA, 
-    #            bo_oficial = TRUE) %>% 
-    #     select(id_osc, cd_identificador_osc, tx_area_atuacao, 
-    #            tx_subarea_atuacao, ft_area_atuacao, bo_oficial, 
-    #            ft_area_atuacaoPadronizado)
-    #   
-    #   tb_area_atuacao <- tb_area_atuacao %>% 
-    #     bind_rows(newRows) %>% 
-    #     arrange(id_osc)
-    #   
-    #   # table(tb_area_atuacao$ft_area_atuacao)
-    #   rm(InputCEBAS, newRows)
-    # }
-    # 
-    # # Identifica área de atuação via CNEAS/MDS
-    # if(file.exists(paste0(DirName, "input_files/InputCNEAS.xlsx"))) {
-    #   InputCNEAS <- read_xlsx(paste0(DirName, "input_files/InputCNEAS.xlsx"), 
-    #                           sheet = 1)
-    #   
-    #   # Formata base InputCNEAS
-    #   names(InputCNEAS)[1] <- "cnpj"
-    #   InputCNEAS <- InputCNEAS %>% 
-    #     mutate(cnpj = str_remove_all(cnpj, fixed(".")), 
-    #            cnpj = str_remove_all(cnpj, fixed("/")), 
-    #            cnpj = str_remove_all(cnpj, fixed("-")))
-    #   
-    #   # Usa CNEAS/MDS para identificar OSC como assistência social
-    #   newRows <- InputCNEAS %>% 
-    #     rename(cd_identificador_osc = cnpj) %>% 
-    #     
-    #     # Insere "id_osc"
-    #     left_join(idControl, by = "cd_identificador_osc") %>% 
-    #     
-    #     dplyr::filter(!is.na(id_osc)) %>% 
-    #     
-    #     # Evita duplicação dos campos
-    #     distinct(id_osc, .keep_all = TRUE) %>% 
-    #     
-    #     mutate(tx_area_atuacao = "Assistência social", 
-    #            ft_area_atuacao = paste0("CNEAS/MDS/", Att_Atual$At_CodRef[1]), 
-    #            ft_area_atuacaoPadronizado = "CNEAS/MDS",
-    #            tx_subarea_atuacao = NA, 
-    #            bo_oficial = TRUE) %>% 
-    #     select(id_osc, cd_identificador_osc, tx_area_atuacao, 
-    #            tx_subarea_atuacao, ft_area_atuacao, bo_oficial, 
-    #            ft_area_atuacaoPadronizado)
-    #   
-    #   tb_area_atuacao <- tb_area_atuacao %>% 
-    #     bind_rows(newRows) %>% 
-    #     arrange(id_osc)
-    #   
-    #   # table(tb_area_atuacao$ft_area_atuacao)
-    #   rm(InputCNEAS, newRows)
-    # }
+      # message("Inserindo ", fontes_alterativas_atuacao[g])
+    
+      Input_data <- fread(
+        glue( "{diretorio_att}input_files/{fontes_alterativas_atuacao[g]}"))
+      
+      assert_that(
+        all(
+          c("tx_area_atuacao", "tx_subarea_atuacao", "ft_area_atuacao",
+              "cd_identificador_osc") %in% names(Input_data)
+            ))
+
+      # names(Input_data)
+
+      # Usa CEBAS/MS para identificar OSC como da área da saúde
+      newRows <- Input_data %>% 
+
+        mutate(ft_area_atuacaoPadronizado = ft_area_atuacao,
+               ft_area_atuacao = paste0(ft_area_atuacao, "/", codigo_presente_att),
+               bo_oficial = TRUE, 
+               cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
+                                              width = 14,
+                                              side = "left", 
+                                              pad = "0")
+               ) %>%
+        
+        # Insere "id_osc"
+        left_join(idControl, by = "cd_identificador_osc") %>%
+        dplyr::filter(!is.na(id_osc)) %>% # Evita id NA
+        distinct(id_osc, .keep_all = TRUE) %>% # Evita duplicação dos campos
+        
+        select(id_osc, cd_identificador_osc, tx_area_atuacao,
+               tx_subarea_atuacao, ft_area_atuacao, bo_oficial,
+               ft_area_atuacaoPadronizado)
+
+      tb_area_atuacao <- tb_area_atuacao %>%
+        bind_rows(newRows) %>%
+        arrange(id_osc)
+
+      # table(tb_area_atuacao$ft_area_atuacao)
+      rm(Input_data, newRows)
   }
+  
+  tb_area_atuacao <- tb_area_atuacao %>%
+    dplyr::filter(!is.na(id_osc)) # Evita id NA
   
   
   # Insere os códigos das áreas
@@ -702,6 +635,36 @@ if(!(61 %in% processos_att_atual)) {
   dc_area_atuacao <- fread("tab_auxiliares/dc_area_atuacao.csv", encoding = "Latin-1")
   dc_subarea_atuacao <- fread("tab_auxiliares/dc_subarea_atuacao.csv", encoding = "Latin-1")
   
+  # Formata dados:
+  dc_area_atuacao$tx_area_atuacao <- dc_area_atuacao$tx_area_atuacao %>% 
+    toupper() %>% 
+    stringi::stri_trans_general(id = "Latin-ASCII") %>% 
+    str_remove_all("[:punct:]") %>% 
+    str_trim() %>% 
+    str_squish()
+  
+  dc_subarea_atuacao$tx_subarea_atuacao <- dc_subarea_atuacao$tx_subarea_atuacao %>% 
+    toupper() %>% 
+    stringi::stri_trans_general(id = "Latin-ASCII") %>% 
+    str_remove_all("[:punct:]") %>% 
+    str_trim() %>% 
+    str_squish()
+  
+  tb_area_atuacao$tx_area_atuacao <- tb_area_atuacao$tx_area_atuacao %>% 
+    toupper() %>% 
+    stringi::stri_trans_general(id = "Latin-ASCII") %>% 
+    str_remove_all("[:punct:]") %>% 
+    str_trim() %>% 
+    str_squish()
+  
+  tb_area_atuacao$tx_subarea_atuacao <- tb_area_atuacao$tx_subarea_atuacao %>% 
+    toupper() %>% 
+    stringi::stri_trans_general(id = "Latin-ASCII") %>% 
+    str_remove_all("[:punct:]") %>% 
+    str_trim() %>% 
+    str_squish()
+  
+  # Transforma nomes em códigos
   tb_area_atuacao <- tb_area_atuacao %>% 
     left_join(dc_area_atuacao, by = "tx_area_atuacao") %>% 
     left_join(select(dc_subarea_atuacao, -cd_area_atuacao), 
@@ -713,7 +676,6 @@ if(!(61 %in% processos_att_atual)) {
   rm(dc_area_atuacao, dc_subarea_atuacao)
   
   # Remove duplicatas da chave "id_osc & cd_area_atuacao & cd_subarea_atuacao"
-  
   tb_area_atuacao <- tb_area_atuacao %>% 
     # Agrupa pela chave múltipla
     group_by(id_osc, cd_area_atuacao, cd_subarea_atuacao) %>% 
@@ -730,6 +692,8 @@ if(!(61 %in% processos_att_atual)) {
     # Finaliza
     ungroup() %>% 
     select(everything())
+  
+  # table(tb_area_atuacao$ft_area_atuacao)
   
   # Adiciona novos IDs:
   
