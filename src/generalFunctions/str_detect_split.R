@@ -8,8 +8,8 @@ library(stringr)
 
 # Debug:
 # chunksize = 20
-# pattern <- ExcludeName
-# x <- split_CNPJ[[i]]
+# pattern <- check_names
+# x <- TestData[[VarTest]]
 
 str_detect_split <- function(x, pattern, chunksize = 20) {
   
@@ -21,6 +21,7 @@ str_detect_split <- function(x, pattern, chunksize = 20) {
   
   # Teste cada chunk
   for (i in seq_along(patternchunks)) {
+    # i <- 1
     patterchunk_i <- paste0(patternchunks[[i]], collapse = "|")
     testpattern <- testpattern | str_detect(x, patterchunk_i)
   }

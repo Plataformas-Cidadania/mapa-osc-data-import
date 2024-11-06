@@ -10,34 +10,43 @@
 library(readxl)
 library(lubridate)
 
-Tb_OSC_Full <- readRDS("backup_files/2024_01/intermediate_files/Tb_OSC_Full.RDS")
+# Função para determinar as áreas de atuação
+source("src/specificFunctions/AreaAtuacaoOSC.R")
+
+
+Tb_OSC_Full <- readRDS("backup_files/2023_01/intermediate_files/Tb_OSC_Full.RDS")
+
+# names(Tb_OSC_Full)
+
+# Transforma Tb_OSC_Full em DB_OSC
+DB_OSC <- Tb_OSC_Full %>%
+  # mutate(cnae = .data[["cnae_fiscal"]], 
+  mutate(cnae = .data[["cnae_fiscal_principal"]], 
+         micro_area_atuacao = NA)
+
+DB_OSC <- slice(DB_OSC, 1:100000)
+
+# names(DB_OSC)
+
+# DB_AreaSubaria <- fread("tab_auxiliares/Areas&Subareas.csv",
+#                         encoding = "Latin-1")
 
 # Regras para determinar as subáreas de atuação
 DB_SubAreaRegras <- read_xlsx("tab_auxiliares/IndicadoresAreaAtuacaoOSC.xlsx", 
                               sheet = 1)
 
-# DB_AreaSubaria <- fread("tab_auxiliares/Areas&Subareas.csv",
-#                         encoding = "Latin-1")
-
 # Relação entre micro áreas e macro áreas
 DB_AreaSubaria <- read_xlsx("tab_auxiliares/IndicadoresAreaAtuacaoOSC.xlsx", 
                             sheet = "Areas&Subareas")
 
-message(as.character(now()), "   Início da rotina de determinação das áreas")
+names(DB_SubAreaRegras)
 
-# Função para determinar as áreas de atuação
-source("src/specificFunctions/AreaAtuacaoOSC.R")
-
-names(Tb_OSC_Full)
-
-# Transforma Tb_OSC_Full em DB_OSC
-DB_OSC <- Tb_OSC_Full %>%
-  mutate(cnae = .data[["cnae_fiscal"]], 
-         micro_area_atuacao = NA)
-
-names(DB_OSC)
+DB_SubAreaRegras <- DB_SubAreaRegras %>% 
+  dplyr::filter(AreaAtuacao != "Desenvolvimento rural")
 
 # rm(Tb_OSC_Full) # não vamos mais utilizar esses dados
+
+
 
 # Usa função "AreaAtuacaoOSC" para determinar qual a área de atuação
 # das OSCs
@@ -46,7 +55,7 @@ DB_OSC$micro_area_atuacao <- AreaAtuacaoOSC(select(DB_OSC,
                                                    razao_social, 
                                                    cnae, 
                                                    micro_area_atuacao), 
-                                            DB_SubAreaRegras, 
+                                            slice(DB_SubAreaRegras, 1:323), 
                                             chuck_size = 10000, verbose = FALSE)
 
 DB_OSC <- DB_OSC %>% 
@@ -57,13 +66,19 @@ DB_OSC <- DB_OSC %>%
   # Insere Macro áreas de atuação
   left_join(DB_AreaSubaria, by = "micro_area_atuacao")
 
-message(agora(), "   Final da rotina de terminação das áreas")
+now()
 
-table(DB_OSC$micro_area_atuacao, useNA = "always")
+DB_OSC %>% 
+  group_by(micro_area_atuacao) %>% 
+  summarise(Freq = n()) %>% 
+  mutate(Per = Freq/sum(Freq)) %>% 
+  print(n = 40)
 
-
-DB_OSC$razao_social[DB_OSC$micro_area_atuacao == "Desenvolvimento rural" ] %>% 
+DB_OSC$razao_social[DB_OSC$micro_area_atuacao == "Outras formas de desenvolvimento e defesa de direitos"] %>% 
   sample(20)
+
+# To DO:
+# Fazer um comparativo entre o critério anterior e esse aqui.
 
 
 # Fim ####

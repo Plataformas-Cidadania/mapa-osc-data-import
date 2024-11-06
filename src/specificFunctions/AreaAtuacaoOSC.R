@@ -37,8 +37,10 @@ library(lubridate)
 # verbose = TRUE
 
 
-AreaAtuacaoOSC <- function(DB_OSC, DB_SubAreaRegras,
-                           chuck_size = 5000, verbose = TRUE) {
+AreaAtuacaoOSC <- function(DB_OSC, 
+                           DB_SubAreaRegras,
+                           chuck_size = 5000, 
+                           verbose = TRUE) {
 
   assert_that(file.exists("src/generalFunctions/str_detect_split.R"))
   
@@ -57,6 +59,16 @@ AreaAtuacaoOSC <- function(DB_OSC, DB_SubAreaRegras,
   assert_that("micro_area_atuacao" %in% names(DB_OSC),
     msg = "Falta variável 'micro_area_atuacao' em DB_OSC")
   
+  
+  DB_SubAreaRegras %>% 
+    dplyr::filter(Variavel == "cnae", CriterioMultiplo != 0) %>% 
+    group_by(CriterioMultiplo) %>% 
+    summarise(Freq = n()) %>% 
+    select(Freq) %>% unlist() %>% as.integer() %>% 
+    magrittr::equals(1) %>% 
+    all() %>% 
+    assert_that(msg = "Existe ambiguidade em critérios múltiplos na variável 'cnae'")
+  
   # Função str_detect_split para optimizar os testes com expressões regulares
   source("src/generalFunctions/str_detect_split.R", local = TRUE)
   
@@ -67,7 +79,7 @@ AreaAtuacaoOSC <- function(DB_OSC, DB_SubAreaRegras,
   # Coloca as colunas em ordem
   DB_SubAreaRegras <- arrange(DB_SubAreaRegras, Ordem)
   
-  names(DB_SubAreaRegras)
+  # names(DB_SubAreaRegras)
   
   # Retira problemas de formatação:
   DB_SubAreaRegras <- DB_SubAreaRegras %>% 
@@ -99,7 +111,7 @@ AreaAtuacaoOSC <- function(DB_OSC, DB_SubAreaRegras,
     unique()
   
   for (i in seq_along(split_OSC)) {
-    # i <- 2
+    # i <- 10
     
     message("Testando conjunto de OSC ", i, " de ", length(split_OSC))
     
@@ -138,7 +150,7 @@ AreaAtuacaoOSC <- function(DB_OSC, DB_SubAreaRegras,
     
     # Seleção com base em múltiplos critérios
     for (h in GrupoMultiplos) {
-      # h <- 1
+      # h <- 11
       
       if (verbose) message("Teste grupo múltiplo ", h)
       
