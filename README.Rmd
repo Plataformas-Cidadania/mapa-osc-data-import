@@ -77,25 +77,32 @@ A etapa do processamento dos dados (caixa central da figura 1) é executada pelo
 
 	Uma inovação introduzida na atualização de 2024 é a adição de três tabelas no Mapa para registrar o fluxo de atualização. São elas:
 
-**tb_controle_atualizacao:** registra as atualizações do mapa, incluindo a data e horário de início e fim da atualização, bem como a data de referência (última atualização da Receita Federal) dos dados.
+* **tb_controle_atualizacao:** registra as atualizações do mapa, incluindo a data e horário de início e fim da atualização, bem como a data de referência (última atualização da Receita Federal) dos dados.
 
-**tb_processos_atualizacao:** registra o horário de início e fim de cada uma das oito etapas de atualização mencionadas anteriormente.
+* **tb_processos_atualizacao:** registra o horário de início e fim de cada uma das oito etapas de atualização mencionadas anteriormente.
 
-**tb_backups_files:** registra os arquivos intermediários e finais gerados durante o processo de atualização.
+* **tb_backups_files:** registra os arquivos intermediários e finais gerados durante o processo de atualização.
 
-A seguir, detalharemos cada um dos processos de atualização.
+Mais detalhes sobre a atualização estão disponibilizado na documentação do Mapa das Organizações Sociais [documentação do Mapa das Organizações Sociais](https://mapaosc.ipea.gov.br/metodologia)
 
 
 
 ## Estrutura do Diretório
 
-1. src/DatabaseOutput.R  
-2. src/AnalysisDataOutput.R  
-3. src/Models.R  
+* **pasta 'backup_files'**:
+* **pasta 'development_zone'**:
+* **pasta 'documentacao'**:
+* **pasta 'tab_auxiliares'**:
+* **pasta 'src'**:
+* **pasta 'src/generalFunctions'**:
+* **pasta 'src/specificFunctions'**:
+* **pasta 'src/uso_unico'**:
 
 
 ## Principais Arquivos de Atualização
 
+* **pasta 'src/atualiza_dados_OSC.R'**:
+* **pasta 'src/specificFunctions/01_setup_atualizacao.R'**:
 
 ## Tabelas Auxiliares
 
