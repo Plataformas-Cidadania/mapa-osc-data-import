@@ -1,0 +1,32 @@
+---
+title: "Mapa das Organizações da Sociedade Civil - IPEA, Governo Federal, Brasil"
+output: 
+  rmarkdown::github_document
+    
+---
+
+# Descrição do Mapa
+
+This is
+
+# O Processo de Atualização dos Dados
+
+There are three ways to replicate this research, depending on how deep the replicantion is.
+
+## Estrutura do Diretório
+
+1. src/DatabaseOutput.R  
+2. src/AnalysisDataOutput.R  
+3. src/Models.R  
+
+
+## Principais Scripts de Atualização
+
+
+## Tabelas Auxiliares
+
+
+
+## Backup de Atualização
+
+
