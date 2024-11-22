@@ -19,8 +19,10 @@ library(jsonlite)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Baixa a chave secreta do código
-assert_that(file.exists("keys/psql12-homolog_key.json"))
-keys <- jsonlite::read_json("keys/psql12-homolog_keySUPER.json")
+
+keys_file <- "keys/psql12-prod_key3.json"
+assert_that(file.exists(keys_file))
+keys <- jsonlite::read_json(keys_file)
 
 
 # Verifica se pode conectar
@@ -49,7 +51,7 @@ connec <- dbConnect(RPostgres::Postgres(),
 # Verifica a coneção com a base
 assert_that(dbIsValid(connec))
 
-rm(keys, TestConexao)
+rm(keys, TestConexao, keys_file)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,16 +65,17 @@ Tables
 
 # Tabelas a se extrair:
 
-TablesExtract <- c("tb_dados_gerais", "tb_osc", "tb_area_atuacao", "tb_localizacao")
+TablesExtract <- c("tb_dados_gerais", "tb_osc", "tb_area_atuacao", 
+                   "tb_localizacao", "tb_contato")
 
-DirExtract <- "data/temp/2024-07-08 extract/"
+DirExtract <- "data/temp/2024-11-21 extract/"
 
 if(!dir.exists(DirExtract)) {
   dir.create(DirExtract)
 }
 
 for (i in seq_along(TablesExtract)) {
-  # i <- 3
+  # i <- 1
   print(TablesExtract[i])
   
   DataLoad <- dbGetQuery(connec, paste0("SELECT * FROM ", 
@@ -81,8 +84,13 @@ for (i in seq_along(TablesExtract)) {
                                         ";"))
   
   saveRDS(DataLoad, paste0(DirExtract, TablesExtract[i], ".RDS"))
-  
+  rm(DataLoad)
 }
+rm(i)
 
+
+dbDisconnect(connec)
+rm(TablesExtract, DirExtract, Tables, TablesExtract)
+rm(connec)
 
 # Fim ####
