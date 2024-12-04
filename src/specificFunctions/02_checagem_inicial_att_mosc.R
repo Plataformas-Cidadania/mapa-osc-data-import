@@ -230,6 +230,58 @@ Sys.sleep(2)
 
 rm(teste, teste_verific)
 
+# # Teste para inserir coluna em 'portal_osc'
+
+# Teste de cria coluna em uma tabela existente:
+query_AddCol <- paste0("ALTER TABLE tb_osc",
+                       " ADD COLUMN temp_var Boolean",
+                       ";")
+
+# cat(query_AddCol)
+dbExecute(conexao_mosc, query_AddCol)
+
+
+teste <- try(dbGetQuery(conexao_mosc, 
+                        paste0("SELECT * FROM tb_osc",
+                               " LIMIT 500", 
+                               ";")))
+
+
+assert_that("temp_var" %in% names(teste), 
+            msg = glue("Não foi possível inserir coluna criada em tabela em ",
+                       "'portal_osc' ", 
+                       "
+                       Teste de inclusão de coluna em tabela fundamental no 'portal_osc' falhou!
+                       ")) %>% 
+  if(.) message("Teste de inclusão de inserção de coluna em 'portal_osc' realizado ", 
+                "com sucesso") 
+
+rm(teste, query_AddCol)
+
+# Teste para remover coluna em  'portal_osc'
+# Deleta a coluna, se ela existir:
+query_DropCol <- paste0("ALTER TABLE tb_osc",
+                        " DROP COLUMN IF EXISTS temp_var;")
+
+# cat(query_DropCol)
+
+dbExecute(conexao_mosc, query_DropCol)
+
+teste <- try(dbGetQuery(conexao_mosc, 
+                        paste0("SELECT * FROM tb_osc",
+                               " LIMIT 500", 
+                               ";")))
+
+assert_that(!"temp_var" %in% names(teste), 
+            msg = glue("Não foi possível deletar coluna criada em tabela em ",
+                       "'portal_osc' ", 
+                       "
+                       Teste de exclusão de coluna em tabela fundamental no 'portal_osc' falhou!
+                       ")) %>% 
+  if(.) message("Teste de exclusão de inserção de coluna em 'portal_osc' realizado ", 
+                "com sucesso") 
+
+rm(teste, query_DropCol)
 
 # Verifica se as tabelas de controle de backup estão presentes:
 tables <- dbListTables(conexao_mosc)
@@ -298,7 +350,33 @@ assert_that(!is.error(teste_rfb),
   if(.) message("Teste de leitura do banco da Receita Federal realizado com ", 
                 "sucesso")
 
+rm(teste_rfb)
+
 Sys.sleep(2)
+
+# To do !!! ####
+
+# Colocar aqui a data de referência do dos dados originais (Receita Federal)
+
+message("Aproveitando para inserir data de referência da atualização")
+
+estabelecimentos_raw <- try(dbGetQuery(conexao_rfb, 
+                                       glue("SELECT data_situacao_cadastral ",
+                                            "FROM {definicoes$tabela_estabelecimentos_rfb}",
+                                            " LIMIT 5000000", 
+                                            ";")))
+
+# names(estabelecimentos_raw)
+
+definicoes$data_dados_referencia <- estabelecimentos_raw %>% 
+  dplyr::filter(data_situacao_cadastral > 0) %>% 
+  mutate(data_situacao_cadastral = ymd(data_situacao_cadastral)) %>% 
+  summarise(max_date = max(data_situacao_cadastral, na.rm = TRUE)) %>% 
+  mutate(max_date = as.character(max_date)) %>% 
+  unlist() %>% as.character() %>% ymd()
+  
+rm(estabelecimentos_raw)
+
 
 # De forma profilática, desconecta do banco de dados
 dbDisconnect(conexao_rfb)

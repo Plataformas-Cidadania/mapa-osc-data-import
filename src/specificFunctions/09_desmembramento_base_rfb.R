@@ -194,7 +194,7 @@ if(!(61 %in% processos_att_atual)) {
     path_file <- glue("{diretorio_att}output_files/tb_osc.RDS")
     saveRDS(tb_osc, path_file)
     
-    # Atualiza controle de processos (tb_processos_atualizacao)  
+    # Atualiza controle de processos (tb_backups_files)  
     if(!definicoes$att_teste) atualiza_processos_att(
       TipoAtt = "arquivo backup", 
       id_att = id_presente_att, 
@@ -599,6 +599,8 @@ if(!(61 %in% processos_att_atual)) {
           c("tx_area_atuacao", "tx_subarea_atuacao", "ft_area_atuacao",
               "cd_identificador_osc") %in% names(Input_data)
             ))
+      
+      Input_data$tx_subarea_atuacao <- as.character(Input_data$tx_subarea_atuacao)
 
       # names(Input_data)
 

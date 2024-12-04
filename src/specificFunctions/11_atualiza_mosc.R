@@ -21,6 +21,15 @@ assert_that(file.exists(glue("{diretorio_att}output_files/tb_contato.RDS")))
 assert_that(file.exists(glue("{diretorio_att}output_files/tb_localizacao.RDS")))
 
 
+# Atualiza controle de processos (tb_processos_atualizacao)  
+if(!definicoes$att_teste) atualiza_processos_att(
+  TipoAtt = "inicio", 
+  id_att = id_presente_att, 
+  id_processo = 4, 
+  processo_nome = "Update banco de dados MOSC")
+
+# tb_processos_atualizacao
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Coneção à Base ####
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -211,8 +220,9 @@ assert_that(file.exists("tab_auxiliares/31_refresh_views_mat.sql"))
 refresh_views <- read_lines("tab_auxiliares/31_refresh_views_mat.sql")
 
 for (i in seq_along(refresh_views)) {
+  # i <- 16
   message(refresh_views[i])
-  dbExecute(connec, refresh_views[i])
+  dbExecute(conexao_mosc, refresh_views[i])
 }
 rm(i, refresh_views)
 
@@ -220,11 +230,16 @@ rm(i, refresh_views)
 # Finalização da rotina ####
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# Atualiza controle de processos (tb_processos_atualizacao)  
+if(!definicoes$att_teste) atualiza_processos_att(
+  TipoAtt = "fim", 
+  id_att = id_presente_att, 
+  id_processo = 4)
 
 # Desconecta da base
-dbDisconnect(connec)
+dbDisconnect(conexao_mosc)
 
-rm(connec, Tables)
+rm(conexao_mosc)
 rm(AtualizaDados)
 
 # Fim ####

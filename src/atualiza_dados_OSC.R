@@ -26,13 +26,11 @@ definicoes <- list()
 # Schema da Receita Federal de onde iremos retirar os dados:
 definicoes$schema_receita <- "rfb_2024" # ATUALIZAR AQUI QUANDO CHEGAR NOVOS DADOS
 
-# Colocar aqui a data de referência do dos dados originais (Receita Federal)
-definicoes$data_dados_referencia <- ymd("2024-04-13") # ATUALIZAR AQUI TAMBÉM
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Arquivo JSON com as chave de acesso ao banco de dados MOSC
 # definicoes$credenciais_mosc <- "keys/localhost_key.json"
-definicoes$credenciais_mosc <- "keys/psql12-homolog_keySUPER.json"
+definicoes$credenciais_mosc <- "keys/psql12-prod_key3.json"
 
 # Arquivo JSON com as chaves de acesso ao banco de dados da RFB e da RAIS:
 definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"
@@ -85,6 +83,7 @@ source("src/specificFunctions/08_gera_geolocalizacao.R")
 
 # Neste ponto aqui o arquivo "intermediate_files/LatLonOSC.RDS" deve estar
 # presente e atualizado:
+assert_that(file.exists(glue("{diretorio_att}intermediate_files/LatLonOSC.RDS")))
 Confirmation <- readline("O arquivo de geolocalização está atualizado? (s/n) ")
 assert_that(Confirmation == "s")
 rm(Confirmation)
@@ -100,10 +99,17 @@ source("src/specificFunctions/10_insere_dados_rais.R")
 # Atualização MOSC: Update dos dados no Banco de Dados MOSC ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Estou aqui!!!! ####
-
-
 source("src/specificFunctions/11_atualiza_mosc.R")
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Finaliza a Rotina ####
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+# Faz a cópia da rotina utilizada
+
+# Estou aqui!!!! ####
 
 
 
