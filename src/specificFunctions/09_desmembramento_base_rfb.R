@@ -232,6 +232,9 @@ if(!(61 %in% processos_att_atual)) {
       ft_fundacao_osc = FonteRFB,
       ft_ano_cadastro_cnpj = FonteRFB,
       ft_classe_atividade_economica_osc = FonteRFB,
+      ft_fechamento_osc = FonteRFB, 
+      cd_cnae_secundaria = str_replace_all(cnae_fiscal_secundaria, 
+                                               ",", fixed(" | ")),
       
       # Evitar dar fonte de dado missing:
       ft_natureza_juridica_osc = ifelse(is.na(cd_natureza_juridica_osc), NA, ft_natureza_juridica_osc),
@@ -239,14 +242,17 @@ if(!(61 %in% processos_att_atual)) {
       ft_nome_fantasia_osc = ifelse(is.na(tx_nome_fantasia_osc), NA, ft_nome_fantasia_osc),
       ft_fundacao_osc = ifelse(is.na(dt_fundacao_osc), NA, ft_fundacao_osc),
       ft_ano_cadastro_cnpj = ifelse(is.na(dt_ano_cadastro_cnpj), NA, ft_ano_cadastro_cnpj),
-      ft_classe_atividade_economica_osc = ifelse(is.na(cd_classe_atividade_economica_osc), NA, ft_classe_atividade_economica_osc)
+      ft_classe_atividade_economica_osc = ifelse(is.na(cd_classe_atividade_economica_osc), NA, ft_classe_atividade_economica_osc),
+      ft_fechamento_osc = ifelse(is.na(dt_fechamento_osc), NA, ft_fechamento_osc)
     ) %>% 
     
     select(id_osc, cd_identificador_osc, cd_natureza_juridica_osc, ft_natureza_juridica_osc, 
            tx_razao_social_osc, ft_razao_social_osc, tx_nome_fantasia_osc, 
            ft_nome_fantasia_osc, dt_fundacao_osc, ft_fundacao_osc, 
            dt_ano_cadastro_cnpj, ft_ano_cadastro_cnpj, 
-           cd_classe_atividade_economica_osc, ft_classe_atividade_economica_osc, 
+           dt_fechamento_osc, nr_ano_fechamento_osc, ft_fechamento_osc,
+           cd_classe_atividade_economica_osc, cd_cnae_secundaria, 
+           ft_classe_atividade_economica_osc, 
            situacao)
   
   # Checa Chaves Primárias únicas e não nulas:
