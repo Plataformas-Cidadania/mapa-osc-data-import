@@ -193,20 +193,100 @@ Sociais](https://mapaosc.ipea.gov.br/metodologia)
 
 ## Estrutura do Diretório
 
-- **pasta ‘backup_files’**:
-- **pasta ‘development_zone’**:
-- **pasta ‘documentacao’**:
-- **pasta ‘tab_auxiliares’**:
-- **pasta ‘src’**:
-- **pasta ‘src/generalFunctions’**:
-- **pasta ‘src/specificFunctions’**:
-- **pasta ‘src/uso_unico’**:
+- **pasta ‘backup_files’**: contém os arquivos de backup cada uma das
+  atualizações. Cada atualização tem um diretório específico nesta
+  pasta, cujo nome é o ano da atualização e o número dela. Por exemplo,
+  “2024_01” é a atualização número 01 de 2024, “2023_01” é a atualização
+  01 de 2025 etc.
+- **pasta ‘development_zone’**: é um diretório reservado a testes e
+  desenvolvimento da equipe do MOSC.
+- **pasta ‘documentacao’**: contém arquivos sobre a documentação desta
+  atualização.
+- **pasta ‘tab_auxiliares’**: aqui ficam pequenas tabelas necessárias
+  para a atualização que tem uma chance baixa de precisarem ser
+  atualizadas.
+- **pasta ‘src’**: pasta onde estão os scripts da atualização.
+- **pasta ‘src/generalFunctions’**: pasta onde ficam funções gerais que
+  auxiliam as rotinas de atualização.
+- **pasta ‘src/specificFunctions’**: pasta com rotinas e funções
+  específicas da atualização.
+- **pasta ‘src/uso_unico’**: pasta com scripts que tendem a ser usada
+  poucas vezes ou uma vez, como mudanças estruturais no banco de dados.
 
 ## Principais Arquivos de Atualização
 
-- **pasta ‘src/atualiza_dados_OSC.R’**:
-- **pasta ‘src/specificFunctions/01_setup_atualizacao.R’**:
+- **Script ‘src/atualiza_dados_OSC.R’**: é o script principal (main) da
+  atualização. Executar esse script irá atualizar o MOSC. Este script
+  chama os vários scripts da pasta ‘src/specificFunctions/’
+- **Script ‘src/specificFunctions/01_setup_atualizacao.R’**: carrega
+  bibliotecas e funções usadas em toda a atualização, bem como coloca
+  definições que raramente mudam.
+- **Script ‘src/specificFunctions/02_checagem_inicial_att_mosc.R’**:
+  Antes de realizar a atualização propriamente dita, esse script faz uma
+  série de checagens para saber se todos os dados e as tabelas
+  auxiliares estão disponíveis e se a conexão com o banco de dados está
+  operacional e com as permissões necessárias.
+- **Script ‘src/specificFunctions/03_inicia_controle_atualizacao.R’**:
+  cria linhas de controle da atualização na tabela
+  tb_controle_atualizacao. Cria uma conexão dbplyr com as tabelas
+  ‘tb_processos_atualizacao’ e ‘tb_backups_files’. Se houver uma
+  atualização iniciada e não concluída, resgara os dados delas para
+  sabermos de onde ela parou.
+- **Script ‘src/specificFunctions/04_cria_diretorio_atualizacao.R’**:
+  cria diretório para criar arquivos de input e backup da atualização.
+- **Script ‘src/specificFunctions/05_baixa_dados_rfb.R’**: baixa dados
+  brutos da Receita Federal do Brasil, já filtrando as organizações sem
+  fins lucrativos.
+- **Script ‘src/specificFunctions/06_identificacao_osc_nabase_rfb.R’**:
+  as rotinas para separar organizações não lucrativas que
+  conceitualmente não são OSC (cartórios, partidos, comissões de
+  formatura etc), utilizando a função ‘findosc-v2023’ e outros
+  procedimentos.
+- **Script ‘src/specificFunctions/07_determinacao_areas_atuacao.R’**:
+  fazer uma estimativa das áreas de atuação das OSC com base na CNAE.
+- **Script ‘src/specificFunctions/08_gera_geolocalizacao.R’**: formatar
+  o output do GALILEO para poder gerar as variáveis de geolocalização do
+  MOSC.
+- **Script ‘src/specificFunctions/09_desmembramento_base_rfb.R’**: com
+  base nos dados extraídos da Receita Federal, já passada a de
+  identificação das OSC (com o find_OSC) e determinação da área de
+  atuação,extrair as principais tabelas do Mapa das Organizações Da
+  Sociedade Civil.
+- **Script ‘src/specificFunctions/10_insere_dados_rais.R’**: Insere
+  dados da RAIS no Mapa das Organizações Sociais.
+- **Script ‘src/specificFunctions/11_atualiza_mosc.R’**: atualiza o
+  banco de dados principal do MOSC através de uma série de comandos SQL.
+- **Script ‘src/specificFunctions/12_resumo_base.R’**: cria uma versão
+  simplificada da base de dados que pode ser exportada por um arquivo
+  CSV grande.
+- **Script ‘src/specificFunctions/31_refresh_views_mat.sql’**: atualiza
+  as Views materializadas do banco de dados MOSC.
 
 ## Tabelas Auxiliares
 
-## Backup de Atualização
+Abaixo estão as principais tabelas do diretório ‘tab_auxiliares’:
+
+- **tabela ‘tab_auxiliares/Areas&Subareas.csv’**: descreve a relação
+  entre as áreas e sobáreas das OSC.
+- **tabela ‘tab_auxiliares/CodMunicRFB.csv’**: tabela ‘de/para’ do
+  código municipal da Receita Federal para o código municipal do IBGE.
+- **tabela ‘tab_auxiliares/dc_area_atuacao.csv’**: relação entre o
+  código e a descrição textual das áreas de atuação no MOSC.
+- **tabela ‘tab_auxiliares/dc_subarea_atuacao.csv’**: relação entre o
+  código e a descrição textual das subáreas de atuação no MOSC.
+- **tabela ‘tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv’**: tabela com
+  todas as expressões regulares para identificar as áreas de atuação das
+  OSC através do CNAE e razão social.
+- **tabela ‘tab_auxiliares/IndicadoresAreaAtuacaoOSC.xlsx’**: tabela com
+  todas as expressões regulares para identificar as áreas de atuação das
+  OSC através do CNAE e razão social. Mantida a redundância com os
+  formados CSV e XLSX para facilitar a manipulação dos dados.
+- **tabela ‘tab_auxiliares/Municipios.csv’**: relação entre código IBGE,
+  nome e UF dos municípios brasileiros.
+- **tabela ‘tab_auxiliares/NomesCampos.xlsx’**: descreve os campos do
+  banco de dados RAIS.
+- **tabela ‘tab_auxiliares/NonOSCNames.csv’**: tabela com todas as
+  expressões regulares para identificar OSCs entre os CNPJs da Receita
+  Federal através da razão social.
+- **tabela ‘tab_auxiliares/UFs.csv’**: código IBGE das unidades
+  federativas do Brasil.
