@@ -383,8 +383,6 @@ if(!(61 %in% processos_att_atual)) {
     rm(path_file)
   }
   
-  
-
   # Tabela: tb_localizacao ####
   
   # Dados de geolocalização:
@@ -397,19 +395,26 @@ if(!(61 %in% processos_att_atual)) {
     as.character() %>% ymd_hms()
   
   LatLon_data <- readRDS(LatLon_file)
+
   
-  # Checa Chaves Primárias únicas e não nulas:
-  Check_PK_Rules(LatLon_data$cd_identificador_osc)
+  names(LatLon_data)
   
   LatLon_data <- LatLon_data %>% 
     # Uniformiza o campo CPF:
-    mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
+    mutate(cd_identificador_osc = str_pad(as.character(cnpj), 
                                           width = 14, 
                                           side = "left", 
-                                          pad = "0")) %>% 
+                                          pad = "0"), 
+           qualidade_classificacao = paste0(tipo_resultado, "_", precisao)
+           ) %>% 
     # Insere "id_osc"
     left_join(idControl, by = "cd_identificador_osc") %>% 
-    select(-cd_identificador_osc)
+    rename(Longitude = lon, 
+           Latitude = lat) %>% 
+    select(id_osc, Longitude, Latitude, qualidade_classificacao)
+  
+  # Checa Chaves Primárias únicas e não nulas:
+  Check_PK_Rules(LatLon_data$cd_identificador_osc)
   
   # sum(is.na(LatLon_data$id_osc)) # Ver o caso dessas OSC sem CNPJ # TO DO
   
@@ -465,8 +470,8 @@ if(!(61 %in% processos_att_atual)) {
                                NA, geo_localizacao),
       
       # tornar essa fonte dinâmica, de acordo com a atualização! # TO DO
-      ft_latlon = "Software ArcGIS", 
-      ft_geo_localizacao = "Software ArcGIS",
+      ft_latlon = "pacote R geocodebr", 
+      ft_geo_localizacao = "pacote R geocodebr",
       
       # Classificação do GALILEO:
       # qualidade_classificacao = case_when(cd_precisao_localizacao == 1 ~ "1 Estrela", 
@@ -474,8 +479,8 @@ if(!(61 %in% processos_att_atual)) {
       #                                     TRUE ~ NA),
       
       # Classificação do ArcGIS
-      qualidade_classificacao = paste0(status, "_", score, "_ ", match_type, 
-                                       "_", addr_type),
+      # qualidade_classificacao = paste0(status, "_", score, "_ ", match_type, 
+      #                                  "_", addr_type),
       
       dt_geocodificacao = Dt_LatLon_data, 
       # tx_endereco = paste0(tipo_de_logradouro, " ", logradouro), # Uniformizar campor # TO DO
@@ -557,9 +562,6 @@ if(!(61 %in% processos_att_atual)) {
     
     rm(path_file)
   }
-  
-  
-  
   
   # Tabela: tb_area_atuacao ####
   
@@ -765,7 +767,6 @@ if(!(61 %in% processos_att_atual)) {
     
     rm(path_file)
   }
-  
   
   # Atualiza realização de processos:
   

@@ -30,7 +30,6 @@
 ## Outputs:
 # Tb_OSC_Full (objeto da memória e, caso definicoes$att_teste == FALSE, arquivo salvo)
 
-
 # bibliotecas necessárias:
 library(magrittr)
 library(dplyr)
@@ -42,7 +41,6 @@ library(assertthat)
 library(DBI)
 library(RODBC)
 library(RPostgres) 
-
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Determinação das áreas de atuação OSC ####
@@ -96,8 +94,16 @@ if(!(31 %in% processos_att_atual)) {
   source("src/specificFunctions/AreaAtuacaoOSC.R")
   
   # Transforma Tb_OSC_Full em DB_OSC
+  
+  CamposAtualizacao <- fread("tab_auxiliares/CamposAtualizacao.csv") %>% 
+    dplyr::filter(schema_receita == definicoes$schema_receita)
+  
+  campo_rfb_cnae_principal <- CamposAtualizacao %>% 
+    dplyr::filter(campos == "campo_rfb_cnae_principal") %>% 
+    select(nomes) %>% slice(1) %>%  unlist() %>% as.character()
+  
   DB_OSC <- Tb_OSC_Full %>%
-    mutate(cnae = .data[[definicoes$campo_rfb_cnae_principal]], 
+    mutate(cnae = .data[[campo_rfb_cnae_principal]], 
            micro_area_atuacao = NA)
   
   rm(Tb_OSC_Full) # não vamos mais utilizar esses dados
@@ -176,6 +182,8 @@ if(!(31 %in% processos_att_atual)) {
   # table(MultiAreas$OrdemArea)
   # table(MultiAreas$micro_area_atuacao)
   
+  if(definicoes$salva_backup) saveRDS(MultiAreas, 
+                                      glue("{diretorio_att}intermediate_files/MultiAreasAtuacao.RDS"))
   
   # Salva arquivo Backup - Multi áreas ####
   

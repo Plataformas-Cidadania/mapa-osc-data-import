@@ -13,6 +13,12 @@
 # Setup ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# install.packages("remotes")
+# remotes::install_github("ipeaGIT/geocodebr")
+
+library(geocodebr)
+
+
 ## Inputs:
 # definicoes
 
@@ -122,63 +128,31 @@ if(!(91 %in% processos_att_atual)) {
     sum(
       tb_localizacao_old$cnpj[ sample(seq_len(nrow(tb_localizacao_old)), 20) ] %in% 
         DB_OSC$cnpj) > 3 )
-
   
+  
+  
+  # Seleciona somente os endereços novos ou alterados:
   novos_enderecos_osc <- DB_OSC %>% 
     select(cnpj, cep, numero) %>% 
     left_join(select(tb_localizacao_old, cnpj, nr_cep, nr_localizacao), 
               by = "cnpj") %>% 
     mutate(nr_cep = str_pad(as.character(nr_cep), 
-                          width = 8, 
-                          side = "left", 
-                          pad = "0"), 
+                            width = 8, 
+                            side = "left", 
+                            pad = "0"), 
            cep = str_pad(as.character(cep), 
-                          width = 8, 
-                          side = "left", 
-                          pad = "0"), 
+                         width = 8, 
+                         side = "left", 
+                         pad = "0"), 
            ref_endereco_old = paste0(nr_cep, "_", nr_localizacao), 
            ref_endereco_new = paste0(cep, "_", numero), 
            flag_new = ref_endereco_old != ref_endereco_new) %>% 
     dplyr::filter(flag_new)
   
   
-  source("src/generalFunctions/clean_adrs_number.R")
-  
-  # Insere variável de número de endereço limpa
-  tb_localizacao_old$nr_clean <- clean_adrs_number(tb_localizacao_old$nr_localizacao)
-  novos_enderecos_osc$nr_clean <- clean_adrs_number(novos_enderecos_osc$numero)
-  
-  # Cria lista de endereços aproximados em 'tb_localizacao_old':
-  enderecos_existentes <- tb_localizacao_old %>% 
-    select(nr_cep, nr_clean) %>% 
-    mutate(numero_aproximado = ifelse(
-      ( nr_clean == "SN" | nr_clean == "KM" | is.na(nr_clean) ),
-                                      "SN", 
-      as.character( floor(as.numeric(nr_clean)/500) ) ), 
-      
-      endereco_aproximado = paste0(str_sub(nr_cep, 1, 5), "-",
-                                   str_sub(nr_cep, 6, 8),
-                                   "_", numero_aproximado)
-      ) %>% 
-    distinct(endereco_aproximado)
-  
-  
-  novos_enderecos_osc2 <- novos_enderecos_osc %>% 
-    select(cnpj, nr_cep, nr_clean) %>% 
-    mutate(numero_aproximado = ifelse(
-      ( nr_clean == "SN" | nr_clean == "KM" | is.na(nr_clean) ),
-      "SN", as.character( floor(as.numeric(nr_clean)/500) ) ), 
-      
-      endereco_aproximado = paste0(str_sub(nr_cep, 1, 5), "-",
-                                   str_sub(nr_cep, 6, 8),
-                                   "_", numero_aproximado),
-      Ja_Existe = endereco_aproximado %in% enderecos_existentes[["endereco_aproximado"]]) %>% 
-    dplyr::filter(!Ja_Existe)
-  
-  
   # Extrai as informações necessárias:
   input_busca_geo <- DB_OSC %>%
-    dplyr::filter(cnpj %in% novos_enderecos_osc2$cnpj) %>% 
+    dplyr::filter(cnpj %in% novos_enderecos_osc$cnpj) %>% 
     # Variáveis de endereço:
     select(cnpj, razao_social, tipo_logradouro, logradouro, 
            numero, bairro, cep, municipio, pais) %>% 
@@ -195,33 +169,67 @@ if(!(91 %in% processos_att_atual)) {
                          side = "left", 
                          pad = "0"),
            cep2 = paste0(str_sub(cep, 1, 5), "-", str_sub(cep, 6, 8)),
-      tx_endereco = paste0(tipo_logradouro, " ", logradouro, ", ", numero,
-                           ", BAIRRO ", bairro, ", CEP ", cep2,
-                               ", ", Munic_Nome2, 
-                               "-", UF),
-      # Não considerar zona rural um bairro:
-      tx_endereco = str_replace(tx_endereco, " BAIRRO ZONA RURAL", 
-                                " ZONA RURAL"))
+           tx_endereco = paste0(tipo_logradouro, " ", logradouro, ", ", numero,
+                                ", BAIRRO ", bairro, ", CEP ", cep2,
+                                ", ", Munic_Nome2, 
+                                "-", UF),
+           # Não considerar zona rural um bairro:
+           tx_endereco = str_replace(tx_endereco, " BAIRRO ZONA RURAL", 
+                                     " ZONA RURAL"))
   
-  # Analisa como ficou a formatação do endereço:
-  # input_busca_geo$tx_endereco[sample(seq_len(nrow(input_busca_geo)), 10)]
+  input_busca_geo <- input_busca_geo  %>% 
+    # slice(1:10000) %>% 
+    mutate(logradouro_full = paste(tipo_logradouro, logradouro), 
+           logradouro_full = str_remove(logradouro_full, fixed("S/N") ), 
+           numero = str_squish(numero), 
+           numero = str_remove(numero, " .*"), 
+           numero = str_remove_all(numero, "[:alpha:]"), 
+           numero = str_squish(numero), 
+           numero = as.numeric(numero)    )
+  
+  campos <- geocodebr::definir_campos(
+    logradouro = "logradouro_full",
+    numero = "numero",
+    cep = "cep",
+    localidade = "bairro",
+    municipio = "Munic_Nome",
+    estado = "UF"
+  )
+
+  HorarioInicio <- lubridate::now()
+  geo_loc <- geocodebr::geocode(
+    enderecos = input_busca_geo, 
+    campos_endereco = campos, 
+    verboso = TRUE, 
+    resolver_empates = TRUE)
+  HorarioFim <- lubridate::now()
+  
+  message("Duração da Busca ", round(HorarioFim - HorarioInicio, 2), 
+          " minutos")
+  
+  message("Média de ", 
+          round(lubridate::as.duration( 
+            (HorarioFim - HorarioInicio)/nrow(input_busca_geo)), 
+            6), 
+          " segundos")
   
   # Salva arquivos de endereços das OSC
-  fwrite(input_busca_geo, 
-         paste0(diretorio_att, "intermediate_files/input_busca_geo.csv"),
-         sep = ";", dec = ",")
+  
+  saveRDS(geo_loc, glue("{diretorio_att}intermediate_files/LatLonOSC.RDS"))
+  
+  processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 90], 91))
   
   if(!definicoes$att_teste) atualiza_processos_att(
     TipoAtt = "fim", 
     id_att = id_presente_att, 
     id_processo = 9, 
     path_file_backup = ifelse(definicoes$salva_backup, 
-                              "data/raw/Galileo/GalileoINPUT.RDS", 
+                              glue("{diretorio_att}intermediate_files/LatLonOSC.RDS"), 
                               NULL))
   
     rm(input_busca_geo, novos_enderecos_osc, tb_localizacao_old)
     rm(CodMunicRFB)
-    rm(clean_adrs_number, enderecos_existentes, novos_enderecos_osc2)
+    rm(geo_loc, campos, HorarioFim, HorarioInicio)
     # ls()
   
 } else {

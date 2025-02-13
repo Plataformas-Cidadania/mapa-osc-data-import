@@ -94,27 +94,48 @@ if(!(11 %in% processos_att_atual)) {
   ## 399-9	Associação Privada
   # Fonte: https://concla.ibge.gov.br/estrutura/natjur-estrutura/natureza-juridica-2021
 
-  # Por algum motivo, o glue não funciona bem com listas:
-  tabela_empresas_rfb <- definicoes$tabela_empresas_rfb[[1]]
-  tabela_estabelecimentos_rfb <- definicoes$tabela_estabelecimentos_rfb[[1]]
-  campo_cnpj <- definicoes$campo_rfb_cnpj[[1]]
-  campo_natureza_juridica <- definicoes$campo_rfb_natureza_juridica[[1]]
+  # Carrega os campos necessários para os testes abaixo.
+  CamposAtualizacao <- fread("tab_auxiliares/CamposAtualizacao.csv") %>% 
+    dplyr::filter(schema_receita == definicoes$schema_receita)
+  
+  tabela_empresas_rfb <- CamposAtualizacao %>% 
+    dplyr::filter(campos == "tabela_empresas_rfb") %>% 
+    select(nomes) %>% slice(1) %>%  unlist() %>% as.character()
+    
+  tabela_estabelecimentos_rfb <- CamposAtualizacao %>% 
+    dplyr::filter(campos == "tabela_estabelecimentos_rfb") %>% 
+    select(nomes) %>% slice(1) %>%  unlist() %>% as.character()
+  
+  campo_cnpj <- CamposAtualizacao %>% 
+    dplyr::filter(campos == "campo_rfb_cnpj") %>% 
+    select(nomes) %>% slice(1) %>%  unlist() %>% as.character()
+  
+  campo_natureza_juridica <- CamposAtualizacao %>% 
+    dplyr::filter(campos == "campo_rfb_natureza_juridica") %>% 
+    select(nomes) %>% slice(1) %>%  unlist() %>% as.character()
+  
+  natjur_nao_lucrativo <- CamposAtualizacao %>% 
+    dplyr::filter(campos == "natjur_nao_lucarivo") %>% 
+    select(nomes) %>% slice(1) %>%  unlist() %>% as.character() %>% 
+    str_split(fixed("|")) %>% magrittr::extract2(1)
+  
+  rm(CamposAtualizacao)
   
   # Query para resgatar ao mesmo tempo dados de empresas e estabelecimentos
   # filtrando por naturezas jurídicas não lucraticas, na Receita Federal:
   query_naolucrativo_rfb <- glue(
     "SELECT * FROM {tabela_empresas_rfb} 
       RIGHT JOIN {tabela_estabelecimentos_rfb} 
-      ON {definicoes$tabela_estabelecimentos_rfb}.{campo_cnpj} \\
-      = {definicoes$tabela_empresas_rfb}.{campo_cnpj} 
+      ON {tabela_estabelecimentos_rfb}.{campo_cnpj} \\
+      = {tabela_empresas_rfb}.{campo_cnpj} 
       WHERE {campo_natureza_juridica} IN ('",
-    paste(definicoes$natjur_nao_lucarivo, collapse = "', '"),
+    paste(natjur_nao_lucrativo, collapse = "', '"),
     "')",
     # " LIMIT 1000", 
     ";")
   
   rm(tabela_empresas_rfb, tabela_estabelecimentos_rfb, campo_cnpj, 
-     campo_natureza_juridica)
+     campo_natureza_juridica, natjur_nao_lucrativo)
   
   # Faz a busca na receita federal ####
   message(agora(), "  Iniciando busca nos dados da Receita Federal")

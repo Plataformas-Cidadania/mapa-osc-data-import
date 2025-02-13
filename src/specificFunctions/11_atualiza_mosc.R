@@ -45,7 +45,7 @@ if(!(exists("conexao_mosc") && dbIsValid(conexao_mosc))){
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Função de atualização de dados:
-source("src/BDConnection.R")
+source("src/specificFunctions/BDConnection.R")
 
 # Garante que a função existe
 assert_that(exists("AtualizaDados"))

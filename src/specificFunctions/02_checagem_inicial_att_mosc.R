@@ -67,21 +67,24 @@ Sys.sleep(2)
 
 # Verifica se as tabelas auxiliares estão presentes no diretório 'tab_auxiliares'.
 
-## Controle da variável id_osc, de acordo com a última atualização:
-assert_that(file.exists("tab_auxiliares/idControl.RDS"),
-            msg = glue("O arquivo de ID das OSC da última versão ", 
-                       "não está disponível")) %>% 
-  if(.) message("O arquivo de ID das OSC da última versão encontrado em",
-                "'tab_auxiliares'")
+## Tabela com os nomes que indicam que determinado CNPJ não é OSC
+assert_that(file.exists("tab_auxiliares/CamposAtualizacao.csv"),
+            msg = glue("O arquivo 'CamposAtualizacao.csv' contendo os nomes dos ", 
+                       "campos e tabelas da RFB da atualização ", 
+                       "não foi encontrado em 'tab_auxiliares'")) %>% 
+  if(.) message("Arquivo 'CamposAtualizacao.csv' encontrado em 'tab_auxiliares'")
 
 Sys.sleep(2)
 
-## Controle do ID da tabela tb_area_atuacao
-assert_that(file.exists("tab_auxiliares/idAreaAtuacaoControl.RDS"),
-            msg = glue("O arquivo de ID das área de atuação das OSC da ", 
-                       "última versão não está disponível")) %>% 
-  if(.) message("O arquivo de ID das área de atuação encontrado ", 
-                "em 'tab_auxiliares'")
+# Carrega os campos necessários para os testes abaixo.
+CamposAtualizacao <- fread("tab_auxiliares/CamposAtualizacao.csv") %>% 
+  dplyr::filter(schema_receita == definicoes$schema_receita)
+
+## Campos da atualização
+assert_that(nrow(CamposAtualizacao) > 0,
+            msg = glue("O arquivo 'CamposAtualizacao.csv' não contém os campos ", 
+                       "da atualiação {definicoes$schema_receita} ")) %>% 
+  if(.) message("Campos da atualização encontrados em 'CamposAtualizacao.csv'")
 
 Sys.sleep(2)
 
@@ -333,14 +336,28 @@ assert_that("credenciais_rfb" %in% names(definicoes),
             msg = "O objeto 'credenciais_rfb', não foi carregado!")
 
 conexao_rfb <- postCon(definicoes$credenciais_rfb, 
-                       Con_options = glue("-c search_path={definicoes$schema_receita}"))
+                       Con_options = glue("-c search_path={definicoes$schema_receita}")
+                       )
+
 if(dbIsValid(conexao_rfb)) message("Conectado ao BD 'rais_2019'")
+
+
+
+tabela_empresas_rfb <- CamposAtualizacao %>% 
+  dplyr::filter(campos == "tabela_empresas_rfb") %>% 
+  slice(1) %>% 
+  select(nomes) %>% 
+  unlist() %>% as.character()
+
+# tables <- dbListTables(conexao_rfb)
+# tables
 
 # Testa extrair dados do banco
 teste_rfb <- try(dbGetQuery(conexao_rfb, 
-                        glue("SELECT * FROM {definicoes$tabela_empresas_rfb}",
+                        glue("SELECT * FROM {tabela_empresas_rfb}",
                                " LIMIT 500", 
                                ";")))
+
 
 assert_that(!is.error(teste_rfb), 
             msg = glue("Não foi possível ler uma amostra do banco ", 
@@ -350,23 +367,24 @@ assert_that(!is.error(teste_rfb),
   if(.) message("Teste de leitura do banco da Receita Federal realizado com ", 
                 "sucesso")
 
-rm(teste_rfb)
+rm(teste_rfb, tabela_empresas_rfb)
 
 Sys.sleep(2)
 
-# To do !!! ####
+# Data de referência do dos dados originais (Receita Federal)
+message("Encontra data de referência da atualização")
 
-# Colocar aqui a data de referência do dos dados originais (Receita Federal)
-
-message("Aproveitando para inserir data de referência da atualização")
+tabela_estabelecimentos_rfb <-  CamposAtualizacao %>% 
+  dplyr::filter(campos == "tabela_estabelecimentos_rfb") %>% 
+  slice(1) %>% 
+  select(nomes) %>% 
+  unlist() %>% as.character()
 
 estabelecimentos_raw <- try(dbGetQuery(conexao_rfb, 
                                        glue("SELECT data_situacao_cadastral ",
-                                            "FROM {definicoes$tabela_estabelecimentos_rfb}",
+                                            "FROM {tabela_estabelecimentos_rfb}",
                                             " LIMIT 5000000", 
                                             ";")))
-
-# names(estabelecimentos_raw)
 
 definicoes$data_dados_referencia <- estabelecimentos_raw %>% 
   dplyr::filter(data_situacao_cadastral > 0) %>% 
@@ -375,12 +393,13 @@ definicoes$data_dados_referencia <- estabelecimentos_raw %>%
   mutate(max_date = as.character(max_date)) %>% 
   unlist() %>% as.character() %>% ymd()
   
-rm(estabelecimentos_raw)
+rm(estabelecimentos_raw, tabela_estabelecimentos_rfb)
 
 
 # De forma profilática, desconecta do banco de dados
 dbDisconnect(conexao_rfb)
 rm(conexao_rfb)
+rm(CamposAtualizacao)
 rm(postCon)
 
 

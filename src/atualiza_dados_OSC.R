@@ -24,13 +24,13 @@ definicoes <- list()
 
 #~~~~~~~~~~~~ MUITO IMPORTANTE: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Schema da Receita Federal de onde iremos retirar os dados:
-definicoes$schema_receita <- "rfb_2024" # ATUALIZAR AQUI QUANDO CHEGAR NOVOS DADOS
+definicoes$schema_receita <- "rfb_2025" # ATUALIZAR AQUI QUANDO CHEGAR NOVOS DADOS
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Arquivo JSON com as chave de acesso ao banco de dados MOSC
-# definicoes$credenciais_mosc <- "keys/localhost_key.json"
-definicoes$credenciais_mosc <- "keys/psql12-prod_key3.json"
+definicoes$credenciais_mosc <- "keys/psql12-homolog_key.json"
+# definicoes$credenciais_mosc <- "keys/psql12-prod_key3.json"
 
 # Arquivo JSON com as chaves de acesso ao banco de dados da RFB e da RAIS:
 definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"
@@ -77,16 +77,7 @@ source("src/specificFunctions/06_identificacao_osc_nabase_rfb.R")
 source("src/specificFunctions/07_determinacao_areas_atuacao.R")
 
 # Gera o arquivo de INPUT de Geolocalização:
-# (extrai as informações de endereços das OSC para que o software de localização
-# como o GALILEO ou outro, possa gerar a latitude e longitude)
 source("src/specificFunctions/08_gera_geolocalizacao.R")
-
-# Neste ponto aqui o arquivo "intermediate_files/LatLonOSC.RDS" deve estar
-# presente e atualizado:
-assert_that(file.exists(glue("{diretorio_att}intermediate_files/LatLonOSC.RDS")))
-Confirmation <- readline("O arquivo de geolocalização está atualizado? (s/n) ")
-assert_that(Confirmation == "s")
-rm(Confirmation)
 
 # Desmembramento da base RFB
 source("src/specificFunctions/09_desmembramento_base_rfb.R")

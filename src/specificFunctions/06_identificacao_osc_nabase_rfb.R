@@ -101,21 +101,39 @@ if(!(21 %in% processos_att_atual)) {
                                  "MUNIC DO PART DA FREN"), collapse = "|")
   
   
-  
   # Coloca aqui o nome dos campos para não ficar uma linha de comando muito
   # longa abaixo:
-  campo_cnae <- definicoes$campo_rfb_cnae_principal
-  campo_razao_social <- definicoes$campo_rfb_razao_social
+  
+  # Carrega os campos necessários para os testes abaixo.
+  CamposAtualizacao <- fread("tab_auxiliares/CamposAtualizacao.csv") %>% 
+    dplyr::filter(schema_receita == definicoes$schema_receita)
+  
+  campo_cnae <- CamposAtualizacao %>% 
+    dplyr::filter(campos == "campo_rfb_cnae_principal") %>% 
+    select(nomes) %>% slice(1) %>%  unlist() %>% as.character()
+    
+  campo_razao_social <-  CamposAtualizacao %>% 
+    dplyr::filter(campos == "campo_rfb_razao_social") %>% 
+    select(nomes) %>% slice(1) %>%  unlist() %>% as.character()
+  
+  names(tb_JoinOSC)
+  class(tb_JoinOSC)
+  
+  # Evita nomes duplicados
+  if(anyDuplicated(names(tb_JoinOSC)) > 0) {
+    names(tb_JoinOSC) <- make.unique(names(tb_JoinOSC), sep = "_")
+  }
   
   # Descobre OSC com base no CNAE e expressões regulares partidárias
   tb_JoinOSC <- tb_JoinOSC %>% 
     mutate(IsOSC = 
              case_when(
-               .data[[campo_cnae]] %in% c("8112500", "8550301") ~ FALSE, 
+               .data[[campo_cnae]] %in% c("8112500", "8550301") ~ FALSE,
                str_sub(.data[[campo_cnae]], 1, 5) == "94201" ~ FALSE,
                str_detect(.data[[campo_razao_social]], indicadores_partidos) &
-                 .data[[campo_cnae]] == "9492800" ~ FALSE, 
-               TRUE ~ TRUE))
+                 .data[[campo_cnae]] == "9492800" ~ FALSE,
+               TRUE ~ TRUE)
+           )
   
   # table(tb_JoinOSC$IsOSC, useNA = "always")
   rm(indicadores_partidos, campo_cnae, campo_razao_social)
@@ -129,7 +147,7 @@ if(!(21 %in% processos_att_atual)) {
   
   # Uso da função find_OSC para excluir organizações do conceito de OSC ####
   # com base em expressões regulares aplicadas à razão social:
-  source("src/findosc-v2023.R")
+  source("src/specificFunctions/findosc-v2023.R")
   
   message(agora(), "   Início da execução de find_OSC")
   
@@ -208,10 +226,8 @@ if(!(21 %in% processos_att_atual)) {
     select(cd_identificador_osc, IsOSC, dt_fechamento_osc, nr_ano_fechamento_osc) %>% 
     mutate(dt_ultima_att = as.character(today()))
   
-  saveRDS(DtFechamentoOSC, 
+  if(definicoes$salva_backup) saveRDS(DtFechamentoOSC, 
           glue("{diretorio_att}intermediate_files/DtFechamentoOSC.RDS"))
-  
-  rm(DtFechamentoOSC)
   
   # Muda nome do objeto para marcar mudança de processamento:
   Tb_OSC_Full <- tb_JoinOSC %>% 
@@ -227,7 +243,7 @@ if(!(21 %in% processos_att_atual)) {
   
   # Atualiza controle de processos ####
   processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 20], 21))
-  
+
   # Atualiza controle de processos (tb_processos_atualizacao)  
   if(!definicoes$att_teste) atualiza_processos_att(
     TipoAtt = "fim", 
@@ -235,7 +251,15 @@ if(!(21 %in% processos_att_atual)) {
     id_processo = 2, 
     path_file_backup = ifelse(definicoes$salva_backup, path_file_backup, NULL))
   
+  # Salva arquivo de data de fechamento
+  if(!definicoes$att_teste) atualiza_processos_att(
+    TipoAtt = "arquivo backup", 
+    id_att = id_presente_att, 
+    id_processo = 2, 
+    path_file_backup = glue("{diretorio_att}intermediate_files/DtFechamentoOSC.RDS"))
+  
   rm(path_file_backup)
+  rm(DtFechamentoOSC)
   rm(tb_JoinOSC) # não vamos mais utilizar esses dados
   
   } else {
