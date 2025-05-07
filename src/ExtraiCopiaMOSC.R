@@ -20,7 +20,7 @@ library(jsonlite)
 
 # Baixa a chave secreta do código
 
-keys_file <- "keys/psql12-prod_key3.json"
+keys_file <- "keys/psql12-homolog_key.json"
 assert_that(file.exists(keys_file))
 keys <- jsonlite::read_json(keys_file)
 
@@ -66,9 +66,9 @@ Tables
 # Tabelas a se extrair:
 
 TablesExtract <- c("tb_dados_gerais", "tb_osc", "tb_area_atuacao", 
-                   "tb_localizacao", "tb_contato")
+                   "tb_localizacao", "tb_contato", "tb_relacoes_trabalho")
 
-DirExtract <- "data/temp/2024-11-21 extract/"
+DirExtract <- "development_zone/2025-03-06 extract-homolog/"
 
 if(!dir.exists(DirExtract)) {
   dir.create(DirExtract)

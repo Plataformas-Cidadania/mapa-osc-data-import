@@ -88,8 +88,12 @@ message("Inserindo dados da tabela 'tb_dados_gerais'")
 tb_dados_gerais <- readRDS(glue("{diretorio_att}output_files/tb_dados_gerais.RDS"))
 
 # Corrige tipos de dado
+tb_dados_gerais[["dt_fechamento_osc"]] <- as_date(tb_dados_gerais[["dt_fechamento_osc"]])
 tb_dados_gerais[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais[["cd_natureza_juridica_osc"]])
 tb_dados_gerais[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais[["dt_fundacao_osc"]])
+tb_dados_gerais[["ft_fechamento_osc"]] <- as.character(tb_dados_gerais[["ft_fechamento_osc"]])
+
+class(tb_dados_gerais[["ft_fechamento_osc"]])
 
 # Esta variável tem um interpretação diferente no banco de dados antigo e novo (investigar!)
 # tb_dados_gerais[["dt_ano_cadastro_cnpj"]] <- NA_Date_
@@ -170,7 +174,6 @@ tb_area_atuacao <- readRDS(glue("{diretorio_att}output_files/tb_area_atuacao.RDS
 
 # Corrige tipos de dado
 tb_area_atuacao[["id_osc"]] <- as.integer(tb_area_atuacao[["id_osc"]])
-
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = conexao_mosc,

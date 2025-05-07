@@ -29,7 +29,7 @@ definicoes$schema_receita <- "rfb_2025" # ATUALIZAR AQUI QUANDO CHEGAR NOVOS DAD
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Arquivo JSON com as chave de acesso ao banco de dados MOSC
-definicoes$credenciais_mosc <- "keys/psql12-homolog_key.json"
+definicoes$credenciais_mosc <- "keys/psql12-usr_manutencao_mapa.json"
 # definicoes$credenciais_mosc <- "keys/psql12-prod_key3.json"
 
 # Arquivo JSON com as chaves de acesso ao banco de dados da RFB e da RAIS:
@@ -37,7 +37,7 @@ definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"
 
 # Essa atualização é teste? 
 # (não registra processos novos nos controles)
-definicoes$att_teste <- FALSE
+definicoes$att_teste <- TRUE
 
 # Essa atualização vai salvar os arquivos intermediários no diretório de backup?
 definicoes$salva_backup <- TRUE

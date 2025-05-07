@@ -116,9 +116,6 @@ if(!(21 %in% processos_att_atual)) {
     dplyr::filter(campos == "campo_rfb_razao_social") %>% 
     select(nomes) %>% slice(1) %>%  unlist() %>% as.character()
   
-  names(tb_JoinOSC)
-  class(tb_JoinOSC)
-  
   # Evita nomes duplicados
   if(anyDuplicated(names(tb_JoinOSC)) > 0) {
     names(tb_JoinOSC) <- make.unique(names(tb_JoinOSC), sep = "_")
@@ -151,6 +148,7 @@ if(!(21 %in% processos_att_atual)) {
   
   message(agora(), "   Início da execução de find_OSC")
   
+  # FindOSC:
   tb_JoinOSC$IsOSC <- tb_JoinOSC$IsOSC & 
     find_OSC(tb_JoinOSC$razao_social, NonOSCNames, verbose = FALSE)
   
@@ -200,8 +198,8 @@ if(!(21 %in% processos_att_atual)) {
   # Extrai data de Fechamento das OSC ####
   tb_JoinOSC <- tb_JoinOSC %>% 
     # Campo de situação a atividade da OCS:
-    mutate(situacao = as.integer(situacao_cadastral), 
-           bo_osc_ativa = situacao %in% c(2, 3, 4), 
+    mutate(cd_situacao_cadastral = as.integer(situacao_cadastral), 
+           bo_osc_ativa = cd_situacao_cadastral %in% c(2, 3, 4), 
            # Existem casos em que a data_situacao_cadastral é '0', mesmo em OSC inativas.
            # Investiguei todos esses casos e me parece que são falhas de versões anteriores 
            # do find_osc, pois não me parecem OSC pelos critérios adotados. Vou excluir essas
@@ -223,7 +221,8 @@ if(!(21 %in% processos_att_atual)) {
   DtFechamentoOSC <- tb_JoinOSC %>% 
     dplyr::filter(IsOSC, !is.na(dt_fechamento_osc)) %>% 
     rename(cd_identificador_osc = cnpj) %>%
-    select(cd_identificador_osc, IsOSC, dt_fechamento_osc, nr_ano_fechamento_osc) %>% 
+    select(cd_identificador_osc, IsOSC, cd_situacao_cadastral, 
+           dt_fechamento_osc, nr_ano_fechamento_osc) %>% 
     mutate(dt_ultima_att = as.character(today()))
   
   if(definicoes$salva_backup) saveRDS(DtFechamentoOSC, 

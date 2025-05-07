@@ -233,6 +233,7 @@ if(!(61 %in% processos_att_atual)) {
       ft_ano_cadastro_cnpj = FonteRFB,
       ft_classe_atividade_economica_osc = FonteRFB,
       ft_fechamento_osc = FonteRFB, 
+      data_situacao_cadastral = ymd(data_situacao_cadastral),
       cd_cnae_secundaria = str_replace_all(cnae_fiscal_secundaria, 
                                                ",", fixed(" | ")),
       
@@ -253,7 +254,7 @@ if(!(61 %in% processos_att_atual)) {
            dt_fechamento_osc, nr_ano_fechamento_osc, ft_fechamento_osc,
            cd_classe_atividade_economica_osc, cd_cnae_secundaria, 
            ft_classe_atividade_economica_osc, 
-           situacao)
+           cd_situacao_cadastral, data_situacao_cadastral)
   
   # Checa Chaves Primárias únicas e não nulas:
   Check_PK_Rules(tb_dados_gerais$id_osc)
@@ -284,7 +285,21 @@ if(!(61 %in% processos_att_atual)) {
     rm(path_file)
   }
   
+  # Tabela DtFechamentoOSC ####
   
+  # ESTOU AQUI !!!!
+  
+  DtFechamentoOSC <- readRDS(glue("{diretorio_att}/intermediate_files/DtFechamentoOSC.RDS"))
+  
+  DtFechamentoOSC <- DtFechamentoOSC %>% 
+    # Insere "id_osc"
+    left_join(idControl, by = "cd_identificador_osc") %>% 
+    mutate(dt_fechamento_osc = ymd(dt_fechamento_osc), 
+           data_situacao_cadastral = dt_fechamento_osc) %>% 
+    select(id_osc, cd_identificador_osc, cd_situacao_cadastral, dt_fechamento_osc, 
+           nr_ano_fechamento_osc, data_situacao_cadastral)
+  
+  sum(is.na(DtFechamentoOSC$id_osc))
   
   
   # Tabela: tb_contato ####
