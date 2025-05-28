@@ -120,12 +120,13 @@ if(!(61 %in% processos_att_atual)) {
   
   # Tabela: tb_osc ####
   
+  message("Gerando tabela: tb_osc")
+  
   # Resgata o "id_osc" antigo
 
   # Formata base:
   tb_osc <- DB_OSC %>% 
-    rename(tx_apelido_osc = nome_fantasia, 
-           cd_situacao_cadastral = situacao) %>% 
+    rename(tx_apelido_osc = nome_fantasia) %>% 
     
     # Resgata o id_osc antigo.
     left_join(idControl, by = "cd_identificador_osc") %>% 
@@ -133,19 +134,15 @@ if(!(61 %in% processos_att_atual)) {
     mutate(ft_apelido_osc = FonteRFB, 
            ft_identificador_osc = FonteRFB,
            ft_osc_ativa = FonteRFB, 
-           bo_osc_ativa = TRUE, 
-           bo_Filial = matriz_filial == "2", # No outro banco o nome do campo era 'identificador_matrizfilial ' # TO DO: uniformizar nomes dos campos
-           ft_Filial = FonteRFB) %>% 
+           bo_osc_ativa = TRUE) %>% 
     
     arrange(id_osc) %>% 
-    select(id_osc,tx_apelido_osc, ft_apelido_osc, cd_identificador_osc,
-           ft_identificador_osc, bo_osc_ativa, ft_osc_ativa, bo_Filial,
-           ft_Filial, cd_situacao_cadastral) %>% 
+    select(id_osc, tx_apelido_osc, ft_apelido_osc, cd_identificador_osc,
+           ft_identificador_osc, bo_osc_ativa, ft_osc_ativa, cd_situacao_cadastral) %>% 
     # Evitar dar fonte de dado missing:
     mutate(ft_apelido_osc = ifelse(is.na(tx_apelido_osc), NA, ft_apelido_osc),
            ft_identificador_osc = ifelse(is.na(cd_identificador_osc), NA, ft_identificador_osc),
-           ft_osc_ativa = ifelse(is.na(bo_osc_ativa), NA, ft_osc_ativa), 
-           ft_Filial = ifelse(is.na(bo_Filial), NA, ft_Filial))
+           ft_osc_ativa = ifelse(is.na(bo_osc_ativa), NA, ft_osc_ativa))
   
   # Cria id_osc dos novos CNPJs:
   if(sum(is.na(tb_osc$id_osc)) > 0) {
@@ -210,15 +207,20 @@ if(!(61 %in% processos_att_atual)) {
   
   # Tabela: tb_dados_gerais ####
   
+  message("Gerando tabela: tb_dados_gerais")
+  
   tb_dados_gerais <- DB_OSC %>% 
     rename(cd_natureza_juridica_osc = natureza_juridica, 
            tx_razao_social_osc = razao_social, 
-           tx_nome_fantasia_osc = nome_fantasia) %>% 
+           tx_nome_fantasia_osc = nome_fantasia, 
+           cd_matriz_filial = matriz_filial, # No outro banco o nome do campo era 'identificador_matrizfilial ' # TO DO: uniformizar nomes dos campos
+           ) %>% 
     
     # Insere "id_osc"
     left_join(idControl, by = "cd_identificador_osc") %>% 
     
-    mutate(# uniformizar os campos da RFB logo no início da atualização # TO DO
+    mutate(
+      # uniformizar os campos da RFB logo no início da atualização # TO DO
       # dt_fundacao_osc = as.character(ymd(data_de_inicio_atividade)),
       # dt_ano_cadastro_cnpj = as.character(ymd(data_de_inicio_atividade)), 
       
@@ -254,7 +256,7 @@ if(!(61 %in% processos_att_atual)) {
            dt_fechamento_osc, nr_ano_fechamento_osc, ft_fechamento_osc,
            cd_classe_atividade_economica_osc, cd_cnae_secundaria, 
            ft_classe_atividade_economica_osc, 
-           cd_situacao_cadastral, data_situacao_cadastral)
+           cd_matriz_filial, data_situacao_cadastral)
   
   # Checa Chaves Primárias únicas e não nulas:
   Check_PK_Rules(tb_dados_gerais$id_osc)
@@ -285,24 +287,9 @@ if(!(61 %in% processos_att_atual)) {
     rm(path_file)
   }
   
-  # Tabela DtFechamentoOSC ####
-  
-  # ESTOU AQUI !!!!
-  
-  DtFechamentoOSC <- readRDS(glue("{diretorio_att}/intermediate_files/DtFechamentoOSC.RDS"))
-  
-  DtFechamentoOSC <- DtFechamentoOSC %>% 
-    # Insere "id_osc"
-    left_join(idControl, by = "cd_identificador_osc") %>% 
-    mutate(dt_fechamento_osc = ymd(dt_fechamento_osc), 
-           data_situacao_cadastral = dt_fechamento_osc) %>% 
-    select(id_osc, cd_identificador_osc, cd_situacao_cadastral, dt_fechamento_osc, 
-           nr_ano_fechamento_osc, data_situacao_cadastral)
-  
-  sum(is.na(DtFechamentoOSC$id_osc))
-  
-  
   # Tabela: tb_contato ####
+  
+  message("Gerando tabela: tb_contato")
   
   tb_contato <- DB_OSC %>% 
     rename(tx_email = correio_eletronico) %>% 
@@ -400,8 +387,12 @@ if(!(61 %in% processos_att_atual)) {
   
   # Tabela: tb_localizacao ####
   
+  message("Gerando tabela: tb_contato")
+  
   # Dados de geolocalização:
   LatLon_file <- glue("{diretorio_att}intermediate_files/LatLonOSC.RDS")
+  
+  assert_that(file.exists(LatLon_file))
   
   Dt_LatLon_data <- file.info(LatLon_file) %>% 
     mutate(ctime = as.character(ctime)) %>% 
@@ -412,7 +403,7 @@ if(!(61 %in% processos_att_atual)) {
   LatLon_data <- readRDS(LatLon_file)
 
   
-  names(LatLon_data)
+  # names(LatLon_data)
   
   LatLon_data <- LatLon_data %>% 
     # Uniformiza o campo CPF:
@@ -578,7 +569,11 @@ if(!(61 %in% processos_att_atual)) {
     rm(path_file)
   }
   
+  
+  
   # Tabela: tb_area_atuacao ####
+  
+  message("Gerando tabela: tb_area_atuacao")
   
   tb_area_atuacao <- DB_OSC %>% 
     dplyr::filter(!is.na(micro_area_atuacao) & !is.na(macro_area_atuacao)) %>% 
@@ -606,49 +601,59 @@ if(!(61 %in% processos_att_atual)) {
   for (g in seq_along(fontes_alterativas_atuacao)) {
     # g <- 1
     
-      # message("Inserindo ", fontes_alterativas_atuacao[g])
+    message("Inserindo ", fontes_alterativas_atuacao[g])
     
-      Input_data <- fread(
-        glue( "{diretorio_att}input_files/{fontes_alterativas_atuacao[g]}"))
+    encodguess <- glue("{diretorio_att}input_files/{fontes_alterativas_atuacao[g]}") %>% 
+      guess_encoding() %>% 
+      magrittr::extract2(1) %>% 
+      magrittr::extract2(1) %>%
+      magrittr::equals(c("ISO-8859-2", "ISO-8859-1", "Latin-1")) %>% 
+      any() %>% 
+      ifelse("Latin-1", 'UTF-8')
+    
+    Input_data <- fread(
+      glue( "{diretorio_att}input_files/{fontes_alterativas_atuacao[g]}"), 
+      encoding = encodguess)
+    
+    assert_that(
+      all(
+        c("tx_area_atuacao", "tx_subarea_atuacao", "ft_area_atuacao",
+          "cd_identificador_osc") %in% names(Input_data)
+      ))
+    
+    Input_data$tx_subarea_atuacao <- as.character(Input_data$tx_subarea_atuacao)
+    
+    # names(Input_data)
+    
+    newRows <- Input_data %>% 
       
-      assert_that(
-        all(
-          c("tx_area_atuacao", "tx_subarea_atuacao", "ft_area_atuacao",
-              "cd_identificador_osc") %in% names(Input_data)
-            ))
+      mutate(ft_area_atuacaoPadronizado = ft_area_atuacao,
+             ft_area_atuacao = paste0(ft_area_atuacao, "/", codigo_presente_att),
+             bo_oficial = TRUE, 
+             cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
+                                            width = 14,
+                                            side = "left", 
+                                            pad = "0")
+      ) %>%
       
-      Input_data$tx_subarea_atuacao <- as.character(Input_data$tx_subarea_atuacao)
-
-      # names(Input_data)
-
-      # Usa CEBAS/MS para identificar OSC como da área da saúde
-      newRows <- Input_data %>% 
-
-        mutate(ft_area_atuacaoPadronizado = ft_area_atuacao,
-               ft_area_atuacao = paste0(ft_area_atuacao, "/", codigo_presente_att),
-               bo_oficial = TRUE, 
-               cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
-                                              width = 14,
-                                              side = "left", 
-                                              pad = "0")
-               ) %>%
-        
-        # Insere "id_osc"
-        left_join(idControl, by = "cd_identificador_osc") %>%
-        dplyr::filter(!is.na(id_osc)) %>% # Evita id NA
-        distinct(id_osc, .keep_all = TRUE) %>% # Evita duplicação dos campos
-        
-        select(id_osc, cd_identificador_osc, tx_area_atuacao,
-               tx_subarea_atuacao, ft_area_atuacao, bo_oficial,
-               ft_area_atuacaoPadronizado)
-
-      tb_area_atuacao <- tb_area_atuacao %>%
-        bind_rows(newRows) %>%
-        arrange(id_osc)
-
-      # table(tb_area_atuacao$ft_area_atuacao)
-      rm(Input_data, newRows)
+      # Insere "id_osc"
+      left_join(idControl, by = "cd_identificador_osc") %>%
+      dplyr::filter(!is.na(id_osc)) %>% # Evita id NA
+      distinct(id_osc, .keep_all = TRUE) %>% # Evita duplicação dos campos
+      
+      select(id_osc, cd_identificador_osc, tx_area_atuacao,
+             tx_subarea_atuacao, ft_area_atuacao, bo_oficial,
+             ft_area_atuacaoPadronizado)
+    
+    tb_area_atuacao <- tb_area_atuacao %>%
+      bind_rows(newRows) %>%
+      arrange(id_osc)
+    
+    # table(tb_area_atuacao$ft_area_atuacao)
+    rm(Input_data, newRows)
+    rm(encodguess)
   }
+  rm(g, fontes_alterativas_atuacao)
   
   tb_area_atuacao <- tb_area_atuacao %>%
     dplyr::filter(!is.na(id_osc)) # Evita id NA

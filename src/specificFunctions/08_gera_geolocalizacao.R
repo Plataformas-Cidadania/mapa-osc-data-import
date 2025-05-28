@@ -35,7 +35,7 @@ library(geocodebr)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Executa o processo se não foi feito
-if(!(91 %in% processos_att_atual)) {
+if( !(91 %in% processos_att_atual) ) {
   
   message("Extrai localização das OSC")
   Sys.sleep(2) # Dar um tempo apenas para o usuário ler as mensagens da atualização
@@ -100,7 +100,11 @@ if(!(91 %in% processos_att_atual)) {
   
   # Adiciona CNPJ das OSC em 'tb_localizacao_old':
   tb_localizacao_old <- tb_localizacao_old %>% 
-    left_join(select(tb_osc_old, id_osc, cd_identificador_osc), by = "id_osc") %>% 
+    
+    left_join(
+      select(tb_osc_old, id_osc, cd_identificador_osc), 
+      by = "id_osc") %>% 
+    
     mutate(cnpj = str_pad(as.character(cd_identificador_osc), 
                           width = 14, 
                           side = "left", 
@@ -130,7 +134,6 @@ if(!(91 %in% processos_att_atual)) {
         DB_OSC$cnpj) > 3 )
   
   
-  
   # Seleciona somente os endereços novos ou alterados:
   novos_enderecos_osc <- DB_OSC %>% 
     select(cnpj, cep, numero) %>% 
@@ -149,6 +152,8 @@ if(!(91 %in% processos_att_atual)) {
            flag_new = ref_endereco_old != ref_endereco_new) %>% 
     dplyr::filter(flag_new)
   
+  # nrow(novos_enderecos_osc)
+  # View(novos_enderecos_osc)
   
   # Extrai as informações necessárias:
   input_busca_geo <- DB_OSC %>%
@@ -187,21 +192,25 @@ if(!(91 %in% processos_att_atual)) {
            numero = str_squish(numero), 
            numero = as.numeric(numero)    )
   
+  # names(input_busca_geo)
+  
   campos <- geocodebr::definir_campos(
     logradouro = "logradouro_full",
     numero = "numero",
     cep = "cep",
     localidade = "bairro",
-    municipio = "Munic_Nome",
+    municipio = "CodMunicIBGE",
     estado = "UF"
   )
 
   HorarioInicio <- lubridate::now()
+  
   geo_loc <- geocodebr::geocode(
     enderecos = input_busca_geo, 
     campos_endereco = campos, 
     verboso = TRUE, 
     resolver_empates = TRUE)
+  
   HorarioFim <- lubridate::now()
   
   message("Duração da Busca ", round(HorarioFim - HorarioInicio, 2), 
@@ -214,7 +223,6 @@ if(!(91 %in% processos_att_atual)) {
           " segundos")
   
   # Salva arquivos de endereços das OSC
-  
   saveRDS(geo_loc, glue("{diretorio_att}intermediate_files/LatLonOSC.RDS"))
   
   processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 90], 91))

@@ -47,6 +47,9 @@ if(!51 %in% processos_att_atual) {
   # Marca início do processo
   horario_processo_inicio <- now()
   
+  # Início do processo ####
+  processos_att_atual <- c(processos_att_atual[processos_att_atual != 51], 50)
+  
   # Atualiza controle de processos (tb_processos_atualizacao)  
   if(!definicoes$att_teste) atualiza_processos_att(
     TipoAtt = "inicio", 
@@ -64,11 +67,12 @@ if(!51 %in% processos_att_atual) {
     dir.create(glue("{diretorio_att}input_files/"))
     dir.create(glue("{diretorio_att}intermediate_files/"))
     dir.create(glue("{diretorio_att}output_files/"))
+    dir.create(glue("{diretorio_att}replication_files/"))
     
   }
   
   # Atualiza controle de processos:
-  processos_att_atual <- unique(c(processos_att_atual, 51))
+  processos_att_atual <- c(processos_att_atual[processos_att_atual != 50], 51)
 
   # Atualiza controle de processos (tb_processos_atualizacao)  
   if(!definicoes$att_teste) atualiza_processos_att(

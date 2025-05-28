@@ -1,6 +1,11 @@
 log de versões mapa-osc-data-import
 
 
+
+-0.9.01
+	-2025-05-28
+	-Mudanças menores e correção de bugs durante as atualizações 2025_02 e 2025_03
+
 -0.9
 	-2025-05-27
 	-Primeiro lançamento do log

@@ -50,7 +50,7 @@ library(RPostgres)
 
 # Baixa os dados da Receita, se não tiver sido feito ainda
 # "11": Processo 1 (baixar bases de dados brutas RFB) e 1 (completo)
-if(!(11 %in% processos_att_atual)) {
+if( !(11 %in% processos_att_atual) ) {
 
   ## Checagens preliminares ####
   assert_that("credenciais_rfb" %in% names(definicoes), 
@@ -133,6 +133,9 @@ if(!(11 %in% processos_att_atual)) {
     "')",
     # " LIMIT 1000", 
     ";")
+  
+  # Checa query:
+  # query_naolucrativo_rfb
   
   rm(tabela_empresas_rfb, tabela_estabelecimentos_rfb, campo_cnpj, 
      campo_natureza_juridica, natjur_nao_lucrativo)

@@ -47,7 +47,7 @@ library(assertthat)
 
 # Executa o processo se não foi feito
 # "21": Processo 2 (Identificação OSC via Razão Social) e 1 (completo)
-if(!(21 %in% processos_att_atual)) {
+if( !(21 %in% processos_att_atual) ) {
   
   message("Identificação OSC via Razão Social")
   
@@ -172,12 +172,36 @@ if(!(21 %in% processos_att_atual)) {
     select(cd_identificador_osc) %>% 
     collect() %>% 
     # Corrigir cd_identificador_osc (pad)
-    mutate(cd_identificador_osc = str_pad(cd_identificador_osc, 
+    mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
                                           width = 14, side = "left",
                                           pad = 0)) %>% 
     unlist() %>% as.character()
   
   # table(tb_JoinOSC$era_osc_ultima_att)
+  
+  # Incorpora WhiteList
+  if( file.exists("tab_auxiliares/WhiteList.csv") ) {
+    
+    WhiteList <- try(
+      fread("tab_auxiliares/WhiteList.csv") %>% 
+      dplyr::filter(ativo == 1) %>% 
+      select(cd_identificador_osc) %>% 
+      # Corrigir cd_identificador_osc (pad)
+      mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
+                                            width = 14, side = "left",
+                                            pad = 0)) %>% 
+      unlist() %>% as.character()
+      )
+    
+    # Confere se os CNPJ estão nos dados
+    # WhiteList %in% tb_JoinOSC$cnpj
+    
+    if( !is.error(WhiteList) ) {
+      osc_ultima_att <- c(osc_ultima_att, WhiteList)
+    }
+    
+    rm(WhiteList)
+  }
   
   # Colocar em tb_JoinOSC a variável de se ela estava ativa na última
   # atualização:
@@ -211,8 +235,9 @@ if(!(21 %in% processos_att_atual)) {
            # ela está inativa:
            dt_fechamento_osc = ifelse(bo_osc_ativa, NA, 
                                       data_situacao_cadastral), 
+           dt_fechamento_osc = ymd(dt_fechamento_osc),
            # Ano de fechamento OSC
-           nr_ano_fechamento_osc = year(ymd(dt_fechamento_osc))
+           nr_ano_fechamento_osc = year(dt_fechamento_osc)
     )
   # table(tb_JoinOSC$bo_osc_ativa)
   # table(tb_JoinOSC$nr_ano_fechamento_osc, useNA = "always")

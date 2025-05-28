@@ -153,7 +153,7 @@ assert_that(file.exists("src/generalFunctions/postCon.R"))
 source("src/generalFunctions/postCon.R") 
 assert_that(is.function(postCon))
 
-message(agora(), "  Concectando aos Bancos de Dados MOSC")
+message(agora(), "  Conectando aos Bancos de Dados MOSC")
 Sys.sleep(1) # Dar um tempo apenas para o usuário ler as mensagens da atualização
 
 # Primeiro vamos checar se conseguimos nos conectar ao banco de dados:
@@ -329,7 +329,7 @@ rm(conexao_mosc)
 # Checagem da Conexão com o banco contendo os dados da RFB (rais_2019) ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-message(agora(), "  Concectando aos Bancos de Dados RFB (rais_2019)")
+message(agora(), "  Conectando aos Bancos de Dados RFB (rais_2019)")
 Sys.sleep(1) # Dar um tempo apenas para o usuário ler as mensagens da atualização
 
 assert_that("credenciais_rfb" %in% names(definicoes), 

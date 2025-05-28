@@ -220,10 +220,19 @@ AtualizaDados <- function(Conexao,
   if(sum(DadosNovos[["AddRows"]]) > 0) {
     
     if(samples) {
-      # Amostra de linhas inseridas
-      SampleAdd <- sample(DadosNovos[[Chave]][DadosNovos$AddRows], 20)
-      message("Amostra de linhas inseridas: ", Chave, " == ", 
-              paste0(SampleAdd, collapse = ", "))
+      
+      if( sum(DadosNovos[["AddRows"]]) > 20 ) {
+        # Amostra de linhas inseridas
+        SampleAdd <- sample(DadosNovos[[Chave]][DadosNovos$AddRows], 20)
+        message("Amostra de linhas inseridas: ", Chave, " == ", 
+                paste0(SampleAdd, collapse = ", "))
+        
+      } else {
+        SampleAdd <- DadosNovos[[Chave]][DadosNovos$AddRows]
+        message("Amostra de linhas inseridas: ", Chave, " == ", 
+                paste0(SampleAdd, collapse = ", "))
+        
+      }
       rm(SampleAdd)
     }
     

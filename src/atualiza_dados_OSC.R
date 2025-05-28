@@ -22,25 +22,39 @@
 # importantes em uma lista:
 definicoes <- list()
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~ MUITO IMPORTANTE: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 # Schema da Receita Federal de onde iremos retirar os dados:
 definicoes$schema_receita <- "rfb_2025" # ATUALIZAR AQUI QUANDO CHEGAR NOVOS DADOS
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Arquivo JSON com as chave de acesso ao banco de dados MOSC 
+# (escolher entre homologação e produção)
 
-# Arquivo JSON com as chave de acesso ao banco de dados MOSC
-definicoes$credenciais_mosc <- "keys/psql12-usr_manutencao_mapa.json"
-# definicoes$credenciais_mosc <- "keys/psql12-prod_key3.json"
+# definicoes$credenciais_mosc <- "keys/psql12-homolog_key.json" # Banco de homologação
+definicoes$credenciais_mosc <- "keys/psql12-usr_manutencao_mapa.json" # acesso completo ao banco de produção
+# definicoes$credenciais_mosc <- "keys/psql12-prod_key3.json" # acesso limitado ao banco de proução
 
 # Arquivo JSON com as chaves de acesso ao banco de dados da RFB e da RAIS:
 definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"
 
+# Adiciona um comentário para a atualização
+definicoes$tx_att_comentarios <- glue::glue("Corrige bug da atualização 2025_02 na lista de OSC de habitação (ficou faltando a determinação da subárea de atuação")
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 # Essa atualização é teste? 
 # (não registra processos novos nos controles)
-definicoes$att_teste <- TRUE
+definicoes$att_teste <- FALSE
 
 # Essa atualização vai salvar os arquivos intermediários no diretório de backup?
 definicoes$salva_backup <- TRUE
+
+# Existem novos dados RAIS nesta atualização?
+definicoes$atualiza_RAIS <- FALSE
 
 # Outras definições importantes, mas que raramente precisam ser mudada
 # estão na rotina de Setup (abaixo) ('src/specificFunctions/setup_atualizacao.R')
@@ -97,18 +111,16 @@ source("src/specificFunctions/11_atualiza_mosc.R")
 # Finaliza a Rotina ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-# Faz a cópia da rotina utilizada
-
-# Estou aqui!!!! ####
+source("src/specificFunctions/13_finaliza_att.R")
 
 
-
+dbDisconnect(conexao_mosc)
 
 # Limpa memória
-rm(ControleAtualizacao, Att_Atual)
-rm(ProcessosAtualizacao, ProcessosAtt_Atual, BackupsFiles)
-rm(DirName)
+rm(conexao_mosc, agora, atualiza_processos_att, CamposAtualizacao)
+rm(definicoes, diretorio_att, codigo_presente_att, id_presente_att)
+rm(processos_att_atual, tb_backups_files, tb_controle_atualizacao, 
+   tb_processos_atualizacao)
 ls()
-
+gc()
 # Fim ####

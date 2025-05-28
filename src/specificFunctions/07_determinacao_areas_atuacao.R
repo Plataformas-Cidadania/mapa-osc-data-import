@@ -48,7 +48,7 @@ library(RPostgres)
 
 # Executa o processo se não foi feito
 # "31": Processo 2 (Determinação das áreas de atuação OSC) e 1 (completo)
-if(!(31 %in% processos_att_atual)) {
+if( !(31 %in% processos_att_atual) ) {
   
   message("Determinação das áreas de atuação OSC")
   Sys.sleep(2) # Dar um tempo apenas para o usuário ler as mensagens da atualização
@@ -106,6 +106,7 @@ if(!(31 %in% processos_att_atual)) {
     mutate(cnae = .data[[campo_rfb_cnae_principal]], 
            micro_area_atuacao = NA)
   
+  rm(campo_rfb_cnae_principal)
   rm(Tb_OSC_Full) # não vamos mais utilizar esses dados
   
   # Usa função "AreaAtuacaoOSC" para determinar qual a área de atuação
@@ -187,7 +188,7 @@ if(!(31 %in% processos_att_atual)) {
   
   # Salva arquivo Backup - Multi áreas ####
   
-  processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 90], 91))
+  processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 30], 31))
   
   # Atualiza controle de processos (tb_processos_atualizacao) 
   if(!definicoes$att_teste) atualiza_processos_att(
@@ -201,6 +202,7 @@ if(!(31 %in% processos_att_atual)) {
   rm(AreaAtuacaoOSC, DB_SubAreaRegras, DB_AreaSubaria)
   rm(horario_processo_inicio, path_file_backup)
   rm(MultiAreas)
+  gc()
   # ls()
   
 } else {
