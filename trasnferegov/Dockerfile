@@ -1,19 +1,29 @@
+# -----------------------------
+# 1. Base e dependências do sistema
+# -----------------------------
 FROM r-base:latest
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
         unixodbc \
         unixodbc-dev \
-        odbc-postgresql
+        odbc-postgresql \
+        libpq-dev \
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get install -y libpq-dev
+# -----------------------------
+# 2. Instalação de pacotes R
+# -----------------------------
+RUN R -e "install.packages(c('data.table', 'DBI', 'dotenv', 'RPostgres', 'odbc'), repos='https://cran.r-project.org')"
 
+# -----------------------------
+# 3. Configuração da aplicação
+# -----------------------------
 WORKDIR /app
 
-COPY ./src/.env  /app/
-COPY ./src/pipeline_tb_projeto.R  /app/
+COPY ./src ./
 
-RUN R -e "install.packages(c('data.table', 'DBI', 'dotenv', 'RPostgres'), repos='https://cran.r-project.org')"
-RUN R -e "install.packages('odbc', repos='https://cran.r-project.org')"
-
-
-CMD ["Rscript", "pipeline_tb_projeto.R"]
+# -----------------------------
+# 4. Execução do script
+# -----------------------------
+CMD ["Rscript", "pipeline_tb_projeto.R"]        
