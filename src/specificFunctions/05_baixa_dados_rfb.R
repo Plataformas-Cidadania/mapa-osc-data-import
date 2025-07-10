@@ -92,6 +92,7 @@ if( !(11 %in% processos_att_atual) ) {
   ## 322-0	Organização Religiosa
   ## 330-1	Organização Social (OS)
   ## 399-9	Associação Privada
+  ## 320-1 Estabelecimento, no Brasil, de Fundação ou Associação Estrangeiras
   # Fonte: https://concla.ibge.gov.br/estrutura/natjur-estrutura/natureza-juridica-2021
 
   # Carrega os campos necessários para os testes abaixo.

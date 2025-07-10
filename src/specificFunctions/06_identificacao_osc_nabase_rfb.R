@@ -156,6 +156,37 @@ if( !(21 %in% processos_att_atual) ) {
   
   rm(NonOSCNames, find_OSC)
   
+  # Coloca as OSC que são OSCIP ####
+  # Na regra do MOSC, todas as OSCIP são OSC
+  message("Incorporando OSCIP")
+  
+  if(file.exists("input_files_next/tb_oscip.csv")) {
+    
+    OSCIP <- fread("input_files_next/tb_oscip.csv") %>% 
+      rename(cd_identificador_osc = cnpj) %>% 
+      # Corrigir cd_identificador_osc (pad)
+      mutate(cd_identificador_osc = str_pad(cd_identificador_osc, 
+                                            width = 14, side = "left",
+                                            pad = 0)) %>% 
+      unlist() %>% as.character()
+    
+    tb_JoinOSC <- tb_JoinOSC %>% 
+      mutate(
+        # Se for classificada como OSCIP, colocar nesta variávei
+        eh_oscip = cnpj %in% OSCIP,
+        
+        # Toda OSCIP é OSC
+        IsOSC = IsOSC | eh_oscip, 
+        
+        # Vou deixar NA para a fonte da atualização OSC quando tiver 
+        # identificação pela OSCIP:
+        ft_IsOSC = ifelse(IsOSC, glue("findOSC.R_{codigo_presente_att}"), NA)
+      )
+    
+  } else {
+    message("Arquivo de OSCIPs não encontrado")
+  }
+  
   #  Inserindo OSCs que estavam na última versão do Banco ####
   # (princípio de não deletar OSC do banco exclusivamente pelo find_OSC)
   # bkp <- tb_JoinOSC

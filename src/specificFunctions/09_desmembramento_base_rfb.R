@@ -594,15 +594,14 @@ if(!(61 %in% processos_att_atual)) {
            ft_area_atuacaoPadronizado) 
   
   
-  
-  fontes_alterativas_atuacao <- list.files(glue( "{diretorio_att}input_files/"),
-                                           "^tb_area_atuacao")
+  fontes_alterativas_atuacao <- list.files("input_files_next", "^tb_area_atuacao")
   
   for (g in seq_along(fontes_alterativas_atuacao)) {
     # g <- 1
     
     message("Inserindo ", fontes_alterativas_atuacao[g])
     
+<<<<<<< Updated upstream
     encodguess <- glue("{diretorio_att}input_files/{fontes_alterativas_atuacao[g]}") %>% 
       guess_encoding() %>% 
       magrittr::extract2(1) %>% 
@@ -626,6 +625,11 @@ if(!(61 %in% processos_att_atual)) {
     # names(Input_data)
     
     newRows <- Input_data %>% 
+=======
+      Input_data <- fread(
+        glue( "input_files_next/{fontes_alterativas_atuacao[g]}")
+        )
+>>>>>>> Stashed changes
       
       mutate(ft_area_atuacaoPadronizado = ft_area_atuacao,
              ft_area_atuacao = paste0(ft_area_atuacao, "/", codigo_presente_att),
@@ -636,6 +640,7 @@ if(!(61 %in% processos_att_atual)) {
                                             pad = "0")
       ) %>%
       
+<<<<<<< Updated upstream
       # Insere "id_osc"
       left_join(idControl, by = "cd_identificador_osc") %>%
       dplyr::filter(!is.na(id_osc)) %>% # Evita id NA
@@ -654,6 +659,47 @@ if(!(61 %in% processos_att_atual)) {
     rm(encodguess)
   }
   rm(g, fontes_alterativas_atuacao)
+=======
+      Input_data$tx_subarea_atuacao <- as.character(Input_data$tx_subarea_atuacao)
+
+      # names(Input_data)
+      
+      newRows <- Input_data %>% 
+        
+        mutate(
+          ft_area_atuacaoPadronizado = ft_area_atuacao,
+          ft_area_atuacao = paste0(ft_area_atuacao, "/", codigo_presente_att),
+          bo_oficial = TRUE, 
+          cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
+                                         width = 14,
+                                         side = "left", 
+                                         pad = "0")
+        ) %>%
+        
+        # Insere "id_osc"
+        left_join(idControl, by = "cd_identificador_osc") %>%
+        dplyr::filter(!is.na(id_osc)) %>% # Evita id NA
+        distinct(id_osc, .keep_all = TRUE) %>% # Evita duplicação dos campos
+        
+        select(id_osc, cd_identificador_osc, tx_area_atuacao,
+               tx_subarea_atuacao, ft_area_atuacao, bo_oficial,
+               ft_area_atuacaoPadronizado)
+
+      tb_area_atuacao <- tb_area_atuacao %>%
+        bind_rows(newRows) %>%
+        arrange(id_osc)
+      
+      # Transfere arquivo de "input_files_next" para "diretorio_input_att"
+      file.rename(
+        from = glue( "input_files_next/{fontes_alterativas_atuacao[g]}"), 
+        to = glue("{diretorio_att}input_files/{fontes_alterativas_atuacao[g]}")
+      )
+      
+      # table(tb_area_atuacao$ft_area_atuacao)
+      rm(Input_data, newRows)
+  }
+  rm(fontes_alterativas_atuacao, g)
+>>>>>>> Stashed changes
   
   tb_area_atuacao <- tb_area_atuacao %>%
     dplyr::filter(!is.na(id_osc)) # Evita id NA
