@@ -20,7 +20,8 @@ library(jsonlite)
 
 # Baixa a chave secreta do código
 
-keys_file <- "keys/psql12-homolog_key.json"
+keys_file <- "keys/psql12-usr_manutencao_mapa.json" # acesso completo ao banco de produção
+# keys_file <- "keys/psql12-homolog_key.json"  # Banco de homologação
 assert_that(file.exists(keys_file))
 keys <- jsonlite::read_json(keys_file)
 

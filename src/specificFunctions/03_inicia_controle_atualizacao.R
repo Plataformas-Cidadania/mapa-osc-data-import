@@ -86,17 +86,20 @@ if(!any(pull(tb_controle_atualizacao, tx_att_situacao) == "Iniciada")) {
     paste0(year(now()), "_", .)
   
   # Insere linha de atualização nova:
-  rows_append(
-    tb_controle_atualizacao, 
-    copy_inline(conexao_mosc, 
-                tibble(att_id = id_presente_att, 
-                       cd_att_ref = codigo_presente_att, 
-                       tx_att_situacao = "Iniciada", 
-                       dt_att_ref = definicoes$data_dados_referencia, 
-                       dt_att_inicio = lubridate::now(), 
-                       dt_att_fim = NA_Date_,
-                       .rows = 1)), 
-    in_place = TRUE)
+  if(!definicoes$att_teste) {
+    rows_append(
+      tb_controle_atualizacao, 
+      copy_inline(conexao_mosc, 
+                  tibble(att_id = id_presente_att, 
+                         cd_att_ref = codigo_presente_att, 
+                         tx_att_situacao = "Iniciada", 
+                         dt_att_ref = definicoes$data_dados_referencia, 
+                         dt_att_inicio = lubridate::now(), 
+                         dt_att_fim = NA_Date_,
+                         .rows = 1)), 
+      in_place = TRUE)
+  }
+  
   
 } else {
   
@@ -134,17 +137,18 @@ diretorio_att <- paste0(definicoes$dir_backup_files,
 # Carrega tabela dos arquivos de backup:
 tb_backups_files <- tbl(conexao_mosc, "tb_backups_files")
 
-# Insere o comentário da Atualização
-query_AltRow <- glue("UPDATE tb_controle_atualizacao \n",
-                     " SET tx_att_comentarios = '{definicoes$tx_att_comentarios}' \n",
-                     " WHERE att_id = {id_presente_att}",
-                     ";")
+if(!definicoes$att_teste) {
+  # Insere o comentário da Atualização
+  query_AltRow <- glue("UPDATE tb_controle_atualizacao \n",
+                       " SET tx_att_comentarios = '{definicoes$tx_att_comentarios}' \n",
+                       " WHERE att_id = {id_presente_att}",
+                       ";")
+  
+  # query_AltRow
+  dbExecute(conexao_mosc, query_AltRow)
+  rm(query_AltRow)
+}
 
-# query_AltRow
-
-dbExecute(conexao_mosc, query_AltRow)
-
-rm(query_AltRow)
 
 message(agora(), ": Controle de Atualização Carregado")
 Sys.sleep(1) # Dar um tempo apenas para o usuário ler as mensagens da atualização

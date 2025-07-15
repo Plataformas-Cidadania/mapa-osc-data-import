@@ -36,7 +36,8 @@ if(!(exists("conexao_mosc") && dbIsValid(conexao_mosc))) {
   # Credenciais de acesso ao banco de dados:
   # (determinam qual banco de dados acessar)
   # credenciais_mosc <- "keys/psql12-homolog_keySUPER.json"
-  credenciais_mosc <- "keys/psql12-homolog_keySUPER.json"
+  # credenciais_mosc <- "keys/psql12-homolog_keySUPER.json"
+  credenciais_mosc <- "keys/psql12-usr_manutencao_mapa.json" # acesso completo ao banco de produção
   
   # Função para facilitar a conexão com os bancos de dados PostgreSQL:
   source("src/generalFunctions/postCon.R") 
@@ -53,8 +54,7 @@ if(!(exists("conexao_mosc") && dbIsValid(conexao_mosc))) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Usando o arquivo de backup:
-tb_osc <- readRDS("backup_files/2024_01/output_files/tb_osc.RDS")
-
+# tb_osc <- readRDS("backup_files/2024_01/output_files/tb_osc.RDS")
 
 # Usando o arquivo do banco de dados
 tb_osc <- dbGetQuery(conexao_mosc, paste0("SELECT * FROM tb_osc",
@@ -64,15 +64,20 @@ tb_osc <- dbGetQuery(conexao_mosc, paste0("SELECT * FROM tb_osc",
 # Dados da tabela 'tb_dados_gerais':
 
 # Usando o arquivo de backup:
-tb_dados_gerais <- readRDS("backup_files/2024_01/output_files/tb_dados_gerais.RDS")
+# tb_dados_gerais <- readRDS("backup_files/2024_01/output_files/tb_dados_gerais.RDS")
 
 # Usando o arquivo do banco de dados
 tb_dados_gerais <- dbGetQuery(conexao_mosc, paste0("SELECT * FROM tb_dados_gerais",
                                   # " LIMIT 500", 
                                   ";"))
 
+names(tb_dados_gerais)
+
 Dados <- tb_dados_gerais %>% 
-  dplyr::filter(id_osc %in% tb_osc$id_osc) %>% 
+  left_join(select(tb_osc, id_osc, cd_identificador_osc, bo_osc_ativa, 
+                   cd_situacao_cadastral), 
+            by = "id_osc") %>% 
+  dplyr::filter(bo_osc_ativa) %>% 
   # Evita problemas de padding:
   mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
                                         width = 14, 
@@ -87,7 +92,10 @@ Dados <- tb_dados_gerais %>%
          # nome fantasia
          tx_nome_fantasia_osc, 
          # data de fundação da OSC
-         dt_fundacao_osc)
+         dt_fundacao_osc, 
+         # cnae
+         cd_classe_atividade_economica_osc
+         )
 
 rm(tb_dados_gerais, tb_osc)
 
@@ -95,7 +103,7 @@ rm(tb_dados_gerais, tb_osc)
 # Dados da tabela 'tb_localizacao':
 
 # Usando o arquivo de backup:
-tb_localizacao <- readRDS("backup_files/2024_01/output_files/tb_localizacao.RDS")
+# tb_localizacao <- readRDS("backup_files/2024_01/output_files/tb_localizacao.RDS")
 
 
 # Usando o arquivo do banco de dados
@@ -107,37 +115,45 @@ sum(is.na(tb_localizacao$tx_endereco_corrigido))
 
 sum(is.na(Dados$tx_endereco_completo))
 
+names(tb_localizacao)
+
+Municipios <- fread("tab_auxiliares/Municipios.csv", 
+                    encoding = "Latin-1")
+
+UFs <- fread("tab_auxiliares/UFs.csv", 
+             encoding = "Latin-1")
+
 
 Dados <- Dados %>% 
   left_join(select(tb_localizacao, 
                    id_osc,
                    # código do município
                    cd_municipio,
-                   # nome do município
-                   tx_endereco_corrigido2,
                    # endereço completo
-                   tx_endereco_corrigido,
-                   # latitude e longitude, se houver
-                   tx_latitude,
-                   tx_longitude), 
+                   tx_endereco_corrigido), 
             by = "id_osc") %>% 
+  
+  left_join(select(Municipios, Munic_Id, UF_Id, Munic_Nome), 
+            by = c("cd_municipio" = "Munic_Id")) %>% 
+  
+  left_join(UFs, by = "UF_Id") %>% 
+            
   # Corrige nomes esquisitos desta base:
-  rename(municipio_nome = tx_endereco_corrigido2, 
-         tx_endereco_completo = tx_endereco_corrigido) %>% 
-  mutate(
-    # código da UF
-    cd_uf = str_sub(cd_municipio, 1, 2),
-    # nome da UF
-    sigla_uf = str_sub(municipio_nome, -2, -1)  )
+  rename(tx_endereco_completo = tx_endereco_corrigido) %>% 
+  
+  select(everything())
 
-rm(tb_localizacao)
+names(Dados)
+  
+
+rm(tb_localizacao, Municipios, UFs)
 
 
 # Dados da tabela 'tb_area_atuacao'
 # finalidades de atuação/area de atuação 
 
 # Usando o arquivo de backup:
-tb_area_atuacao <- readRDS("backup_files/2024_01/output_files/tb_area_atuacao.RDS")
+# tb_area_atuacao <- readRDS("backup_files/2024_01/output_files/tb_area_atuacao.RDS")
 
 # Usando o arquivo do banco de dados
 tb_area_atuacao <- dbGetQuery(conexao_mosc, paste0("SELECT * FROM tb_area_atuacao",
@@ -200,7 +216,7 @@ rm(dc_area_atuacao, dc_subarea_atuacao)
 
 # DB_OSC
 
-DB_OSC <- readRDS("backup_files/2024_01/intermediate_files/DB_OSC.RDS")
+DB_OSC <- readRDS("backup_files/2025_03/intermediate_files/DB_OSC.RDS")
 
 Dados <- Dados %>% 
   # Vou deixar o CNPJ mais claro aqui:
@@ -221,6 +237,9 @@ rm(DB_OSC)
 names(Dados)
 
 Dados2 <- Dados %>% 
+  rename(cnpj = cd_identificador_osc, 
+         municipio_nome = Munic_Nome, 
+         cnae = cd_classe_atividade_economica_osc) %>% 
   # Deixa as variáveis em uma ordem agradável
   select(
     # Identificação da OSC:
@@ -234,14 +253,14 @@ Dados2 <- Dados %>%
     tx_endereco_completo, 
     cd_municipio, 
     municipio_nome, 
-    cd_uf, 
-    sigla_uf, 
-    tx_latitude, 
-    tx_longitude, 
+    # cd_uf, 
+    UF_Sigla, 
+    # tx_latitude, 
+    # tx_longitude, 
     
     # Áreas de Atuação:
     cnae, 
-    cnae_fiscal_secundaria,
+    # cnae_fiscal_secundaria,
     Area_Assistencia_social, 
     Area_Associacoes_patronais_e_profissionais, 
     Area_Cultura_e_recreacao, 
@@ -269,6 +288,7 @@ Dados2 <- Dados %>%
     SubArea_Outros_servicos_de_saude, 
     SubArea_Religiao)
 
+names(Dados2)
 
 table(Dados2$SubArea_Hospitais)
 table(Dados2$SubArea_Esportes_e_recreacao)
@@ -283,10 +303,11 @@ hoje_txt <- today() %>%
   str_remove_all("-")
 
 # Salva
-fwrite(Dados2, glue("backup_files/2024_01/output_files/{hoje_txt}_MOSC_baseresumida.csv"), 
+fwrite(Dados2, glue("backup_files/2025_03/output_files/{hoje_txt}_MOSC_baseresumida.csv"), 
        sep = ";", dec = ",")
 
 rm(Dados, Dados2)
+dbDisconnect(conexao_mosc)
 rm(conexao_mosc)
 rm(hoje_txt)
 gc()

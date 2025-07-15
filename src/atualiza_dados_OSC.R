@@ -48,10 +48,10 @@ definicoes$tx_att_comentarios <- glue::glue("Corrige bug da atualização 2025_0
 
 # Essa atualização é teste? 
 # (não registra processos novos nos controles)
-definicoes$att_teste <- FALSE
+definicoes$att_teste <- TRUE
 
 # Essa atualização vai salvar os arquivos intermediários no diretório de backup?
-definicoes$salva_backup <- TRUE
+definicoes$salva_backup <- FALSE
 
 # Existem novos dados RAIS nesta atualização?
 definicoes$atualiza_RAIS <- FALSE
