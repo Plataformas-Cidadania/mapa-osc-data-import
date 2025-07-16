@@ -12,7 +12,7 @@ editor_options:
     wrap: 72
 ---
 
-## Rotina de Atualização - versão 2023/2024
+## Rotina de Atualização
 
 <br />
 
@@ -228,7 +228,7 @@ A seguir, detalharemos cada um dos processos de atualização.
 
 <br />
 
-## Procedimentos preliminares de atualização
+### Procedimentos preliminares de atualização
 
 Antes de realizar a atualização propriamente dita, o script
 [src/atualiza_dados_OSC.R](src/atualiza_dados_OSC.R) faz uma série de
@@ -996,7 +996,7 @@ atualização ("backup/{pasta da atualização}/output_files/”) e o processo
 
 <br />
 
-## Estrutura do Diretório
+## Estrutura do Repositório GitHub
 
 -   **pasta 'backup_files'**: contém os arquivos de backup cada uma das
     atualizações. Cada atualização tem um diretório específico nesta
