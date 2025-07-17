@@ -609,8 +609,7 @@ if(!(61 %in% processos_att_atual)) {
       magrittr::equals(c("ISO-8859-2", "ISO-8859-1", "Latin-1")) %>% 
       any() %>% 
       ifelse("Latin-1", 'UTF-8')
-    
-<<<<<<< Updated upstream
+
     Input_data <- fread(
       glue( "input_files_next/{fontes_alterativas_atuacao[g]}"), 
       encoding = encodguess)
@@ -638,14 +637,13 @@ if(!(61 %in% processos_att_atual)) {
       Input_data <- fread(
         glue( "input_files_next/{fontes_alterativas_atuacao[g]}")
         )
->>>>>>> Stashed changes
-      
+
       # Insere "id_osc"
       left_join(idControl, by = "cd_identificador_osc") %>%
       dplyr::filter(!is.na(id_osc)) %>% # Evita id NA
       distinct(id_osc, .keep_all = TRUE) %>% # Evita duplicação dos campos
       
-<<<<<<< Updated upstream
+
       select(id_osc, cd_identificador_osc, tx_area_atuacao,
              tx_subarea_atuacao, ft_area_atuacao, bo_oficial,
              ft_area_atuacaoPadronizado)
@@ -667,7 +665,6 @@ if(!(61 %in% processos_att_atual)) {
   }
   rm(g, fontes_alterativas_atuacao)
 
-=======
       Input_data$tx_subarea_atuacao <- as.character(Input_data$tx_subarea_atuacao)
 
       # names(Input_data)

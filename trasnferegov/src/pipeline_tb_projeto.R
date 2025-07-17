@@ -1,11 +1,7 @@
-
 library(odbc)
 library(DBI)
 library(data.table)
-library(dotenv)
 library(RPostgres)
-
-#load_dot_env()
 
 con_db_name <- Sys.getenv("CON_DBNAME")
 con_db_host <- Sys.getenv("CON_DBHOST")
@@ -27,7 +23,7 @@ con <- dbConnect(RPostgres::Postgres(),
   port = con_db_port
 )
 
-print(paste("Conexão 1:",dbIsValid(con)))
+print(paste("Connection 1:",dbIsValid(con)))
 
 con2 <- dbConnect(RPostgres::Postgres(),
   dbname = con2_db_name,
@@ -37,13 +33,13 @@ con2 <- dbConnect(RPostgres::Postgres(),
   port = con2_db_port
 )
 
-print(paste("Conexão 2:",dbIsValid(con2)))
+print(paste("Connection 2:",dbIsValid(con2)))
 
-tb_projeto <- data.table(dbGetQuery(con, "SELECT * FROM osc.tb_projeto"))
-
+tb_projeto <- data.table(dbGetQuery(con, "SELECT * FROM mapa_osc.tb_projeto"))
+print(paste("Table selected: ", nrow(tb_projeto)))
 
 query <- "
-  INSERT INTO public.tb_projeto (
+  INSERT INTO osc.tb_projeto (
     id_projeto, id_osc, tx_nome_projeto, ft_nome_projeto, cd_status_projeto, ft_status_projeto,
     dt_data_inicio_projeto, ft_data_inicio_projeto, dt_data_fim_projeto, ft_data_fim_projeto,
     tx_link_projeto, ft_link_projeto, nr_total_beneficiarios, ft_total_beneficiarios, nr_valor_captado_projeto,
@@ -92,14 +88,68 @@ query <- "
     cd_uf = excluded.cd_uf,
     ft_uf = excluded.ft_uf"
 
+print("Start insert/update")
+
+# Desativar TRIGGER
+dbExecute(con2, "ALTER TABLE osc.tb_projeto DISABLE TRIGGER projeto;")
+
+# Parâmetros
+batch_size <- 10000
+n <- nrow(tb_projeto)
+print(paste("Total of records:", n))
 tempo_inicio <- Sys.time()
-dbBegin(con2)
+lotes_com_erro <- list()
+erros_finais <- list()
+tempo_inicio <- Sys.time()
 
-dbExecute(con2, query, params = unname(as.list(tb_projeto)))
+# Etapa 1: Inserção em lotes
+for (i in seq(1, n, by = batch_size)) {
+  fim <- min(i + batch_size - 1, n)
+  batch <- tb_projeto[i:fim, ]
+  
+  print(paste("Inserindo lote", i, "a", fim))
+  
+  resultado <- tryCatch({
+    for (j in 1:nrow(batch)) {
+      params <- unname(as.list(batch[j, ]))
+      dbExecute(con2, query, params = params)
+    }
+    NULL
+  }, error = function(e) {
+    message(paste("Erro no lote", i, "-", e$message))
+    return(list(inicio = i, fim = fim))
+  })
+  
+  if (!is.null(resultado)) {
+    lotes_com_erro[[length(lotes_com_erro) + 1]] <- resultado
+  }
+}
 
+# Etapa 2: Reprocessar lotes com erro, linha por linha
+for (lote in lotes_com_erro) {
+  i <- lote$inicio
+  fim <- lote$fim
+  batch <- tb_projeto[i:fim, ]
+  
+  print(paste("Reprocessando lote com erro:", i, "a", fim))
+  
+  for (j in 1:nrow(batch)) {
+    linha <- batch[j, ]
+    id <- linha$id_projeto
+    
+    tryCatch({
+      params <- unname(as.list(linha))
+      dbExecute(con2, query, params = params)
+    }, error = function(e) {
+      message(paste("Erro final no id_projeto:", id, "-", e$message))
+      erros_finais[[length(erros_finais) + 1]] <<- list(id_projeto = id, erro = e$message)
+    })
+  }
+}
 
-dbCommit(con2)
+# Ativar TRIGGER
+dbExecute(con2, "ALTER TABLE osc.tb_projeto ENABLE TRIGGER projeto;")
+
 tempo_fim <- Sys.time()
 tempo_total <- tempo_fim - tempo_inicio
-print(paste("Tempo de execução:", tempo_total, "segundos"))
-
+print(paste("Tempo total de execução:", tempo_total, "segundos"))
