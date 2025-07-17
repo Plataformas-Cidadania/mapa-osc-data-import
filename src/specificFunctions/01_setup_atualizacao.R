@@ -79,6 +79,43 @@ definicoes$path_rscript_att_mosc <- "src/atualiza_dados_OSC.R"
 # Diretório onde está localizado os arquivos de backup da atualização:
 definicoes$dir_backup_files <- "backup_files/"
 
+
+
+
+# Uma série de procedmentos para evitar que se atualize o banco de dados errado:
+
+assert_that(definicoes$Banco_Atualização[1] %in% c("Homologação", "Produção"), 
+            msg = "Valor de 'definicoes$Banco_Atualização' não permitido")
+
+# Pede para o usuário digitar o nome do banco que quer atualizar:
+ConfirmacaoBanco <- readline(
+  prompt = glue(
+    "Digite o banco que vai ser atualizado (opção atual: '", 
+    definicoes$Banco_Atualização[1],
+    "') : "
+    )
+  )
+
+assert_that(ConfirmacaoBanco == definicoes$Banco_Atualização[1], 
+            msg = "Banco digitado não confere com 'definicoes$Banco_Atualização'") 
+
+# Arquivo com as credenciais do banco que se quer atualizar:
+
+if (definicoes$Banco_Atualização[1] == "Homologação") {
+  definicoes$credenciais_mosc <- "keys/psql12-homolog_key.json" # Banco de homologação
+}
+
+if (definicoes$Banco_Atualização[1] == "Produção") {
+  definicoes$credenciais_mosc <- "keys/psql12-usr_manutencao_mapa.json" # acesso completo ao banco de produção
+  # definicoes$credenciais_mosc <- "keys/psql12-prod_key3.json" # acesso limitado ao banco de proução
+}
+
+rm(ConfirmacaoBanco)
+
+assert_that(file.exists(definicoes$credenciais_mosc), 
+            msg = "Arquivo de credenciais MOSC não encontrado")
+
+
 Sys.sleep(1)
 message("Setup concluído com sucesso!")
 Sys.sleep(2)

@@ -29,12 +29,10 @@ definicoes <- list()
 # Schema da Receita Federal de onde iremos retirar os dados:
 definicoes$schema_receita <- "rfb_2025" # ATUALIZAR AQUI QUANDO CHEGAR NOVOS DADOS
 
-# Arquivo JSON com as chave de acesso ao banco de dados MOSC 
+# Escolhe o banco que vai ser atualizado 
 # (escolher entre homologação e produção)
-
-# definicoes$credenciais_mosc <- "keys/psql12-homolog_key.json" # Banco de homologação
-definicoes$credenciais_mosc <- "keys/psql12-usr_manutencao_mapa.json" # acesso completo ao banco de produção
-# definicoes$credenciais_mosc <- "keys/psql12-prod_key3.json" # acesso limitado ao banco de proução
+# As chaves deve estar em: "src/specificFunctions/01_setup_atualizacao.R"
+definicoes$Banco_Atualização <- "Homologação" # Opções: 'Produção' | 'Homologação'
 
 # Arquivo JSON com as chaves de acesso ao banco de dados da RFB e da RAIS:
 definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"

@@ -33,20 +33,13 @@ library(RPostgres)
 # Conecta ao banco de dados, se necessário:
 if(!(exists("conexao_mosc") && dbIsValid(conexao_mosc))) {
   
-  # Credenciais de acesso ao banco de dados:
-  # (determinam qual banco de dados acessar)
-  # credenciais_mosc <- "keys/psql12-homolog_keySUPER.json"
-  # credenciais_mosc <- "keys/psql12-homolog_keySUPER.json"
-  credenciais_mosc <- "keys/psql12-usr_manutencao_mapa.json" # acesso completo ao banco de produção
-  
   # Função para facilitar a conexão com os bancos de dados PostgreSQL:
   source("src/generalFunctions/postCon.R") 
   
   # Concecta aos bancos de dados do MOSC:
-  conexao_mosc <- postCon(credenciais_mosc, Con_options = "-c search_path=osc")
+  conexao_mosc <- postCon(definicoes$credenciais_mosc, Con_options = "-c search_path=osc")
   
-  rm(credenciais_mosc, postCon)
-  
+  rm(postCon)
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -71,7 +64,7 @@ tb_dados_gerais <- dbGetQuery(conexao_mosc, paste0("SELECT * FROM tb_dados_gerai
                                   # " LIMIT 500", 
                                   ";"))
 
-names(tb_dados_gerais)
+# names(tb_dados_gerais)
 
 Dados <- tb_dados_gerais %>% 
   left_join(select(tb_osc, id_osc, cd_identificador_osc, bo_osc_ativa, 
@@ -79,9 +72,17 @@ Dados <- tb_dados_gerais %>%
             by = "id_osc") %>% 
   dplyr::filter(bo_osc_ativa) %>% 
   # Evita problemas de padding:
-  mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
-                                        width = 14, 
-                                        pad = "0")) %>% 
+  mutate(
+    cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
+                                   width = 14, 
+                                   pad = "0"), 
+    situacao_cadastral = case_when(
+      cd_situacao_cadastral == 2 ~ "Ativa",
+      cd_situacao_cadastral == 3 ~ "Suspensa",
+      cd_situacao_cadastral == 4 ~ "Inapta",
+      TRUE ~ "Não Identificado"
+      )
+  ) %>% 
   select(id_osc, 
          # razão social
          tx_razao_social_osc, 
@@ -96,7 +97,7 @@ Dados <- tb_dados_gerais %>%
          # cnae
          cd_classe_atividade_economica_osc, 
          # Situação cadastral
-         cd_situacao_cadastral
+         situacao_cadastral
          )
 
 rm(tb_dados_gerais, tb_osc)
@@ -214,43 +215,51 @@ rm(dc_area_atuacao, dc_subarea_atuacao)
 # (CNAE primária e secundária).
 
 # DB_OSC
+# diretorio_att <- "backup_files/2025_03/"
 
-DB_OSC <- readRDS("backup_files/2025_03/intermediate_files/DB_OSC.RDS")
-
-Dados <- Dados %>% 
-  # Vou deixar o CNPJ mais claro aqui:
-  rename(cnpj = cd_identificador_osc) %>% 
-  left_join(select(DB_OSC, 
-                   cnpj,
-                   cnae,
-                   cnae_fiscal_secundaria),
-            by = "cnpj" ) %>% 
-  mutate(cnae_fiscal_secundaria = str_replace_all(cnae_fiscal_secundaria, 
-                                                  ",", fixed(" | ")))
-
-rm(DB_OSC)
+# TODO: Verificar como adicionar a variável da CNAE secundária ####
+if(FALSE) {
+  assert_that(file.exists(glue("{diretorio_att}intermediate_files/DB_OSC.RDS")))
+  
+  DB_OSC <- readRDS(glue("{diretorio_att}intermediate_files/DB_OSC.RDS"))
+  
+  Dados <- Dados %>% 
+    # Vou deixar o CNPJ mais claro aqui:
+    rename(cnpj = cd_identificador_osc) %>% 
+    left_join(select(DB_OSC, 
+                     cnpj,
+                     cnae,
+                     cnae_fiscal_secundaria),
+              by = "cnpj" ) %>% 
+    mutate(cnae_fiscal_secundaria = str_replace_all(cnae_fiscal_secundaria, 
+                                                    ",", fixed(" | ")))
+  
+  rm(DB_OSC)
+}
 
 
 # Arruma e Salva os dados finais:
 
-names(Dados)
+# names(Dados)
 
 Dados2 <- Dados %>% 
-  rename(cnpj = cd_identificador_osc, 
-         municipio_nome = Munic_Nome, 
-         cnae = cd_classe_atividade_economica_osc) %>% 
+  rename(
+    cnpj = cd_identificador_osc, 
+    municipio_nome = Munic_Nome, 
+    cnae = cd_classe_atividade_economica_osc) %>% 
+  
   # Deixa as variáveis em uma ordem agradável
   select(
+    
     # Identificação da OSC:
     cnpj, 
     tx_razao_social_osc, 
     tx_nome_fantasia_osc, 
     
-    
     # Dados da OSC:
     cd_natureza_juridica_osc, 
     dt_fundacao_osc, 
-    cd_situacao_cadastral,
+    situacao_cadastral,
     
     # Localização:
     tx_endereco_completo, 
