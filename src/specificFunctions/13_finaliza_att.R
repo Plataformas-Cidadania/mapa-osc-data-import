@@ -20,6 +20,29 @@ library(DBI)
 library(RODBC)
 library(RPostgres) 
 
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Esvazia diretório 'input_files_next'   ####
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Lista arquivos de 'input_files_next'
+files_input_next <- list(list.files("input_files_next/")) %>% 
+  unlist() %>% 
+  # Só o modelos_Input.xlsm que vou deixar aqui na pasta
+  str_subset("^modelos_Input.xlsm$", negate = TRUE)
+
+# Transfere todos os arquivos
+for (i in seq_along(files_input_next)) {
+  # i <- 1 # Debug
+  # diretorio_att <- "backup_files/2025_03/"  # Debug
+  file.rename(
+    from = glue("input_files_next/{files_input_next[i]}"), 
+    to = glue("{diretorio_att}input_files/{files_input_next[i]}")
+  )
+}
+rm(i, files_input_next)
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Cópia dos arquivos de código da atualização  ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
