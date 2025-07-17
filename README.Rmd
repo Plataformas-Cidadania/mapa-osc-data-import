@@ -1,134 +1,1104 @@
 ---
 title: "Mapa das Organizações da Sociedade Civil"
-author: "Cooordenação de Instituições Políticas, Governça e Relações Interfederativas da Diretoria de Estudos e Políticas sobre o Estado, as Instituições e a Democracia (Coins/Diest) - IPEA, Governo Federal, Brasil"
+author: |
+  | Cooordenação de Instituições Políticas, Governça e Relações Interfederativas
+  | Diretoria de Estudos e Políticas sobre o Estado, as Instituições e a Democracia (Coins/Diest)
+  | IPEA, Governo Federal, Brasil"
 output: 
-  rmarkdown::github_document
-    
+  rmarkdown::github_document:
+    toc: true
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
-## Rotina de Atualização - versão 2023/2024
+## Rotina de Atualização
 
-A atualização do banco de dados Mapa das Organizações Sociais (MOSC) refere-se à incorporação de novos dados provenientes de fontes mais recentes, como a base de dados da Receita Federal, RAIS ou outras fontes. É importante não confundir a “atualização do banco de dados MOSC” com uma “atualização geral do sistema MOSC”, que pode envolver também mudanças no site ou na estrutura do banco de dados. Estamos falando aqui estritamente da inserção de dados novos ou atualização de dados existentes, mantendo inalterada outras partes do MOSC. 
-Desde a versão 2023/2024 do MOSC, todo o processo de atualização de dados foi automatizado usando a linguagem R, conforme ilustrado no fluxograma da figura 1:
+<br />
+
+**Elaboração:**
+
+Murilo de Oliveira Junqueira (UFPA; IPEA)
+
+<br />
+
+**Revisão:**
+
+Alexandre Pires Domingues (IPEA)
+
+Allberson Danta (UFCE; IPEA)
+
+Felix Lopez (IPEA)
+
+<br />
+
+A atualização do banco de dados Mapa das Organizações Sociais (MOSC)
+refere-se à incorporação de novos dados provenientes de fontes mais
+recentes, como a base de dados da Receita Federal, RAIS ou outras
+fontes. É importante não confundir a “atualização do banco de dados
+MOSC” com uma “atualização geral do sistema MOSC”, que pode envolver
+também mudanças no site ou na estrutura do banco de dados. Estamos
+falando aqui estritamente da inserção de dados novos ou atualização de
+dados existentes, mantendo inalterada outras partes do MOSC.
+
+Desde a versão 2023/2024 do MOSC, todo o processo de atualização de
+dados foi automatizado usando a linguagem R, conforme ilustrado no
+fluxograma da [Figura 1]:
 
 ### Figura 1
 
-![Fluxograma de Atualização MOSC](documentacao/Fluxograma MOSC - Fluxograma MOSC.png)
+![Fluxograma de Atualização
+MOSC](documentacao/Fluxograma%20MOSC%20-%20Fluxograma%20MOSC.png)
 
-A atualização inicia-se com a inserção de novos dados nos bancos de dados disponíveis ao IPEA, principalmente da Receita Federal. Dados da RAIS e outras fontes (descritas adiante) também são utilizados. Esses dados podem estar nos bancos de dados instalados nos servidores do IPEA (PostgreSQL) ou em arquivos (formato CSV ou RDS) em uma pasta específica. Em seguida, a rotina de atualização em R (detalhada posteriormente) processa os dados, utilizando várias tabelas auxiliares. Essas tabelas contêm informações sobre códigos de variáveis, correspondências entre diferentes códigos e expressões regulares usadas para classificar os dados. 
-
-A etapa de geolocalização ainda não está incorporada ao script R e requer um software separado. Atualmente, o programa utilizado é o GALILEO. Assim, o processamento dos dados em R é executado até a etapa de geoprocessamento, quando é interrompido para que o programa de geolocalização produza a latitude e longitude das OSCs. Depois, o script é reiniciado para concluir o processo.
-
-O script R é programado para salvar os arquivos intermediários e finais da atualização em uma pasta de backup. Isso permite a recuperação dos dados e garante a completa rastreabilidade e reprodutibilidade do processo. Por fim, o script R atualiza os dados do banco de dados MOSC nos servidores do IPEA.
-
-Após a atualização dos dados, o site MOSC é atualizado por meio da programação backend e frontend, gerando novas tabelas, figuras e páginas de Organizações da Sociedade Civil. No entanto, esta documentação aborda apenas as etapas de atualização dos dados propriamente dita, não tratando de questões de frontend ou backend.
-
+<br />
 
 ## Como Instalar a Rotina de Atualização
 
-A rotina de atualização pode ser instalada em qualquer computador que: 
-  1. Tenha permissão para ler as fontes de dados (Receita Federal e RAIS, principalmente), 
-  2.  tenha permissão para manipular os bancos de dados do Mapa das Organizações da Sociedade Civil e 
-  3. possua os softwares necessários instalados (R, RStudio e pacotes do R). A seguir, descrevemos detalhadamente o processo de instalação.
-  
-  
-**Passo 01:** Instalar o R e o RStudio. O computador que executará a rotina de atualização precisa ter o R e o RStudio instalados. O processo de instalação é semelhante ao de qualquer outro software. No entanto, é importante atentar-se às diferenças de instalação entre os diversos sistemas operacionais (Linux, Windows, macOS etc.). O R é uma linguagem de programação livre voltada para estatística, análise e manipulação de dados. Seus recursos são flexíveis e poderosos o suficiente para executar toda a rotina de atualização do MOSC (com exceção da geolocalização). O RStudio é um IDE (Integrated Development Environment), criado pela empresa Posit Software, PBC, para facilitar e automatizar a programação em linguagem R. Embora seja possível usar o R sem o RStudio, essa prática é incomum, dada a grande popularidade dessa combinação. Além disso, toda a programação da atualização do MOSC foi feita como um R Project (Projeto R) do RStudio, de modo que não há garantia de que funcionará fora dele. É importante ressaltar que, até a data de elaboração desta documentação (julho de 2024), não é necessário adquirir nenhuma versão paga do RStudio, pois a versão gratuita para uso individual é suficiente para executar todo o código.
+A rotina de atualização pode ser instalada em qualquer computador que:
+(1) tenha permissão para ler as fontes de dados (Receita Federal e RAIS,
+principalmente), (2) tenha permissão para manipular os bancos de dados
+do Mapa das Organizações da Sociedade Civil e (3) possua os softwares
+necessários instalados (R, RStudio e pacotes do R). A seguir,
+descrevemos detalhadamente o processo de instalação.
 
+-   **Passo 01: Instalar o R e o RStudio**. O computador que executará a
+    rotina de atualização precisa ter o
+    [R](https://cran.r-project.org/bin/windows/base/) e o
+    [RStudio](https://posit.co/downloads/) instalados. O processo de
+    instalação é semelhante ao de qualquer outro software. No entanto, é
+    importante atentar-se às diferenças de instalação entre os diversos
+    sistemas operacionais (Linux, Windows, macOS etc.). O R é uma
+    linguagem de programação livre voltada para estatística, análise e
+    manipulação de dados. Seus recursos são flexíveis e poderosos o
+    suficiente para executar toda a rotina de atualização do MOSC. O
+    RStudio é um IDE (Integrated Development Environment), criado pela
+    empresa Posit Software, PBC, para facilitar e automatizar a
+    programação em linguagem R. Embora seja possível usar o R sem o
+    RStudio, essa prática é incomum, dada a grande popularidade dessa
+    combinação. Além disso, toda a programação da atualização do MOSC
+    foi feita como um R Project (Projeto R) do RStudio, de modo que não
+    há garantia de que funcionará fora dele. É importante ressaltar que,
+    até a data de elaboração desta documentação, não é necessário
+    adquirir nenhuma versão paga do RStudio, pois a versão gratuita para
+    uso individual é suficiente para executar todo o código.
 
-**Passo 02:** instalar os pacotes necessários do R. O R permite que o usuário instale pacotes (conjuntos de funções) criados por usuários externos ao R core team. A atualização do MOSC utiliza alguns desses pacotes, que precisam ser instalados previamente. A lista completa dos pacotes necessários para a atualização encontra-se abaixo. Para instalação em Linux, é crucial verificar se todos os pacotes estão funcionando corretamente, garantindo que todas as bibliotecas necessárias do sistema operacional estejam presentes.
-Pacotes de programação e manipulação de dados: magrittr, tidyverse,  assertthat.
-Pacotes de leitura de dados externos: data.table, readxl, jsonlite.
-Pacote de manipulação de datas: lubridate.
-Pacotes de manipulação de textos: stringr, glue.
-Pacotes de conexão a bancos de dados: DBI, RODBC, RPostgres, dbplyr.
+-   **Passo 02: instalar os pacotes necessários do R**. O R permite que
+    o usuário instale pacotes (conjuntos de funções) criados por
+    usuários externos ao R core team. A atualização do MOSC utiliza
+    alguns desses pacotes, que precisam ser instalados previamente[^1].
+    A lista completa dos pacotes necessários para a atualização
+    encontra-se abaixo. Para instalação em Linux, é crucial verificar se
+    todos os pacotes estão funcionando corretamente, garantindo que
+    todas as bibliotecas necessárias do sistema operacional estejam
+    presentes[^2].
 
-**Passo 03:** baixar a rotina de atualização no diretório GitHub. As rotinas de atualização e as tabelas auxiliares estão disponíveis no repositório GitHub: https://github.com/Plataformas-Cidadania/mapa-osc-data-import . O usuário pode clonar este repositório ou baixar os códigos diretamente no site. É fundamental assegurar que o diretório de trabalho do R seja o local onde o repositório Git está instalado.
+    -   **Pacotes de programação e manipulação de dados:** magrittr,
+        tidyverse, assertthat.
 
-**Passo 04:** conseguir as credenciais de acesso aos bancos de dados ‘psql12/portal_osc’ e ‘psql10-df/rais_2019’. A rotina de atualização lê os dados da versão mais recente da RAIS e da Receita Federal no banco de dados ‘psql10-df/rais_2019’ do IPEA e atualiza os dados do banco de dados ‘psql12/portal_osc’. Para acessar esses bancos, são necessárias chaves de acesso específicas. O ‘psql10-df/rais_2019’ requer apenas uma credencial simples de leitura, enquanto o ‘psql12/portal_osc’ exige uma credencial qualificada que permita ler dados de todas as tabelas, modificar dados, criar novos campos, criar e excluir tabelas.  As credenciais devem ser armazenadas na pasta "keys" do diretório de atualização, em arquivos JSON separados para ‘psql10-df/rais_2019’ e ‘psql12/portal_osc’. Cada arquivo deve conter cinco campos: username, password, dbname, host e port. O modelo do arquivo JSON está disponível abaixo, e o usuário deve substituir o conteúdo entre "<>" pelas informações corretas.
+    -   **Pacotes de leitura de dados externos:** data.table, readxl,
+        jsonlite.
 
-{"username":"<usuario>", 
-"password":"<senha>", 
-"dbname":"<nome banco de dados>", 
-"host":"<servidor>", 
-"port":"<porta de acesso>"}
+    -   **Pacote de manipulação de datas:** lubridate.
 
-Realizados todos os procedimentos acima, basta executar as linhas de “src/OSC-v2023.R”, segundo descrição abaixo, para realizar a atualização MOSC. Recomendamos executar “src/OSC-v2023.R” linha a linha, prestando bastante atenção às instruções e contidas nos comentários ao código de programação.
+    -   **Pacotes de manipulação de textos:** stringr, glue.
 
+    -   **Pacotes de conexão a bancos de dados:** DBI, RODBC, RPostgres,
+        dbplyr.
+
+[^1]: A função para se instalar pacotes no R é “install.packages”
+
+[^2]: Durante nossos testes, esse artigo explicando como instalar o
+    pacote tidyverse no Ubuntu foi especialmente útil:
+    [https://medium.com/\@jamie84mclaughlin/installing-r-and-the-tidyverse-on-ubuntu-20-04-60170020649b](https://medium.com/@jamie84mclaughlin/installing-r-and-the-tidyverse-on-ubuntu-20-04-60170020649b)
+
+-   **Passo 03: baixar a rotina de atualização no diretório GitHub**. As
+    rotinas de atualização e as tabelas auxiliares estão disponíveis
+    neste repositório GitHub. O usuário pode clonar este repositório ou
+    baixar os códigos diretamente no site. É fundamental assegurar que o
+    diretório de trabalho do R seja o local onde o repositório Git está
+    instalado[^3].
+
+-   **Passo 04: conseguir as credenciais de acesso aos bancos de dados
+    'psql12/portal_osc' e 'psql10-df/rais_2019'**. A rotina de
+    atualização lê os dados da versão mais recente da RAIS e da Receita
+    Federal no banco de dados ‘psql10-df/rais_2019’ do IPEA e atualiza
+    os dados do banco de dados ‘psql12/portal_osc’. Para acessar esses
+    bancos, são necessárias chaves de acesso específicas. O
+    ‘psql10-df/rais_2019’[^4] requer apenas uma credencial simples de
+    leitura, enquanto o ‘psql12/portal_osc’ exige uma credencial
+    qualificada que permita ler dados de todas as tabelas, modificar
+    dados, criar novos campos, criar e excluir tabelas. As credenciais
+    devem ser armazenadas na pasta "keys" do diretório de atualização,
+    em arquivos JSON separados para ‘psql10-df/rais_2019’ e
+    ‘psql12/portal_osc’. Cada arquivo deve conter cinco campos:
+    username, password, dbname, host e port. O modelo do arquivo JSON
+    está disponível abaixo, e o usuário deve substituir o conteúdo entre
+    "\<\>" pelas informações corretas.
+
+[^3]: Você pode verificar o diretório de trabalho do R usando a função
+    “getwd()”. Para mudar o diretório de trabalho, usar a função
+    “setwd”.
+
+[^4]: Apesar do nome, o banco de dados conter “rais_2019”, ele não
+    contém dados apenas da RAIS (Relação Anual de Informações Sociais),
+    mas dados de várias fontes, incluindo dados da Receita Federal do
+    Brasil (RFB).
+
+<br />
+
+{"username":"\<usuario\>",
+
+"password":"\<senha\>",
+
+"dbname":"\<nome banco de dados\>",
+
+"host":"\<servidor\>",
+
+"port":"\<porta de acesso\>"}
+
+<br />
+
+Realizados todos os procedimentos acima, basta executar as linhas de
+[src/atualiza_dados_OSC.R](src/atualiza_dados_OSC.R), segundo descrição
+abaixo, para realizar a atualização MOSC. Recomendamos executar
+[src/atualiza_dados_OSC.R](src/atualiza_dados_OSC.R) linha a linha,
+prestando bastante atenção às instruções e contidas nos comentários ao
+código de programação.
 
 ## Descrição sumária dos procedimentos de atualização
 
-A etapa do processamento dos dados (caixa central da figura 1) é executada pelo arquivo “src/OSC-v2023.R” que realiza 8 etapas:
+A etapa do processamento dos dados (caixa central da [Figura 1]) é
+executada pelo arquivo
+[src/atualiza_dados_OSC.R](src/atualiza_dados_OSC.R) que realiza 8
+etapas:
 
-1. Extração os dados sobre as organizações na Receita Federal (base CNPJ);
+1.  Extração os dados sobre as organizações na Receita Federal (base
+    CNPJ);
 
-2. Usar uma série de rotinas específicas para identificar quais organizações são OSC, com a ajuda da função ‘find_OSC’;
+2.  Usar uma série de rotinas específicas para identificar quais
+    organizações são OSC, com a ajuda da função ‘find_OSC’;
 
-3. Identificação da área de atuação das OSC com base na CNAE (Cadastro Nacional de Atividades Econômicas), usando outra função específica (AreaAtuacaoOSC). 
+3.  Identificação da área de atuação das OSC com base na CNAE (Cadastro
+    Nacional de Atividades Econômicas), usando outra função específica
+    (AreaAtuacaoOSC).
 
-4. Identificação da geolocalização (longitude e latitude) das organizações utilizando um software específico. Essa etapa não está atualmente incorporada ao código R e requer um software externo (como o GALILEO, por exemplo);
+4.  Identificação da geolocalização (longitude e latitude) das
+    organizações utilizando um software específico. Essa etapa não está
+    atualmente incorporada ao código R e requer um software externo
+    (como o GALILEO, por exemplo);
 
-5. Separação dos dados gerados nas etapas anteriores nas tabelas principais do MOSC: tb_osc, tb_dados_gerais, tb_localizacao, tb_contatos e tb_areas_atuacao. Na tabela tb_areas_atuacao, também podem ser usadas outras fontes de dados, como informações do Ministério da Saúde (CNES, CNEAS Saúde) e do Ministério do Desenvolvimento Social (Censo SUAS, CNEAS Assistência Social) e outras;
+5.  Separação dos dados gerados nas etapas anteriores nas tabelas
+    principais do MOSC: tb_osc, tb_dados_gerais, tb_localizacao,
+    tb_contatos e tb_areas_atuacao. Na tabela tb_areas_atuacao, também
+    podem ser usadas outras fontes de dados, como informações do
+    Ministério da Saúde (CNES, CNEAS Saúde) e do Ministério do
+    Desenvolvimento Social (Censo SUAS, CNEAS Assistência Social) e
+    outras (Ver seção [Inserindo Fontes alternativas de classificação da
+    área de atuação das OSC]).
 
-6. Incorporação dados da RAIS, que mostram informações sobre as relações trabalhistas das OSC;
+6.  Incorporação dados da RAIS, que mostram informações sobre as
+    relações trabalhistas das OSC;
 
-7. Upload dos dados gerados nas etapas anteriores no banco de dados PostgreSQL do IPEA, alocando cada informação em seu devido lugar;
+7.  Upload dos dados gerados nas etapas anteriores no banco de dados
+    PostgreSQL do IPEA, alocando cada informação em seu devido lugar;
 
-8. Procedimentos finais de atualização, como atualizar as Views materializadas do banco de dados para que o site seja atualizado, registrar o término da atualização e salvar os procedimentos utilizados (inclusive o próprio script) para permitir uma completa rastreabilidade da atualização no futuro.
+8.  Procedimentos finais de atualização, como atualizar as Views
+    materializadas do banco de dados para que o site seja atualizado,
+    registrar o término da atualização e salvar os procedimentos
+    utilizados (inclusive o próprio script) para permitir uma completa
+    rastreabilidade da atualização no futuro.
 
-	Uma inovação introduzida na atualização de 2024 é a adição de três tabelas no Mapa para registrar o fluxo de atualização. São elas:
+<br />
 
-* **tb_controle_atualizacao:** registra as atualizações do mapa, incluindo a data e horário de início e fim da atualização, bem como a data de referência (última atualização da Receita Federal) dos dados.
+Uma inovação introduzida na atualização de 2024 é a adição de três
+tabelas no Mapa para registrar o fluxo de atualização. São elas:
 
-* **tb_processos_atualizacao:** registra o horário de início e fim de cada uma das oito etapas de atualização mencionadas anteriormente.
+-   **tb_controle_atualizacao**: registra as atualizações do mapa,
+    incluindo a data e horário de início e fim da atualização, bem como
+    a data de referência (última atualização da Receita Federal) dos
+    dados.
 
-* **tb_backups_files:** registra os arquivos intermediários e finais gerados durante o processo de atualização.
+-   **tb_processos_atualizacao**: registra o horário de início e fim de
+    cada uma das oito etapas de atualização mencionadas anteriormente.
 
-Mais detalhes sobre a atualização estão disponibilizado na documentação do Mapa das Organizações Sociais [documentação do Mapa das Organizações Sociais](https://mapaosc.ipea.gov.br/metodologia)
+-   **tb_backups_files**: registra os arquivos intermediários e finais
+    gerados durante o processo de atualização.
 
+A seguir, detalharemos cada um dos processos de atualização.
 
+<br />
 
-## Estrutura do Diretório
+### Procedimentos preliminares de atualização
 
-* **pasta 'backup_files'**: contém os arquivos de backup cada uma das atualizações. Cada atualização tem um diretório específico nesta pasta, cujo nome é o ano da atualização e o número dela. Por exemplo, "2024_01" é a atualização número 01 de 2024, "2023_01" é a atualização 01 de 2025 etc. 
-* **pasta 'development_zone'**: é um diretório reservado a testes e desenvolvimento da equipe do MOSC.
-* **pasta 'documentacao'**: contém arquivos sobre a documentação desta atualização.
-* **pasta 'tab_auxiliares'**: aqui ficam pequenas tabelas necessárias para a atualização que tem uma chance baixa de precisarem ser atualizadas.
-* **pasta 'src'**: pasta onde estão os scripts da atualização.
-* **pasta 'src/generalFunctions'**: pasta onde ficam funções gerais que auxiliam as rotinas de atualização. 
-* **pasta 'src/specificFunctions'**: pasta com rotinas e funções específicas da atualização.
-* **pasta 'src/uso_unico'**: pasta com scripts que tendem a ser usada poucas vezes ou uma vez, como mudanças estruturais no banco de dados.
+Antes de realizar a atualização propriamente dita, o script
+[src/atualiza_dados_OSC.R](src/atualiza_dados_OSC.R) faz uma série de
+definições, carregamentos e checagens, como forma de garantir que a
+atualização ocorrerá corretamente. Esses procedimentos preliminares são
+os seguintes:
 
+-   **Definições importantes.** É criada uma lista (objeto ‘list’ do R)
+    chamada "definicoes", que armazena as principais configurações da
+    atualização. Essas definições incluem nomes de tabelas e campos,
+    caminhos de arquivos e outras informações essenciais para o código.
+    Cinco definições são fundamentais e devem ser feitas no início do
+    código:
+
+1.  O schema dos dados mais recentes da Receita Federal (disponíveis em
+    ‘psql10-df/rais_2019’);
+
+2.  A data de referência da atualização (data de extração dos dados da
+    Receita Federal);
+
+3.  O schema e a tabela dos dados mais recentes dos vínculos de trabalho
+    RAIS (disponíveis em ‘psql10-df/rais_2019’);
+
+4.  O caminho para o JSON das credenciais do banco ‘psql12/portal_osc’;
+
+5.  O caminho para o JSON das credenciais do banco
+    ‘psql10-df/rais_2019’;
+
+Essas definições são cruciais porque tendem a mudar a cada atualização,
+especialmente as três primeiras. A atualização não funcionará
+corretamente se não estiverem adequadamente configuradas. Além disso,
+existem duas definições secundárias que controlam o comportamento da
+atualização:
+
+-   **Objeto booleano 'att_teste' (na lista ‘definicoes’)**: Quando
+    TRUE, indica uma atualização de teste, não atualizando as planilhas
+    de controle ('tb_controle_atualizacao', 'tb_processos_atualizacao' e
+    'tb_backups_files'). Quando FALSE, realiza a atualização
+    normalmente. **Importante**: 'att_teste' não está relacionado ao
+    ambiente de execução (desenvolvimento, homologação ou produção).
+    Essa distinção é feita pelas credenciais de acesso ao banco MOSC
+    (veja a seção **Diferença entre a Atualização no Banco de
+    Homologação e no Banco de Produção**, abaixo).
+
+-   **Objeto booleano 'salva_backup' (na lista ‘definicoes’):** Quando
+    TRUE, salva os arquivos intermediários e finais da atualização em
+    uma subpasta específica dentro de 'backup_files/'. Quando FALSE, não
+    salva esses arquivos.
+
+-   **Setup da Atualização.** O segundo procedimento preliminar é a
+    execução do script
+    [src/specificFunctions/01_setup_atualizacao.R](src/specificFunctions/01_setup_atualizacao.R),
+    carregando os principais pacotes e algumas funções básicas
+    utilizadas na atualização. Além disso, são feitas definições
+    adicionais (novos elementos à lista 'definicoes' do R).
+    Diferentemente das definições feitas diretamente em
+    "src/OSC-v2023.R", não se espera que estas se atualizem com
+    frequência. Por exemplo, os nomes das tabelas e campos da Receita
+    Federal geralmente não mudam anualmente, embora nada impeça que isso
+    aconteça.
+
+-   **Checagem inicial da atualização.** O script
+    [src/specificFunctions/02_checagem_inicial_att_mosc.R](src/specificFunctions/02_checagem_inicial_att_mosc.R)
+    é executado, realizando uma série de testes na estrutura dos
+    arquivos da atualização. Caso algum erro ou inconsistência for
+    encontrada (falta de um pacote ou tabela auxiliar, por exemplo), a
+    atualização é interrompida e uma mensagem de erro é exibida na tela.
+    Esses procedimentos visam evitar que o código “quebre” mais adiante,
+    garantindo que quaisquer correções e ajustes sejam feitos no início
+    da execução.
+
+-   **Início do controle da atualização .** Ao executar o script
+    [src/specificFunctions/03_inicia_controle_atualizacao.R](src/specificFunctions/03_inicia_controle_atualizacao.R),
+    se não houver nenhuma atualização iniciada em
+    'tb_controle_atualizacao', uma nova linha é criada nesta tabela,
+    registrando a data de início da atualização. Caso já exista uma
+    atualização indicada, assume-se que a execução atual do script está
+    continuando uma atualização prévia. Neste caso, todos os
+    procedimentos já realizados na atualização anterior são baixados
+    através da tabela 'tb_processos_atualizacao'.
+
+-   **Criação do diretório para o backup da atualização .** O script
+    [src/specificFunctions/04_cria_diretorio_atualizacao.R](src/specificFunctions/04_cria_diretorio_atualizacao.R)
+    cria uma nova pasta para armazenar os arquivos do backup da
+    atualização e receber arquivos de dados input. Esta pasta é criada
+    como uma subpasta de 'backup/', com um nome igual ao código da
+    atualização (por exemplo, 'backup/2024_01/'). Dentro dela, são
+    criadas três subpastas: input_files, intermediate_files e
+    output_files (por exemplo, 'backup/2024_01/input_files',
+    'backup/2024_01/intermediate_files' e
+    'backup/2024_01/output_files').
+
+### Etapa 01 - Extração dos Dados da Receita Federal
+
+Esta seção descreve os procedimentos do script
+“src/specificFunctions/05_baixa_dados_rfb.R”, que pode ser executado
+diretamente ou através de
+[src/atualiza_dados_OSC.R](src/atualiza_dados_OSC.R).
+
+O script
+[src/specificFunctions/05_baixa_dados_rfb.R](src/specificFunctions/05_baixa_dados_rfb.R)
+cria e executa uma busca (query) para baixar os dados da Receita Federal
+do Brasil (RFB) no banco 'psql10-df/rais_2019'. Os dados são extraídos
+de duas tabelas da base dos CNPJs da RFB: 'empresas' e
+'estabelecimentos' (nomes vigentes em julho de 2024). A maioria dos
+dados está na base 'estabelecimentos', mas uma informação crucial — a
+natureza jurídica das organizações — encontra-se na base 'empresas'. É
+importante notar que o MOSC registra dados por 'estabelecimento'. Assim,
+se uma organização tem uma sede principal (matriz) e outras secundárias
+(filiais), ela aparecerá como várias organizações no MOSC, mesmo todas
+pertencendo ao mesmo grupo.
+
+Para otimizar a busca, a query no banco ‘psql10-df/rais_2019’ já filtra
+as organizações sem fins lucrativos, excluindo empresas comerciais e
+entidades do setor público logo no início do processo. Isso ocorre
+porque, embora nem toda organização sem fins lucrativos seja uma
+Organização da Sociedade Civil (OSC), toda organização da sociedade
+civil é sem fins lucrativos (e não pertence ao setor público). Para
+aplicar esse filtro, realiza-se um RIGHT JOIN da base 'empresas' na base
+'estabelecimentos' e, em seguida, retornam-se apenas os CNPJs de
+organizações com as seguintes naturezas jurídicas:
+
+-   **Grupo 3: Entidades sem fins lucrativos**
+
+    -   **306-9:** Fundação Privada.
+
+    -   **322-0:** Organização Religiosa.
+
+    -   **330-1:** Organização Social (OS).
+
+    -   **399-9:** Associação Privada.
+
+    -   **320-1:** Estabelecimento, no Brasil, de Fundação ou Associação
+        Estrangeiras
+
+**Fonte:**
+<https://concla.ibge.gov.br/estrutura/natjur-estrutura/natureza-juridica-2021>
+
+O scritp
+[src/specificFunctions/05_baixa_dados_rfb.R](src/specificFunctions/05_baixa_dados_rfb.R)
+cria uma query em linguagem SQL, baseado na estrutura dos dados da
+receita, e a envia para o banco ‘psql10-df/rais_2019’, obtendo em
+retorno o conjunto das organizações privadas sem fins lucrativos
+disponíveis no banco. Segundo o padrão dos dados da base CNPJ/RFB de
+2024, a query executada é a seguinte:
+
+``` sql
+SELECT * FROM empresas
+
+RIGHT JOIN estabelecimento
+
+ON estabelecimento.cnpj_basico = empresas.cnpj_basico
+
+WHERE natureza_juridica IN ('3069', '3220', '3301', '3999', '3201');
+```
+
+Após o retorno dos dados, o script salva uma cópia deles no diretório de
+backup (caso definicoes[[“salva_backup”]] == TRUE) e (caso
+definicoes[[“'att_teste' ”]] == FALSE) registra o processo como
+concluído em ‘tb_processos_atualizacao’.
+
+<br />
+
+### Etapa 02 - Identificação das OSC
+
+O próximo passo da rotina é identificar, dentre todas as organizações
+sem fins lucrativos extraídas do banco da RFB, quais se enquadram no
+conceito de OSC. Na verdade, o processo pode ser melhor definido como a
+exclusão de organizações que, apesar de não visarem o lucro e não serem
+de natureza pública, conceitualmente não se encaixam na definição de
+Organização da Sociedade Civil, segundo a metodologia adotada pelo IPEA
+(Pereira & Andrade, 2021). Esse é o caso de:
+
+1.  Partidos Políticos,
+
+2.  Sindicatos,
+
+3.  Cartórios,
+
+4.  Caixas Escolares,
+
+5.  Condomínios,
+
+6.  Sistema S,
+
+7.  Entidades de Mediação e Arbitragem,
+
+8.  Comissão de Conciliação Prévia,
+
+9.  Conselhos, Fundos e Consórcios municipais e
+
+10. Cemitérios e Funerárias.
+
+O processo de exclusão das organizações é composto por duas etapas. A
+primeira consiste em eliminar as organizações com os seguintes códigos
+CNAE:
+
+-   **8550301:** Administração de caixas escolares
+
+-   **94201:** Atividades de organizações sindicais
+
+-   **8112500:** Condomínios prediais
+
+-   **9492800**: Atividades de organizações políticas
+
+No último caso, CNAE 9492800 - organizações políticas, somente serão
+excluídas organizações que tiverem em sua razão social as seguintes
+expressões regulares[^5]:
+
+[^5]: O “\^” no início das expressões significa que o termo deve ser o
+    início do texto.
+
+|  |  |  |  |
+|----|----|----|----|
+| **N** | **Expressão:** | **N** | **Expressão:** |
+| 1 | \^COLIGACAO | 16 | \^DIRETORIO REGIONAL |
+| 2 | \^COLIGAO | 17 | \^DIRETORIO DA FRENTE LIBERAL |
+| 3 | \^COMISSAO EXECUTIVA | 18 | \^DIRETORIO DA SOCIAL DEMOCRACIA |
+| 4 | \^COMISSAO MUNICIPAL | 19 | \^DIRETORIO DA COLIGACAO |
+| 5 | \^COMITE DA COLIGACAO | 20 | \^DIRETORIO DA MUNICIPAL DA FRENTE |
+| 6 | \^COMISSAO PROVISORIA | 21 | \^DIRETORIO EXECUTIVO |
+| 7 | \^COMITE DE GASTOS E PROPAGANDA | 22 | \^DIRETORIO LIBERAL |
+| 8 | \^DIRETORIO REG | 23 | \^DIRETORIO PROGRESSISTA |
+| 9 | \^DIRETORIO TRAB | 24 | \^DORETORIO MUNICIPAL |
+| 10 | \^COMITE DE PROPAGANDA | 25 | MUNIC DO PART DA FREN |
+| 11 | \^COMITE FINAANCEIRO | 26 | \^DIRETORIO REGIONAL |
+| 12 | \^DIRETORIO TRABALHISTA | 27 | \^DIRETORIO DA FRENTE LIBERAL |
+| 13 | \^COLIGACAO | 28 | \^DIRETORIO DA SOCIAL DEMOCRACIA |
+| 14 | \^COLIGAO | 29 | \^DIRETORIO DA COLIGACAO |
+| 15 | \^DIRETORIO EXECUTIVO | 30 |  |
+
+A segunda etapa para excluir organizações da base OSC é rodar uma função
+previamente construída chamada **find_OSC** (disponível em
+[src/specificFunctions/findosc-v2023.R](src/specificFunctions/findosc-v2023.R)).
+Essa função analisa exclusivamente a razão social das organizações,
+buscando termos ou expressões que indicam que a organização se enquadra
+em um dos 10 casos mencionados anteriormente como não sendo OSC. O
+número de expressões testadas é extenso demais para ser exibido neste
+documento (em julho de 2024, eram 5.445 expressões). Desde a atualização
+de 2023/2024, a função **find_OSC** não armazena essas expressões em
+código, mas em uma tabela auxiliar
+([tab_auxiliares/NonOSCNames.csv](tab_auxiliares/NonOSCNames.csv)).
+Inicialmente, a função find_OSC processa as razões sociais das
+organizações, removendo acentos, cedilha e convertendo o texto para
+maiusculas. Então, se testa as expressões regulares disponíveis em
+"tab_auxiliares/NonOSCNames.csv", usando três tipos de regras:
+
+-   **Caso simples:** a organização que possui esse termo em sua razão
+    social, não é considerada OSC (ex: “\^ASSOCIACOES DE PAIS E
+    MESTRE”).
+
+-   **Combinação de expressões:** quando a organização possui a
+    combinação de dois grupos de expressões regulares, não é OSC (ex:
+    grupo 1: {“FUNDO PREVID”, “\^INSTITUTO DE PREV”}; grupo 2:
+    {“MUNIC”}).
+
+-   **Combinação de expressões com critério de inclusão:** quando existe
+    uma combinação de expressões que faz com que uma organização não
+    seja excluída, ou seja, seja considerada OSC (exemplo: grupo 1:
+    {"CAIXA"}; grupo 2: {"ESC", "ATECCX"}; critério de inclusão:
+    {"CARNAVALESCO"} — assim, a organização "CAIXA DO CORDAO
+    CARNAVALESCO ESCOLA DO RIO GRANDE" será considerada uma OSC, mas
+    "CAIXA ESCOLAR DA ESCOLA RIO GRANDE" não será considerada OSC).
+
+Futuras atualizações e adaptações das expressões regulares do banco,
+conforme as três regras acima, podem ser feitas alterando diretamente o
+arquivo "tab_auxiliares/NonOSCNames.csv", sem necessidade de modificar o
+código de da função **find_OSC**. O uso de tantas expressões regulares
+em um conjunto tão grande de caso pode facilmente esgotar a memória do
+computador que está processando os dados. Para evitar isso, a função
+**find_OSC** utiliza a tática “dividir e conquistar”, limitando o número
+de expressões regulares e razões sociais que são analisadas de cada vez.
+Isso torna a execução do código segura para a maioria dos computadores
+existentes, mas cobra um custo em termos de tempo de execução. Assim, a
+execução do script pode levar de 15 a 40 minutos, dependendo da
+capacidade de processamento e da memória do computador utilizado.
+
+Após o fim dos procedimentos acima, caso definicoes[[“salva_backup”]] ==
+TRUE, uma cópia dos dados processados até o momento no diretório de
+backup e, caso definicoes[[“'att_teste' ”]] == FALSE, registra-se o
+processo como concluído em ‘tb_processos_atualizacao’.
+
+<br />
+
+### Etapa 03 - Determinação das Áreas de Atuação
+
+Esta seção descreve os procedimentos do script
+[src/specificFunctions/07_determinacao_areas_atuacao.R], que pode ser
+executado diretamente ou através de
+[src/atualiza_dados_OSC.R](src/atualiza_dados_OSC.R).
+
+Nesta etapa, utilizamos dados do CNAE (Classificação Nacional de
+Atividades Econômicas) e da razão social das organizações para estimar
+sua área de atuação. A metodologia é semelhante à usada no item anterior
+e também emprega uma função específica para essa estimação: a função
+**AreaAtuacaoOSC** (script
+[src/specificFunctions/AreaAtuacaoOSC.R](src/specificFunctions/AreaAtuacaoOSC.R)),
+que funciona de maneira similar, mas não idêntica, à função
+**find_OSC**.
+
+Assim como a função find_OSC, a função **AreaAtuacaoOSC** estima as
+áreas de atuação das OSC usando uma tabela auxiliar
+(tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv). No entanto, aqui são
+estimados não apenas os dados da razão social das organizações, mas
+também os dados CNAE. Essa tabela define quais campos CNAE e expressões
+regulares devem ser associados a cada área de atuação. Alguns casos são
+simples, como mostram os seguintes exemplos (modelo usado em 2024):
+
+|  |  |  |  |  |
+|---------------|---------------|---------------|---------------|---------------|
+| **Início Código CNAE** | **Nível de Agregação CNAE** | **Descrição Código CNAE** | **Macroárea Atuação MOSC** | **Microárea Atuação MOSC** |
+| 861 | Grupo | Atividades de atendimento hospitalar | Saúde | Hospitais |
+| 94936 | Classe | Atividades de organizações associativas ligadas à cultura e à arte | Cultura e recreação | Cultura e arte |
+| 85112 | Classe | Educação infantil - creche | Educação e pesquisa | Educação infantil |
+| 85121 | Classe | Educação infantil - pré-escola | Educação e pesquisa | Educação infantil |
+| 85139 | Classe | Ensino fundamental | Educação e pesquisa | Ensino fundamental |
+| 852 | Grupo | Ensino médio | Educação e pesquisa | Ensino superior |
+| 854 | Grupo | Educação profissional de nível técnico e tecnológico | Educação e pesquisa | Educação profissional |
+| 855 | Grupo | Atividades de apoio à educação | Educação e pesquisa | Atividades de apoio à educação |
+| 94111 | Classe | Atividades de organizações associativas patronais e empresariais | Associações patronais e profissionais | Associações empresariais e patronais |
+| 94120 | Classe | Atividades de organizações associativas profissionais | Associações patronais e profissionais | Associações profissionais |
+
+Para esses casos simples, a função AreaAtuacaoOSC utiliza a tabela
+[src/specificFunctions/AreaAtuacaoOSC.R](src/specificFunctions/AreaAtuacaoOSC.R)
+como um "de/para", relacionando códigos específicos da CNAE com
+microáreas de atuação. Estas microáreas estão necessariamente vinculadas
+a uma macroárea de atuação. A relação entre microáreas e macroáreas
+usada no MOSC encontra-se em
+[tab_auxiliares/Areas&Subareas.csv](tab_auxiliares/Areas&Subareas.csv).
+No entanto, em alguns casos — notadamente para OSCs religiosas que se
+declararam na classe CNAE "94995 - Associações de atividades não
+especificadas anteriormente" — é preciso realizar testes adicionais com
+expressões regulares usando a razão social.
+
+Assim como no caso da função **find_OSC**, é possível modificar a
+metodologia de atribuição de áreas de atuação sem alterar o script de
+**AreaAtuacaoOSC**. Basta ajustar o "de/para" da relação entre CNAEs ou
+modificar as expressões regulares em
+[tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv](tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv).
+Desse modo, as definições para atribuição da área de atuação das OSCs
+podem ser feitas por pessoas sem conhecimento de programação em R, desde
+que compreendam o funcionamento das expressões contidas em
+[tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv](tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv).
+
+Tal como nas outras etapas, após o fim dos procedimentos acima, caso
+definicoes[[“salva_backup”]] == TRUE, uma nova cópia de backup é gerada
+e, caso definicoes[[“'att_teste' ”]] == FALSE, o processo é registrado
+em ‘tb_processos_atualizacao’.
+
+<br />
+
+### Etapa 04 - Geolocalização das OSC
+
+Esta seção descreve os procedimentos do script
+[src/specificFunctions/08_gera_geolocalizacao.R](src/specificFunctions/08_gera_geolocalizacao.R),
+que pode ser executado diretamente ou através de
+[src/atualiza_dados_OSC.R](src/atualiza_dados_OSC.R).
+
+Em todo o processo de atualização do MOSC, esta é a única etapa que não
+está inteiramente implementada em linguagem R. Atualmente, usa-se um
+software separado (GALILEO) para transformar o endereço das OSC em
+pontos de latitude e longitude. Para isso, é necessário exportar, em
+formato "csv", as seguintes informações de cada OSC:
+
+-   CNPJ
+
+-   Logradouro (rua, avenida, travessa etc)
+
+-   Número
+
+-   Bairro
+
+-   Cidade
+
+-   Unidade Federativa
+
+O script
+[src/specificFunctions/08_gera_geolocalizacao.R](src/specificFunctions/08_gera_geolocalizacao.R)
+extrai as informações acima de cada uma das OSC e as exporta no arquivo
+"backup/{pasta da atualização}/intermediate_files/enderecos_osc.csv",
+sendo "{pasta da atualização}" a pasta criada especificamente para essa
+atualização (ver seção **Procedimentos preliminares de atualização**,
+acima). Neste momento, a atualização precisa interromper a execução do
+código R para que o software de georreferenciamento faça seu trabalho. O
+resultado do georreferenciamento deve ser colocado no arquivo
+"backup/{pasta da atualização}/input_files/georreferenciamento.csv", com
+as variáveis de latitude e longitude nomeadas como **Latitude** e
+**Longitude**, respectivamente. A informação sobre o CNPJ das OSC deve
+ser preservada no mesmo formato do arquivo "backup/{pasta da
+atualização}/intermediate_files/enderecos_osc.csv".
+
+É importante considerar que nem sempre o software de georreferenciamento
+consegue fazer uma estimativa exata da localização da OSC. Nesses casos,
+ele tenta fazer uma estimativa aproximada, que pode se basear na rua,
+bairro ou, no pior cenário, no centroide do município de pertencimento.
+
+Após o fim dos procedimentos acima, caso definicoes[[“'att_teste' ”]] ==
+FALSE, registra-se o processo como concluído em
+‘tb_processos_atualizacao’.
+
+<br />
+
+### Etapa 05 - Processamento dos dados da Receita Federal
+
+Esta seção descreve os procedimentos do script
+[src/specificFunctions/09_desmembramento_base_rfb.R](src/specificFunctions/09_desmembramento_base_rfb.R),
+que pode ser executado diretamente ou através de
+[src/atualiza_dados_OSC.R](src/atualiza_dados_OSC.R).
+
+Nesta etapa da atualização, separamos e processamos os dados extraídos
+da Receita Federal, que até o momento estão todos juntos em uma única
+tabela (a exceção dos dados de georreferenciamento) e, a partir dessa
+tabela única, criamos cinco tabelas que são o “coração” do MOSC:
+
+-   tb_osc.
+
+-   tb_dados_gerais.
+
+-   tb_contatos.
+
+-   tb_localizacao.
+
+-   tb_areas_atuação.
+
+Abaixo descrevemos cada uma destas tabelas e mais detalhes sobre o
+processamento dos dados:
+
+-   **tb_osc.** Esta tabela contém a lista completa de todas as OSC que
+    fazem ou fizeram parte do Mapa, incluindo informações básicas como
+    CNPJ, apelido, CNAE e atividade. É importante notar que o MOSC tem
+    como princípio manter todos os dados inseridos, exceto em caso de
+    erro. Assim, mesmo organizações que tiveram baixa no registro da RFB
+    permaneçam no banco de dados. O campo bo_osc_ativa distingue as OSC
+    ativas das inativas[^6]. Quando este campo é definido como FALSO, a
+    organização é ocultada da visualização pública do mapa (no site),
+    mas seus dados são preservados. Durante a criação da tb_osc, novos
+    códigos de identificação (campo id_osc) são gerados para as OSC
+    recém-inseridas, permitindo que suas informações sejam referenciadas
+    em outras tabelas do banco de dados.
+
+-   **tb_dados_gerais.** Esta tabela contém a maior parte das
+    informações sobre as OSC disponíveis no banco de dados da RFB, como
+    natureza jurídica, razão social, nome fantasia, data de fundação
+    etc. Aqui também são armazenadas as informações inseridas pela
+    própria organização através do site do MOSC, que não se encaixam nas
+    tabelas abaixo. Exemplos dessas informações incluem a missão da
+    organização, sua visão, resumo de atuação, situação do imóvel e link
+    para o estatuto. A atualização é desenhada para evitar alterar dados
+    inseridos pelo próprio usuário, contudo, caso os dados inseridos
+    pelos usuários forem conflitantes com os dados da Receita Federal,
+    eles serão alterados. Mais detalhes sobre o processo de atualização
+    dos dados são fornecidos na Etapa 07.
+
+-   **tb_contatos.** Estão aqui os contatos das OSC, como telefone,
+    e-mail e nome do representante legal. Também é guardado aqui o link
+    para o perfil das OSC nas redes sociais inseridos pelos usuários.
+
+-   **tb_localizacao.** Aqui são inseridos dados sobre o endereço e a
+    localização da OSC, como município, UF, CEP e logradouro da
+    organização. Neste campo, também são incluídas a latitude e
+    longitude estimadas na Etapa 04 - Geolocalização das OSC. O campo
+    geo_localizacao armazena a localização da OSC utilizando a extensão
+    PostGIS do banco de dados PostgreSQL. Portanto, é pré-requisito da
+    atualização ter a extensão PostGIS instalada e funcionando. Esse
+    requisito é verificado na "Checagem inicial da atualização" descrita
+    na seção Procedimentos preliminares de atualização. Os códigos
+    municipais usados pela RFB diferem dos usados pelo MOSC (que seguem
+    o padrão do IBGE). Para corrigir os códigos, usa-se a tabela
+    [tab_auxiliares/CodMunicRFB.csv](tab_auxiliares/CodMunicRFB.csv),
+    que deve estar atualizada. Organizações com endereço no exterior são
+    excluídas desta tabela.
+
+-   **tb_areas_atuacao.** Aqui são armazenadas as áreas de atuação das
+    OSC, estimadas na Etapa 03 — Determinação das Áreas de Atuação. Além
+    dos dados da RFB, podem ser inseridos dados de outras fontes
+    (Ministério da Saúde, Educação, Cultura, Meio Ambiente, etc.). Os
+    procedimentos para o uso de fontes alternativas estão descritos na
+    seção Inserindo Fontes alternativas de classificação da área de
+    atuação das OSC, abaixo. Entre as tabelas criadas por
+    [src/specificFunctions/09_desmembramento_base_rfb.R](src/specificFunctions/09_desmembramento_base_rfb.R),
+    esta é a única que permite que uma OSC apareça em mais de uma linha,
+    dado que é possível que uma OSC tenha diferentes áreas e subáreas de
+    atuação. Contudo, só pode haver uma única combinação entre OSC, área
+    e subárea de atuação (campos id_osc, cd_area_atuacao e
+    cd_subarea_atuacao). As áreas de atuação são identificadas por
+    códigos, presentes nas tabelas auxiliares
+    [tab_auxiliares/dc_area_atuacao.csv](tab_auxiliares/dc_area_atuacao.csv)
+    e "tab_auxiliares/dc_subarea_atuacao.csv".
+
+[^6]: É importante não confundir a definição de “ativa” e “inativa” no
+    banco de dados do MOSC com a situação cadastral da organização na
+    Receita Federal. Pelo critério atual, são consideradas ativas no
+    MOSC as organizações que possuem as seguintes situações cadastrais
+    na RFB: “2 – ATIVA”, “3 – SUSPENSA” e “4 – INAPTA”. São consideradas
+    inativas as seguintes situações cadastrais: “1 – NULA” e “8 –
+    BAIXADA”.
+
+Após finalizado o processamento de dados, caso
+definicoes[[“salva_backup”]] == TRUE, uma cópia de cada tabela acima é
+salva na pasta da atualização ("backup/{pasta da
+atualização}/output_files/”) e, caso definicoes[[“'att_teste' ”]] ==
+FALSE, o processo é registrado em ‘tb_processos_atualizacao’.
+
+<br />
+
+### Etapa 06 - Extração e Processamento dos dados da RAIS
+
+Esta seção descreve os procedimentos do script
+[src/specificFunctions/10_insere_dados_rais.R](src/specificFunctions/10_insere_dados_rais.R),
+que pode ser executado diretamente ou através de
+[src/atualiza_dados_OSC.R](src/atualiza_dados_OSC.R).
+
+Nesta etapa da atualização, inserimos os dados das relações de trabalho
+das OSC. A base de dados mais recente dos vínculos de trabalho das
+organizações deve ser indicada em
+[src/atualiza_dados_OSC.R](src/atualiza_dados_OSC.R). Essa base
+fundamenta-se na Relação Anual de Informações Sociais (RAIS), gerenciada
+pelo Ministério do Trabalho e Emprego, e está em um schema do banco de
+dados ‘psql10-df/rais_2019’. Deste schema, extraímos as informações
+sobre os vínculos de trabalho ativos das OSC e as inserimos na tabela
+**tb_relacoes_trabalho**. Não é necessário executar novamente a
+identificação das OSC (Etapa 02) através da função **find_OSC**, pois as
+informações sobre as OSC ativas são recuperadas da tabela **tb_osc**,
+criada na etapa anterior.
+
+Para evitar sobrecarregar a memória do computador e do servidor de
+dados, realizamos uma extração separada para cada natureza jurídica e
+Unidade Federativa do banco. Embora esse procedimento seja mais seguro
+em termos de gerenciamento de memória, ele pode tornar a rotina um pouco
+mais lenta. Como resultado, o processo de extração dos vínculos de
+trabalho da RAIS pode levar alguns minutos, devido ao grande volume de
+dados.
+
+Após finalizado o processamento de dados, caso
+definicoes[[“salva_backup”]] == TRUE), uma cópia da tabela
+**tb_relacoes_trabalho** é salva na pasta da atualização (“backup/{pasta
+da atualização}/output_files/”) e, caso definicoes[[“'att_teste' ”]] ==
+FALSE, o processo é registrado em ‘tb_processos_atualizacao’.
+
+<br />
+
+### Etapa 07 - Atualização dos dados no BD MOSC
+
+Esta seção descreve os procedimentos do script “src/Atualiza_MOSC.R”,
+que pode ser executado diretamente ou através de
+[src/atualiza_dados_OSC.R](src/atualiza_dados_OSC.R).
+
+Após o processamento de dados nas etapas anteriores, esta etapa se
+encarrega de atualizar o banco de dados MOSC no banco
+‘psql12/portal_osc’. Até o momento, as informações extraídas e
+processadas eram guardadas na memória do computador ou (caso
+definicoes[["salva_backup"]] == TRUE) em arquivos de backup na pasta
+“backup/{pasta da atualização}/output_files/”. Agora, faremos o
+carregamento (upload) dos dados no banco de dados PostgreSQL do MOSC.
+Uma a uma, as tabelas geradas acima são carregadas no banco: **tb_osc**,
+**tb_dados_gerais**, **tb_contato**, **tb_localizacao**,
+**tb_area_atuacao** e **tb_relacoes_trabalho**.
+
+Para realizar essa atualização, o script "src/Atualiza_MOSC.R" utiliza a
+função de apoio **AtualizaDados**, disponível em "src/BDConnection.R".
+**AtualizaDados** atualmente apenas acrescenta ou modifica linhas de
+dados, adotando a filosofia de não deletar informações do banco. Ou
+seja, mesmo que uma OSC tenha esteja como situação cadastral “baixada”
+dos registros da Receita Federal, seus dados permanecem. Nesse caso, os
+dados da OSC baixada apenas deixam de serem atualizados pelo MOSC, mas
+não são apagados.
+
+Para acrescentar informações de novas OSCs, o procedimento é simples:
+usando os pacotes R DBI, RODBC e RPostgres, novas linhas são
+acrescentadas às tabelas existentes com as informações sobre as novas
+OSCs. Para alterar linhas existentes, o procedimento é mais complexo.
+**AtualizaDados** funciona atualizando cada tabela do banco, coluna a
+coluna, através da criação de uma tabela temporária. O procedimento é
+explicado a seguir.
+
+Consideremos que \<tabela de atualização\> é a tabela que queremos
+atualizar, \<coluna de atualização\> é a coluna que queremos atualizar
+dentro de \<tabela de atualização\> e \<tabela dados novos\> é a tabela
+com os dados mais atualizados, produzidos nas etapas anteriores. Assim,
+os passos de **AtualizaDados** são os seguintes:
+
+1.  Se baixa os dados atualmente existentes em \<tabela de
+    atualização\>.
+
+2.  Se determina uma \<coluna de atualização\> para se atualizar, dentre
+    as colunas de \<tabela de atualização\>, sendo que \<coluna de
+    atualização\> não pode ser uma chave-primária nem uma coluna
+    inexistente em \<tabela dados novos\>. A maioria dos dados inseridos
+    pelo usuário não estão em \<tabela dados novos\>, evitando assim que
+    a atualização apague dados inseridos pela própria OSC.
+
+3.  Se compara /<coluna de atualização/> e a coluna equivalente em
+    /<tabela dados novos/>, determinando para se atualizar apenas as
+    linhas onde: (a) Os dados novos são diferentes dos antigos ou os
+    dados antigos estão em branco (missing) e (b) Os dados novos não
+    estão em branco (missing).
+
+4.  As linhas que não atendem aos dois critérios da etapa 3 não serão
+    atualizadas em \<coluna de atualização\>, se mantendo os dados
+    antigos. Isso é feito simplesmente se acrescentando os valores
+    antigos da \<tabela de atualização\> que não atendem ao passo 3 na
+    \<coluna de atualização\>. Basicamente, se preenche linhas onde os
+    dados novos estão em branco, mas os dados antigos não.
+
+5.  Se cria uma tabela temporária, \<update_temp\>, no banco de dados,
+    contendo apenas a chave-primária da \<tabela de atualização\> e a
+    \<coluna de atualização\>, ressalvado o mencionado nos itens 3 e 4.
+    Em \<update_temp\>, a \<coluna de atualização\> é renomeada para
+    temp_var.
+
+6.  Usando comandos SQL, se realiza um LEFT JOIN de \<update_temp\>para
+    \<tabela de atualização\>, transportando temp_var para \<tabela de
+    atualização\>.
+
+7.  Novamente usando SQL, se determina que o valor de \<coluna de
+    atualização\> deve ser igual a temp_var (\<coluna de atualização\> =
+    temp_var), atualizando os dados.
+
+8.  Voltamos ao passo 2 para atualizar uma nova coluna de \<tabela de
+    atualização\>, repetindo os passos 2 a 7 até \<tabela de
+    atualização\> estar atualizada.
+
+Os passos acima se repetem para todas as tabelas da atualização. Embora
+seja relativamente complexa, essa metodologia tem uma grande vantagem:
+ela reduz significativamente o tempo de atualização dos dados. O
+procedimento anterior levava muitas horas para atualizar cada tabela do
+banco, pois atualizava linha por linha, e não coluna por coluna. Com a
+nova metodologia, cada tabela é atualizada em questão de minutos.
+
+Após a atualização de todas as tabelas, “src/Atualiza_MOSC.R” executa a
+atualização das “views materializadas”, necessárias para que a
+atualização do banco produza novos dados no site. Isso é feito
+executando as linhas de código SQL disponíveis em
+“tab_auxiliares/31_refresh_views_mat.sql”
+
+Após o upload dos dados, caso definicoes[[“'att_teste' ”]] == FALSE, o
+processo é registrado como concluído.
+
+<br />
+
+### Etapa 08 - Procedimentos finais de atualização
+
+Realizadas todas as etapas acima, os novos dados são inseridos no
+sistema e o site já mostrará, após a atualização das materialized views,
+as informações atualizadas na busca de OSC e no perfil individual de
+cada organização. Contudo, ainda existem algumas etapas finais de
+atualização, executadas pelo script "src/OSC-v2023.R". São elas:
+
+-   O script faz uma cópia automática dos arquivos R usados na
+    atualização e de todos os arquivos da pasta "tab_auxiliares/" em
+    "backup/{pasta da atualização}/att_files", incluindo o próprio
+    arquivo "src/OSC-v2023.R". Isso é feito para manter um registro
+    completo dos arquivos exatos usados na atualização. Assim, as
+    futuras equipes saberão exatamente como foram realizados todas as
+    etapas da atualização. Para garantir a eficácia desse processo,
+    recomenda-se salvar "src/OSC-v2023.R" antes de iniciar a atualização
+    e tomar extremo cuidado para nunca alterar os arquivos salvos em
+    "backup/{pasta da atualização}/att_files".
+
+-   Caso definicoes[[“'att_teste' ”]] == FALSE, a atualização é marcada
+    como concluída, se registrando o hora do fim da atualização (a hora
+    de início já estava registrada nos **Procedimentos preliminares de
+    atualização**).
+
+-   Todos os objetos do R remanescentes são removidos da memória do
+    computador.
+
+Assim, a rotina da atualização é finalizada.
+
+Nas próximas seções são explicados mais alguns detalhes sobre a
+atualização do Mapa das Organizações da Sociedade Civil.
+
+<br />
+
+## Inserindo Fontes alternativas de classificação da área de atuação das OSC
+
+Além dos dados da Receita Federal, o script “src/specificFunctions/
+09_desmembramento_base_rfb.R” pode utilizar outras fontes de informação,
+como Ministério da Saúde, Educação, Cultura, Meio Ambiente, etc. Para
+isso, deve-se colocar arquivos no formato “csv” na pasta "backup/{pasta
+da atualização}/input_files/” que comecem com “tb_area_atuacao”. Por
+exemplo, “tb_area_atuacao_cneas.csv”, “tb_area_atuacao_censo_suas.csv”,
+“tb_area_atuacao_cnes.csv” etc. Todas os arquivos csv que comecem com
+“tb_area_atuacao” na referida pasta serão processados. Esses arquivos
+devem conter as seguintes variáveis:
+
+-   **cd_identificador_osc**: o CNPJ das organizações. Somente CNPJ de
+    OSC identificadas no banco serão lidos.
+
+-   **tx_area_atuacao:** nome da área de atuação da OSC.
+
+-   **tx_subarea_atuacao:** nome da subárea de atuação da OSC.
+
+-   **ft_area_atuacao:** nome da fonte de dados. Recomenda-se usar aqui
+    o nome abreviado da base de dados e a abreviação do órgão que
+    produziu o dado (ex: CNEAS/MSD, CNES/MS, LIE/ME etc).
+
+Somente serão reconhecidos nomes de áreas e subáreas que constam em
+"tab_auxiliares/Areas&Subareas.csv", portanto, recomenda-se que os nomes
+sejam padronizados exatamente iguais aos constantes neste arquivo. Desde
+a versão 2023/2024 do MOSC, quando duas fontes de dados indicam que OSC
+atua na mesma organização, se registra a área de atuação como sendo em
+ambas as fontes.
+
+<br />
+
+## Diferença entre a Atualização no Banco de Desenvolvimento, Homologação e Produção
+
+É recomendável realizar testes dos códigos em ambientes de
+desenvolvimento e homologação antes de atualizar os dados do banco de
+produção. Para garantir um teste fidedigno, solicite à área técnica que
+deixe esses ambientes o mais semelhantes possível ao ambiente de
+produção ("cópia espelho").
+
+Para direcionar a atualização para os ambientes de desenvolvimento,
+homologação ou produção, basta alterar uma única linha de código no
+início do script "src/OSC-v2023.R": a linha que indica a localização das
+chaves do banco de dados MOSC. O ambiente de produção é o
+'psql12/portal_osc'. Se a chave de acesso estiver direcionada a ele (e
+tiver as permissões necessárias), a atualização ocorrerá no ambiente de
+produção. Porém, se as chaves apontarem para um ambiente de homologação
+(por exemplo, 'psql12-homolog/portal_osc'), o script realizará a
+atualização neste ambiente como se fosse o de produção. O mesmo se
+aplica a um ambiente de desenvolvimento: basta apontar a chave de acesso
+para um banco de dados de desenvolvimento espelho do banco de produção
+MOSC.
+
+Por "apontar a chave", nos referimos à criação de um arquivo JSON na
+pasta "keys/", seguindo o formato descrito na seção [Como Instalar a Rotina de Atualização], passo 4. A diferença é que esse arquivo indica
+um host de homologação ou desenvolvimento. As demais informações do
+arquivo JSON, como nome de usuário e senha, devem ser compatíveis com
+esse ambiente e indicar usuários com permissões suficientes para
+realizar a atualização. Nenhuma outra alteração é necessária.
+
+Não é preciso mudar a chave de acesso para 'psql10-df/rais_2019', pois,
+independentemente de a atualização ser realizada no ambiente de
+desenvolvimento, homologação ou produção, a maior parte dos dados virá
+deste servidor.
+
+<br />
+
+## Possibilidades de Conflito entre dados inseridos pela própria OSC e a atualização
+
+Como mencionado, a rotina de atualização foi desenvolvida para minimizar
+(mas não eliminar completamente) a alteração de dados inseridos pela
+própria OSC através do site do Mapa. A maioria dos campos que a OSC pode
+preencher diretamente através do site — como descrição da organização,
+sua missão, site e diretoria — não é atualizada por esta rotina, já que
+não há informações sobre esses temas nos bancos de dados da RAIS e da
+Receita Federal. No entanto, existe um pequeno número de casos onde pode
+haver conflito, como em dados de telefone e e-mail.
+
+No caso da tabela **tb_area_atuacao**, só haverá conflito se o usuário e
+os scripts de atualização identificarem a mesma área e subárea de
+atuação. Nessa situação, a rotina de atualização alterará a fonte do
+dado de "declaração do usuário" para uma fonte oficial. Se o usuário e
+essa rotina identificarem áreas diferentes de atuação, será considerado
+que a OSC atua em ambas as áreas, e ela aparecerá em mais de uma linha
+em **tb_area_atuacao**.
+
+Após finalizado o upload de dados, caso definicoes[[“salva_backup”]] ==
+TRUE), uma cópia da tabela **tb_relacoes_trabalho** é salva na pasta da
+atualização ("backup/{pasta da atualização}/output_files/”) e o processo
+é registrado em ‘tb_processos_atualizacao’.
+
+<br />
+
+## Estrutura do Repositório GitHub
+
+-   **pasta 'backup_files'**: contém os arquivos de backup cada uma das
+    atualizações. Cada atualização tem um diretório específico nesta
+    pasta, cujo nome é o ano da atualização e o número dela. Por
+    exemplo, "2024_01" é a atualização número 01 de 2024, "2023_01" é a
+    atualização 01 de 2025 etc.
+-   **pasta 'development_zone'**: é um diretório reservado a testes e
+    desenvolvimento da equipe do MOSC.
+-   **pasta 'documentacao'**: contém arquivos sobre a documentação desta
+    atualização.
+-   **pasta 'tab_auxiliares'**: aqui ficam pequenas tabelas necessárias
+    para a atualização que tem uma chance baixa de precisarem ser
+    atualizadas.
+-   **pasta 'src'**: pasta onde estão os scripts da atualização.
+-   **pasta 'src/generalFunctions'**: pasta onde ficam funções gerais
+    que auxiliam as rotinas de atualização.
+-   **pasta 'src/specificFunctions'**: pasta com rotinas e funções
+    específicas da atualização.
+-   **pasta 'src/uso_unico'**: pasta com scripts que tendem a ser usada
+    poucas vezes ou uma vez, como mudanças estruturais no banco de
+    dados.
+
+<br />
 
 ## Principais Arquivos de Atualização
 
-* **Script 'src/atualiza_dados_OSC.R'**: é o script principal (main) da atualização. Executar esse script irá atualizar o MOSC. Este script chama os vários scripts da pasta  'src/specificFunctions/'
-* **Script 'src/specificFunctions/01_setup_atualizacao.R'**: carrega bibliotecas e funções usadas em toda a atualização, bem como coloca definições que raramente mudam.
-* **Script 'src/specificFunctions/02_checagem_inicial_att_mosc.R'**: Antes de realizar a atualização propriamente dita, esse script faz uma série de checagens para saber se todos os dados e as tabelas auxiliares estão disponíveis e se a conexão com o banco de dados está operacional e com as permissões necessárias.
-* **Script 'src/specificFunctions/03_inicia_controle_atualizacao.R'**: cria linhas de controle da atualização na tabela tb_controle_atualizacao. Cria uma conexão dbplyr com as tabelas 'tb_processos_atualizacao' e 'tb_backups_files'. Se houver uma atualização iniciada e não concluída, resgara os dados delas para sabermos de onde ela parou.
-* **Script 'src/specificFunctions/04_cria_diretorio_atualizacao.R'**: cria diretório para criar arquivos de input e backup da atualização.
-* **Script 'src/specificFunctions/05_baixa_dados_rfb.R'**: baixa dados brutos da Receita Federal do Brasil, já filtrando as organizações sem fins lucrativos.
-* **Script 'src/specificFunctions/06_identificacao_osc_nabase_rfb.R'**:  as rotinas para separar organizações não lucrativas que conceitualmente não são OSC (cartórios, partidos, comissões de formatura etc), utilizando a função 'findosc-v2023' e outros procedimentos.
-* **Script 'src/specificFunctions/07_determinacao_areas_atuacao.R'**: fazer uma estimativa das áreas de atuação das OSC com base na CNAE.
-* **Script 'src/specificFunctions/08_gera_geolocalizacao.R'**: formatar o output do GALILEO para poder gerar as variáveis de geolocalização do MOSC.
-* **Script 'src/specificFunctions/09_desmembramento_base_rfb.R'**: com base nos dados extraídos da Receita Federal, já passada a de identificação das OSC (com o find_OSC) e determinação da área de atuação,extrair as principais tabelas do Mapa das Organizações Da Sociedade Civil.
-* **Script 'src/specificFunctions/10_insere_dados_rais.R'**: Insere dados da RAIS no Mapa das Organizações Sociais.
-* **Script 'src/specificFunctions/11_atualiza_mosc.R'**: atualiza o banco de dados principal do MOSC através de uma série de comandos SQL.
-* **Script 'src/specificFunctions/12_resumo_base.R'**: cria uma versão simplificada da base de dados que pode ser exportada por um arquivo CSV grande.
-* **Script 'src/specificFunctions/31_refresh_views_mat.sql'**: atualiza as Views materializadas do banco de dados MOSC.
+-   **Script 'src/atualiza_dados_OSC.R'**: é o script principal (main)
+    da atualização. Executar esse script irá atualizar o MOSC. Este
+    script chama os vários scripts da pasta 'src/specificFunctions/'
+-   **Script 'src/specificFunctions/01_setup_atualizacao.R'**: carrega
+    bibliotecas e funções usadas em toda a atualização, bem como coloca
+    definições que raramente mudam.
+-   **Script 'src/specificFunctions/02_checagem_inicial_att_mosc.R'**:
+    Antes de realizar a atualização propriamente dita, esse script faz
+    uma série de checagens para saber se todos os dados e as tabelas
+    auxiliares estão disponíveis e se a conexão com o banco de dados
+    está operacional e com as permissões necessárias.
+-   **Script 'src/specificFunctions/03_inicia_controle_atualizacao.R'**:
+    cria linhas de controle da atualização na tabela
+    tb_controle_atualizacao. Cria uma conexão dbplyr com as tabelas
+    'tb_processos_atualizacao' e 'tb_backups_files'. Se houver uma
+    atualização iniciada e não concluída, resgara os dados delas para
+    sabermos de onde ela parou.
+-   **Script 'src/specificFunctions/04_cria_diretorio_atualizacao.R'**:
+    cria diretório para criar arquivos de input e backup da atualização.
+-   **Script 'src/specificFunctions/05_baixa_dados_rfb.R'**: baixa dados
+    brutos da Receita Federal do Brasil, já filtrando as organizações
+    sem fins lucrativos.
+-   **Script
+    'src/specificFunctions/06_identificacao_osc_nabase_rfb.R'**: as
+    rotinas para separar organizações não lucrativas que conceitualmente
+    não são OSC (cartórios, partidos, comissões de formatura etc),
+    utilizando a função 'findosc-v2023' e outros procedimentos.
+-   **Script 'src/specificFunctions/07_determinacao_areas_atuacao.R'**:
+    fazer uma estimativa das áreas de atuação das OSC com base na CNAE.
+-   **Script 'src/specificFunctions/08_gera_geolocalizacao.R'**:
+    formatar o output do GALILEO para poder gerar as variáveis de
+    geolocalização do MOSC.
+-   **Script 'src/specificFunctions/09_desmembramento_base_rfb.R'**: com
+    base nos dados extraídos da Receita Federal, já passada a de
+    identificação das OSC (com o find_OSC) e determinação da área de
+    atuação,extrair as principais tabelas do Mapa das Organizações Da
+    Sociedade Civil.
+-   **Script 'src/specificFunctions/10_insere_dados_rais.R'**: Insere
+    dados da RAIS no Mapa das Organizações Sociais.
+-   **Script 'src/specificFunctions/11_atualiza_mosc.R'**: atualiza o
+    banco de dados principal do MOSC através de uma série de comandos
+    SQL.
+-   **Script 'src/specificFunctions/12_resumo_base.R'**: cria uma versão
+    simplificada da base de dados que pode ser exportada por um arquivo
+    CSV grande.
+-   **Script 'src/specificFunctions/31_refresh_views_mat.sql'**:
+    atualiza as Views materializadas do banco de dados MOSC.
+
+<br />
 
 ## Tabelas Auxiliares
 
 Abaixo estão as principais tabelas do diretório 'tab_auxiliares':
 
-* **tabela 'tab_auxiliares/Areas&Subareas.csv'**: descreve a relação entre as áreas e sobáreas das OSC.
-* **tabela 'tab_auxiliares/CodMunicRFB.csv'**: tabela 'de/para' do código municipal da Receita Federal para o código municipal do IBGE.
-* **tabela 'tab_auxiliares/dc_area_atuacao.csv'**: relação entre o código e a descrição textual das áreas de atuação no MOSC.
-* **tabela 'tab_auxiliares/dc_subarea_atuacao.csv'**: relação entre o código e a descrição textual das subáreas de atuação no MOSC.
-* **tabela 'tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv'**: tabela com todas as expressões regulares para identificar as áreas de atuação das OSC através do CNAE e razão social.
-* **tabela 'tab_auxiliares/IndicadoresAreaAtuacaoOSC.xlsx'**: tabela com todas as expressões regulares para identificar as áreas de atuação das OSC através do CNAE e razão social. Mantida a redundância com os formados CSV e XLSX para facilitar a manipulação dos dados.
-* **tabela 'tab_auxiliares/Municipios.csv'**: relação entre código IBGE, nome e UF dos municípios brasileiros.
-* **tabela 'tab_auxiliares/NomesCampos.xlsx'**: descreve os campos do banco de dados RAIS.
-* **tabela 'tab_auxiliares/NonOSCNames.csv'**: tabela com todas as expressões regulares para identificar OSCs entre os CNPJs da Receita Federal através da razão social.
-* **tabela 'tab_auxiliares/UFs.csv'**: código IBGE das unidades federativas do Brasil.
-
-
+-   **tabela 'tab_auxiliares/Areas&Subareas.csv'**: descreve a relação
+    entre as áreas e sobáreas das OSC.
+-   **tabela 'tab_auxiliares/CodMunicRFB.csv'**: tabela 'de/para' do
+    código municipal da Receita Federal para o código municipal do IBGE.
+-   **tabela 'tab_auxiliares/dc_area_atuacao.csv'**: relação entre o
+    código e a descrição textual das áreas de atuação no MOSC.
+-   **tabela 'tab_auxiliares/dc_subarea_atuacao.csv'**: relação entre o
+    código e a descrição textual das subáreas de atuação no MOSC.
+-   **tabela 'tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv'**: tabela
+    com todas as expressões regulares para identificar as áreas de
+    atuação das OSC através do CNAE e razão social.
+-   **tabela 'tab_auxiliares/IndicadoresAreaAtuacaoOSC.xlsx'**: tabela
+    com todas as expressões regulares para identificar as áreas de
+    atuação das OSC através do CNAE e razão social. Mantida a
+    redundância com os formados CSV e XLSX para facilitar a manipulação
+    dos dados.
+-   **tabela 'tab_auxiliares/Municipios.csv'**: relação entre código
+    IBGE, nome e UF dos municípios brasileiros.
+-   **tabela 'tab_auxiliares/NomesCampos.xlsx'**: descreve os campos do
+    banco de dados RAIS.
+-   **tabela 'tab_auxiliares/NonOSCNames.csv'**: tabela com todas as
+    expressões regulares para identificar OSCs entre os CNPJs da Receita
+    Federal através da razão social.
+-   **tabela 'tab_auxiliares/UFs.csv'**: código IBGE das unidades
+    federativas do Brasil.

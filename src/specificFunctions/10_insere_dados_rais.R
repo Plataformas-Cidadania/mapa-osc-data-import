@@ -47,7 +47,7 @@ library(RPostgres)
 
 # Executa o processo se não foi feito anteriormente
 # "81": Processo 8 (Update Banco de Dados MOSC) e 1 (completo)
-if(!(81 %in% processos_att_atual)) {
+if(!(81 %in% processos_att_atual) & definicoes$atualiza_RAIS) {
   
   message("Insere os dados da RAIS")
   Sys.sleep(2) # Dar um tempo apenas para o usuário ler as mensagens da atualização
