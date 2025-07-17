@@ -94,7 +94,9 @@ Dados <- tb_dados_gerais %>%
          # data de fundação da OSC
          dt_fundacao_osc, 
          # cnae
-         cd_classe_atividade_economica_osc
+         cd_classe_atividade_economica_osc, 
+         # Situação cadastral
+         cd_situacao_cadastral
          )
 
 rm(tb_dados_gerais, tb_osc)
@@ -111,11 +113,9 @@ tb_localizacao <- dbGetQuery(conexao_mosc, paste0("SELECT * FROM tb_localizacao"
                                                    # " LIMIT 500", 
                                                    ";"))
 
-sum(is.na(tb_localizacao$tx_endereco_corrigido))
-
-sum(is.na(Dados$tx_endereco_completo))
-
-names(tb_localizacao)
+# sum(is.na(tb_localizacao$tx_endereco_corrigido))
+# sum(is.na(Dados$tx_endereco_completo))
+# names(tb_localizacao)
 
 Municipios <- fread("tab_auxiliares/Municipios.csv", 
                     encoding = "Latin-1")
@@ -143,8 +143,7 @@ Dados <- Dados %>%
   
   select(everything())
 
-names(Dados)
-  
+# names(Dados)
 
 rm(tb_localizacao, Municipios, UFs)
 
@@ -246,8 +245,12 @@ Dados2 <- Dados %>%
     cnpj, 
     tx_razao_social_osc, 
     tx_nome_fantasia_osc, 
+    
+    
+    # Dados da OSC:
     cd_natureza_juridica_osc, 
     dt_fundacao_osc, 
+    cd_situacao_cadastral,
     
     # Localização:
     tx_endereco_completo, 
@@ -288,14 +291,14 @@ Dados2 <- Dados %>%
     SubArea_Outros_servicos_de_saude, 
     SubArea_Religiao)
 
-names(Dados2)
-
-table(Dados2$SubArea_Hospitais)
-table(Dados2$SubArea_Esportes_e_recreacao)
-table(Dados2$SubArea_Educacao_infantil)
-table(Dados2$Area_Cultura_e_recreacao)
-table(Dados2$Area_Desenvolvimento_e_defesa_de_direitos_e_interesses)
-table(Dados2$Area_Religiao)
+# names(Dados2)
+# 
+# table(Dados2$SubArea_Hospitais)
+# table(Dados2$SubArea_Esportes_e_recreacao)
+# table(Dados2$SubArea_Educacao_infantil)
+# table(Dados2$Area_Cultura_e_recreacao)
+# table(Dados2$Area_Desenvolvimento_e_defesa_de_direitos_e_interesses)
+# table(Dados2$Area_Religiao)
 
 
 hoje_txt <- today() %>% 
