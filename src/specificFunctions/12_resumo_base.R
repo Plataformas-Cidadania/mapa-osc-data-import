@@ -306,7 +306,7 @@ hoje_txt <- today() %>%
   str_remove_all("-")
 
 # Salva
-fwrite(Dados2, glue("backup_files/2025_03/output_files/{hoje_txt}_MOSC_baseresumida.csv"), 
+fwrite(Dados2, glue("{diretorio_att}output_files/{hoje_txt}_MOSC_baseresumida.csv"), 
        sep = ";", dec = ",")
 
 rm(Dados, Dados2)
