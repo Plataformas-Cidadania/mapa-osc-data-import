@@ -1,176 +1,242 @@
-Variavel,Valor,AreaAtuacao,CriterioMultiplo,SubgrupoCriterio,IncluiArea,Ordem,macro_area_atuacao
-cnae,861,Hospitais,0,.,1,1,Saúde
-cnae,862,Outros serviços de saúde,0,.,1,2,Saúde
-cnae,863,Outros serviços de saúde,0,.,1,3,Saúde
-cnae,864,Outros serviços de saúde,0,.,1,4,Saúde
-cnae,865,Outros serviços de saúde,0,.,1,5,Saúde
-cnae,866,Outros serviços de saúde,0,.,1,6,Saúde
-cnae,869,Outros serviços de saúde,0,.,1,7,Saúde
-cnae,90,Outros serviços de saúde,0,.,1,8,Saúde
-cnae,91,Outros serviços de saúde,0,.,1,9,Saúde
-cnae,94936,Cultura e arte,0,.,1,10,Cultura e recreação
-cnae,92,Esportes e recreação,0,.,1,11,Cultura e recreação
-cnae,93,Esportes e recreação,0,.,1,12,Cultura e recreação
-cnae,85112,Educação infantil,0,.,1,13,Educação e pesquisa
-cnae,85121,Educação infantil,0,.,1,14,Educação e pesquisa
-cnae,85139,Ensino fundamental,0,.,1,15,Educação e pesquisa
-cnae,852,Ensino superior,0,.,1,16,Educação e pesquisa
-cnae,72,Estudos e pesquisas,0,.,1,17,Educação e pesquisa
-cnae,854,Educação profissional,0,.,1,18,Educação e pesquisa
-cnae,855,Atividades de apoio à educação,0,.,1,19,Educação e pesquisa
-cnae,859,Outras formas de educação/ensino,0,.,1,20,Educação e pesquisa
-cnae,87,Assistência social,0,.,1,21,Assistência social
-cnae,88,Assistência social,0,.,1,22,Assistência social
-cnae,94910,Religião,0,.,1,23,Religião
-cnae,94111,Associações empresariais e patronais,0,.,1,24,Associações patronais e profissionais
-cnae,94120,Associações profissionais,0,.,1,25,Associações patronais e profissionais
-cnae,01,"Associações de produtores rurais, pescadores e similares",0,.,1,26,Associações patronais e profissionais
-cnae,02,"Associações de produtores rurais, pescadores e similares",0,.,1,27,Associações patronais e profissionais
-cnae,03,"Associações de produtores rurais, pescadores e similares",0,.,1,28,Associações patronais e profissionais
-cnae,943,Desenvolvimento e defesa de direitos,0,.,1,29,Desenvolvimento e defesa de direitos e interesses
-cnae,94995,Associações de atividades não especificadas anteriormente,0,.,1,30,Outras atividades associativas
-razao_social,IGREJA,Religião,1,1,1,31,Religião
-razao_social,EVANGELIC,Religião,1,1,1,32,Religião
-razao_social,MOSTEIRO,Religião,1,1,1,33,Religião
-razao_social,EVANG\\.,Religião,1,1,1,34,Religião
-razao_social,PROTESTANTE,Religião,1,1,1,35,Religião
-razao_social,CARITAS,Religião,1,1,1,36,Religião
-razao_social,CENTRO ESP,Religião,1,1,1,37,Religião
-razao_social,CENTRO ESPIRIT,Religião,1,1,1,38,Religião
-razao_social,CRISTA,Religião,1,1,1,39,Religião
-razao_social,BATISTA,Religião,1,1,1,40,Religião
-razao_social,ASSEMBLEIA DE DEUS,Religião,1,1,1,41,Religião
-razao_social,ESPIRITA,Religião,1,1,1,42,Religião
-razao_social,UMBANDA,Religião,1,1,1,43,Religião
-razao_social,CANDOMBLE,Religião,1,1,1,44,Religião
-razao_social,MACONARIA,Religião,1,1,1,45,Religião
-razao_social,LOJA MISTA DO RITO,Religião,1,1,1,46,Religião
-razao_social,DIOCESE,Religião,1,1,1,47,Religião
-razao_social,MITRA,Religião,1,1,1,48,Religião
-razao_social,PAROQUIA,Religião,1,1,1,49,Religião
-razao_social,FRATERNIDADE,Religião,1,1,1,50,Religião
-razao_social,CAPELA,Religião,1,1,1,51,Religião
-razao_social,TEMPLO,Religião,1,1,1,52,Religião
-razao_social,MACONICA,Religião,1,1,1,53,Religião
-razao_social,CASA DE ORACAO,Religião,1,1,1,54,Religião
-razao_social,PASTOR,Religião,1,1,1,55,Religião
-razao_social,PASTORAL,Religião,1,1,1,56,Religião
-razao_social,ASS DE DEUS,Religião,1,1,1,57,Religião
-razao_social,CONGREGACAO,Religião,1,1,1,58,Religião
-razao_social,LUTERAN,Religião,1,1,1,59,Religião
-razao_social,SANTUARIO,Religião,1,1,1,60,Religião
-razao_social,AUG E RESP,Religião,1,1,1,61,Religião
-razao_social,LOJ SIMB,Religião,1,1,1,62,Religião
-razao_social,AUG\\. E RESP,Religião,1,1,1,63,Religião
-razao_social,LOJA SIMB,Religião,1,1,1,64,Religião
-razao_social,AUGUSTA E RESP,Religião,1,1,1,65,Religião
-razao_social,PENTECOSTAL,Religião,1,1,1,66,Religião
-razao_social,BIBLICA,Religião,1,1,1,67,Religião
-razao_social,IGEREJA,Religião,1,1,1,68,Religião
-razao_social,CONVENTO,Religião,1,1,1,69,Religião
-razao_social,^A R L S,Religião,1,1,1,70,Religião
-razao_social,^A\\. R\\. L\\. S\\.,Religião,1,1,1,71,Religião
-razao_social,^A\\.R\\.L\\.S,Religião,1,1,1,72,Religião
-razao_social,^A\\.\\:,Religião,1,1,1,73,Religião
-razao_social,LOJA SIMBOLICA,Religião,1,1,1,74,Religião
-razao_social,^ARLS,Religião,1,1,1,75,Religião
-razao_social,ARQUIDIOCESE,Religião,1,1,1,76,Religião
-razao_social,TEMLO,Religião,1,1,1,77,Religião
-razao_social,PRESBITERIAN,Religião,1,1,1,78,Religião
-razao_social,SINAGOGA,Religião,1,1,1,79,Religião
-razao_social,TERREIRO,Religião,1,1,1,80,Religião
-razao_social,^BISPADO,Religião,1,1,1,81,Religião
-razao_social,^ORATORIO DA DIVINA,Religião,1,1,1,82,Religião
-razao_social,^COMUNIDADE PROFETICA,Religião,1,1,1,83,Religião
-razao_social,^ASSOC,Religião,1,.,0,84,Religião
-razao_social,ASSOCIACAO,Religião,1,.,0,85,Religião
-razao_social,^ORG,Religião,1,.,0,86,Religião
-razao_social,CLUBE,Religião,1,.,0,87,Religião
-razao_social,^HOSPITAL,Religião,1,.,0,88,Religião
-razao_social,FUNDACAO,Religião,1,.,0,89,Religião
-razao_social,FACULDADE,Religião,1,.,0,90,Religião
-razao_social,MACKENZIE,Religião,1,.,0,91,Religião
-razao_social,^CAEDES,Religião,1,.,0,92,Religião
-razao_social,RECUPERACAO,Religião,1,.,0,93,Religião
-razao_social,REABILITACAO,Religião,1,.,0,94,Religião
-razao_social,^INSTITUTO EDUC,Religião,1,.,0,95,Religião
-razao_social,^LAR,Religião,1,.,0,96,Religião
-razao_social,^COM,Religião,1,.,0,97,Religião
-razao_social,CLUB,Religião,1,.,0,98,Religião
-razao_social,ACADEMIA,Religião,1,.,0,99,Religião
-razao_social,SOCIEDADE,Religião,1,.,0,100,Religião
-razao_social,ESCOTEIRO,Religião,1,.,0,101,Religião
-razao_social,COMISSAO,Religião,1,.,0,102,Religião
-razao_social,MUSEU,Religião,1,.,0,103,Religião
-razao_social,CULTURAL,Religião,1,.,0,104,Religião
-razao_social,JOAO BATISTA,Religião,1,.,0,105,Religião
-razao_social,^COLEGI,Religião,1,.,0,106,Religião
-razao_social,^CRECHE,Religião,1,.,0,107,Religião
-razao_social,^ESCOLA,Religião,1,.,0,108,Religião
-cnae,9430800,Religião,2,1,1,109,Religião
-razao_social,IGREJA,Religião,2,2,1,110,Religião
-razao_social,EVANGELIC,Religião,2,2,1,111,Religião
-razao_social,MOSTEIRO,Religião,2,2,1,112,Religião
-razao_social,EVANG\\.,Religião,2,2,1,113,Religião
-razao_social,PROTESTANTE,Religião,2,2,1,114,Religião
-razao_social,CARITAS,Religião,2,2,1,115,Religião
-razao_social,CENTRO ESP,Religião,2,2,1,116,Religião
-razao_social,CENTRO ESPIRIT,Religião,2,2,1,117,Religião
-razao_social,CRISTA,Religião,2,2,1,118,Religião
-razao_social,BATISTA,Religião,2,2,1,119,Religião
-razao_social,ASSEMBLEIA DE DEUS,Religião,2,2,1,120,Religião
-razao_social,ESPIRITA,Religião,2,2,1,121,Religião
-razao_social,UMBANDA,Religião,2,2,1,122,Religião
-razao_social,CANDOMBLE,Religião,2,2,1,123,Religião
-razao_social,MACONARIA,Religião,2,2,1,124,Religião
-razao_social,LOJA MISTA DO RITO,Religião,2,2,1,125,Religião
-razao_social,DIOCESE,Religião,2,2,1,126,Religião
-razao_social,MITRA,Religião,2,2,1,127,Religião
-razao_social,PAROQUIA,Religião,2,2,1,128,Religião
-razao_social,FRATERNIDADE,Religião,2,2,1,129,Religião
-razao_social,CAPELA,Religião,2,2,1,130,Religião
-razao_social,TEMPLO,Religião,2,2,1,131,Religião
-razao_social,MACONICA,Religião,2,2,1,132,Religião
-razao_social,CASA DE ORACAO,Religião,2,2,1,133,Religião
-razao_social,PASTOR,Religião,2,2,1,134,Religião
-razao_social,PASTORAL,Religião,2,2,1,135,Religião
-razao_social,ASS DE DEUS,Religião,2,2,1,136,Religião
-razao_social,CONGREGACAO,Religião,2,2,1,137,Religião
-razao_social,LUTERAN,Religião,2,2,1,138,Religião
-razao_social,SANTUARIO,Religião,2,2,1,139,Religião
-razao_social,AUG E RESP,Religião,2,2,1,140,Religião
-razao_social,LOJ SIMB,Religião,2,2,1,141,Religião
-razao_social,AUG\\. E RESP,Religião,2,2,1,142,Religião
-razao_social,LOJA SIMB,Religião,2,2,1,143,Religião
-razao_social,AUGUSTA E RESP,Religião,2,2,1,144,Religião
-razao_social,PENTECOSTAL,Religião,2,2,1,145,Religião
-razao_social,BIBLICA,Religião,2,2,1,146,Religião
-razao_social,IGEREJA,Religião,2,2,1,147,Religião
-razao_social,CONVENTO,Religião,2,2,1,148,Religião
-razao_social,^A R L S,Religião,2,2,1,149,Religião
-razao_social,^A\\. R\\. L\\. S\\.,Religião,2,2,1,150,Religião
-razao_social,^A\\.R\\.L\\.S,Religião,2,2,1,151,Religião
-razao_social,^A\\.\\:,Religião,2,2,1,152,Religião
-razao_social,LOJA SIMBOLICA,Religião,2,2,1,153,Religião
-razao_social,^ARLS,Religião,2,2,1,154,Religião
-razao_social,ARQUIDIOCESE,Religião,2,2,1,155,Religião
-razao_social,TEMLO,Religião,2,2,1,156,Religião
-razao_social,PRESBITERIAN,Religião,2,2,1,157,Religião
-razao_social,SINAGOGA,Religião,2,2,1,158,Religião
-razao_social,TERREIRO,Religião,2,2,1,159,Religião
-razao_social,^BISPADO,Religião,2,2,1,160,Religião
-razao_social,^ORATORIO DA DIVINA,Religião,2,2,1,161,Religião
-razao_social,^COMUNIDADE PROFETICA,Religião,2,2,1,162,Religião
-razao_social,FACULDADE,Religião,2,.,0,163,Religião
-razao_social,MACKENZIE,Religião,2,.,0,164,Religião
-razao_social,^CAEDES,Religião,2,.,0,165,Religião
-razao_social,RECUPERACAO,Religião,2,.,0,166,Religião
-razao_social,REABILITACAO,Religião,2,.,0,167,Religião
-razao_social,^INSTITUTO EDUC,Religião,2,.,0,168,Religião
-razao_social,^LAR,Religião,2,.,0,169,Religião
-razao_social,^COLEGI,Religião,2,.,0,170,Religião
-razao_social,^CRECHE,Religião,2,.,0,171,Religião
-razao_social,^ESCOLA,Religião,2,.,0,172,Religião
-micro_area_atuacao,"Associações de produtores rurais, pescadores e similares",Outras organizações da sociedade civil,3,1,1,173,Outras atividades associativas
-razao_social,^FUND,Outras organizações da sociedade civil,3,2,1,174,Outras atividades associativas
-razao_social,^INST,Outras organizações da sociedade civil,3,2,1,175,Outras atividades associativas
+Variavel;Valor;AreaAtuacao;CriterioMultiplo;SubgrupoCriterio;IncluiArea;Ordem;macro_area_atuacao
+cnae;861;Hospitais;0;.;1;1;Saúde
+cnae;862;Outros serviços de saúde;0;.;1;2;Saúde
+cnae;863;Outros serviços de saúde;0;.;1;3;Saúde
+cnae;864;Outros serviços de saúde;0;.;1;4;Saúde
+cnae;865;Outros serviços de saúde;0;.;1;5;Saúde
+cnae;866;Outros serviços de saúde;0;.;1;6;Saúde
+cnae;869;Outros serviços de saúde;0;.;1;7;Saúde
+cnae;90;Cultura e arte;0;.;1;8;Cultura e recreação
+cnae;91;Cultura e arte;0;.;1;9;Cultura e recreação
+cnae;92;Esportes e recreação;0;.;1;10;Cultura e recreação
+cnae;93;Esportes e recreação;0;;1;11;Cultura e recreação
+cnae;94936;Cultura e arte;0;.;1;12;Cultura e recreação
+cnae;85112;Educação infantil;0;.;1;13;Educação e pesquisa
+cnae;85121;Educação infantil;0;.;1;14;Educação e pesquisa
+cnae;85139;Ensino fundamental;0;.;1;15;Educação e pesquisa
+cnae;85201;Ensino médio;0;;1;16;Educação e pesquisa
+cnae;853;Ensino superior;0;.;1;17;Educação e pesquisa
+cnae;72;Estudos e pesquisas;0;.;1;18;Educação e pesquisa
+cnae;854;Educação profissional;0;.;1;19;Educação e pesquisa
+cnae;855;Atividades de apoio à educação;0;.;1;20;Educação e pesquisa
+cnae;859;Outras formas de educação/ensino;0;.;1;21;Educação e pesquisa
+cnae;87;Assistência social;0;.;1;22;Assistência social
+cnae;88;Assistência social;0;.;1;23;Assistência social
+cnae;94910;Religião;0;.;1;24;Religião
+cnae;94111;Associações empresariais e patronais;0;.;1;25;Associações patronais e profissionais
+cnae;94120;Associações profissionais;0;.;1;26;Associações patronais e profissionais
+cnae;01;Associações de produtores rurais, pescadores e similares;0;.;1;27;Associações patronais e profissionais
+cnae;02;Associações de produtores rurais, pescadores e similares;0;.;1;28;Associações patronais e profissionais
+cnae;03;Associações de produtores rurais, pescadores e similares;0;.;1;29;Associações patronais e profissionais
+cnae;94995;Associações de atividades não especificadas anteriormente;0;.;1;30;Outras atividades associativas
+razao_social;IGREJA;Religião;1;1;1;31;Religião
+razao_social;EVANGELIC;Religião;1;1;1;32;Religião
+razao_social;MOSTEIRO;Religião;1;1;1;33;Religião
+razao_social;EVANG\\.;Religião;1;1;1;34;Religião
+razao_social;PROTESTANTE;Religião;1;1;1;35;Religião
+razao_social;CARITAS;Religião;1;1;1;36;Religião
+razao_social;CENTRO ESP;Religião;1;1;1;37;Religião
+razao_social;CENTRO ESPIRIT;Religião;1;1;1;38;Religião
+razao_social;CRISTA;Religião;1;1;1;39;Religião
+razao_social;BATISTA;Religião;1;1;1;40;Religião
+razao_social;ASSEMBLEIA DE DEUS;Religião;1;1;1;41;Religião
+razao_social;ESPIRITA;Religião;1;1;1;42;Religião
+razao_social;UMBANDA;Religião;1;1;1;43;Religião
+razao_social;CANDOMBLE;Religião;1;1;1;44;Religião
+razao_social;MACONARIA;Religião;1;1;1;45;Religião
+razao_social;LOJA MISTA DO RITO;Religião;1;1;1;46;Religião
+razao_social;DIOCESE;Religião;1;1;1;47;Religião
+razao_social;MITRA;Religião;1;1;1;48;Religião
+razao_social;PAROQUIA;Religião;1;1;1;49;Religião
+razao_social;FRATERNIDADE;Religião;1;1;1;50;Religião
+razao_social;CAPELA;Religião;1;1;1;51;Religião
+razao_social;TEMPLO;Religião;1;1;1;52;Religião
+razao_social;MACONICA;Religião;1;1;1;53;Religião
+razao_social;CASA DE ORACAO;Religião;1;1;1;54;Religião
+razao_social;PASTOR;Religião;1;1;1;55;Religião
+razao_social;PASTORAL;Religião;1;1;1;56;Religião
+razao_social;ASS DE DEUS;Religião;1;1;1;57;Religião
+razao_social;CONGREGACAO;Religião;1;1;1;58;Religião
+razao_social;LUTERAN;Religião;1;1;1;59;Religião
+razao_social;SANTUARIO;Religião;1;1;1;60;Religião
+razao_social;AUG E RESP;Religião;1;1;1;61;Religião
+razao_social;LOJ SIMB;Religião;1;1;1;62;Religião
+razao_social;AUG\\. E RESP;Religião;1;1;1;63;Religião
+razao_social;LOJA SIMB;Religião;1;1;1;64;Religião
+razao_social;AUGUSTA E RESP;Religião;1;1;1;65;Religião
+razao_social;PENTECOSTAL;Religião;1;1;1;66;Religião
+razao_social;BIBLICA;Religião;1;1;1;67;Religião
+razao_social;IGEREJA;Religião;1;1;1;68;Religião
+razao_social;CONVENTO;Religião;1;1;1;69;Religião
+razao_social;^A R L S;Religião;1;1;1;70;Religião
+razao_social;^A\\. R\\. L\\. S\\.;Religião;1;1;1;71;Religião
+razao_social;^A\\.R\\.L\\.S;Religião;1;1;1;72;Religião
+razao_social;^A\\.\\:;Religião;1;1;1;73;Religião
+razao_social;LOJA SIMBOLICA;Religião;1;1;1;74;Religião
+razao_social;^ARLS;Religião;1;1;1;75;Religião
+razao_social;ARQUIDIOCESE;Religião;1;1;1;76;Religião
+razao_social;TEMLO;Religião;1;1;1;77;Religião
+razao_social;PRESBITERIAN;Religião;1;1;1;78;Religião
+razao_social;SINAGOGA;Religião;1;1;1;79;Religião
+razao_social;TERREIRO;Religião;1;1;1;80;Religião
+razao_social;^BISPADO;Religião;1;1;1;81;Religião
+razao_social;^ORATORIO DA DIVINA;Religião;1;1;1;82;Religião
+razao_social;^COMUNIDADE PROFETICA;Religião;1;1;1;83;Religião
+razao_social;^ASSOC;Religião;1;.;0;84;Religião
+razao_social;ASSOCIACAO;Religião;1;.;0;85;Religião
+razao_social;^ORG;Religião;1;.;0;86;Religião
+razao_social;CLUBE;Religião;1;.;0;87;Religião
+razao_social;^HOSPITAL;Religião;1;.;0;88;Religião
+razao_social;FUNDACAO;Religião;1;.;0;89;Religião
+razao_social;FACULDADE;Religião;1;.;0;90;Religião
+razao_social;MACKENZIE;Religião;1;.;0;91;Religião
+razao_social;^CAEDES;Religião;1;.;0;92;Religião
+razao_social;RECUPERACAO;Religião;1;.;0;93;Religião
+razao_social;REABILITACAO;Religião;1;.;0;94;Religião
+razao_social;^INSTITUTO EDUC;Religião;1;.;0;95;Religião
+razao_social;^LAR;Religião;1;.;0;96;Religião
+razao_social;^COM;Religião;1;.;0;97;Religião
+razao_social;CLUB;Religião;1;.;0;98;Religião
+razao_social;ACADEMIA;Religião;1;.;0;99;Religião
+razao_social;SOCIEDADE;Religião;1;.;0;100;Religião
+razao_social;ESCOTEIRO;Religião;1;.;0;101;Religião
+razao_social;COMISSAO;Religião;1;.;0;102;Religião
+razao_social;MUSEU;Religião;1;.;0;103;Religião
+razao_social;CULTURAL;Religião;1;.;0;104;Religião
+razao_social;JOAO BATISTA;Religião;1;.;0;105;Religião
+razao_social;^COLEGI;Religião;1;.;0;106;Religião
+razao_social;^CRECHE;Religião;1;.;0;107;Religião
+razao_social;^ESCOLA;Religião;1;.;0;108;Religião
+cnae;9430800;Religião;2;1;1;109;Religião
+razao_social;IGREJA;Religião;2;2;1;110;Religião
+razao_social;EVANGELIC;Religião;2;2;1;111;Religião
+razao_social;MOSTEIRO;Religião;2;2;1;112;Religião
+razao_social;EVANG\\.;Religião;2;2;1;113;Religião
+razao_social;PROTESTANTE;Religião;2;2;1;114;Religião
+razao_social;CARITAS;Religião;2;2;1;115;Religião
+razao_social;CENTRO ESP;Religião;2;2;1;116;Religião
+razao_social;CENTRO ESPIRIT;Religião;2;2;1;117;Religião
+razao_social;CRISTA;Religião;2;2;1;118;Religião
+razao_social;BATISTA;Religião;2;2;1;119;Religião
+razao_social;ASSEMBLEIA DE DEUS;Religião;2;2;1;120;Religião
+razao_social;ESPIRITA;Religião;2;2;1;121;Religião
+razao_social;UMBANDA;Religião;2;2;1;122;Religião
+razao_social;CANDOMBLE;Religião;2;2;1;123;Religião
+razao_social;MACONARIA;Religião;2;2;1;124;Religião
+razao_social;LOJA MISTA DO RITO;Religião;2;2;1;125;Religião
+razao_social;DIOCESE;Religião;2;2;1;126;Religião
+razao_social;MITRA;Religião;2;2;1;127;Religião
+razao_social;PAROQUIA;Religião;2;2;1;128;Religião
+razao_social;FRATERNIDADE;Religião;2;2;1;129;Religião
+razao_social;CAPELA;Religião;2;2;1;130;Religião
+razao_social;TEMPLO;Religião;2;2;1;131;Religião
+razao_social;MACONICA;Religião;2;2;1;132;Religião
+razao_social;CASA DE ORACAO;Religião;2;2;1;133;Religião
+razao_social;PASTOR;Religião;2;2;1;134;Religião
+razao_social;PASTORAL;Religião;2;2;1;135;Religião
+razao_social;ASS DE DEUS;Religião;2;2;1;136;Religião
+razao_social;CONGREGACAO;Religião;2;2;1;137;Religião
+razao_social;LUTERAN;Religião;2;2;1;138;Religião
+razao_social;SANTUARIO;Religião;2;2;1;139;Religião
+razao_social;AUG E RESP;Religião;2;2;1;140;Religião
+razao_social;LOJ SIMB;Religião;2;2;1;141;Religião
+razao_social;AUG\\. E RESP;Religião;2;2;1;142;Religião
+razao_social;LOJA SIMB;Religião;2;2;1;143;Religião
+razao_social;AUGUSTA E RESP;Religião;2;2;1;144;Religião
+razao_social;PENTECOSTAL;Religião;2;2;1;145;Religião
+razao_social;BIBLICA;Religião;2;2;1;146;Religião
+razao_social;IGEREJA;Religião;2;2;1;147;Religião
+razao_social;CONVENTO;Religião;2;2;1;148;Religião
+razao_social;^A R L S;Religião;2;2;1;149;Religião
+razao_social;^A\\. R\\. L\\. S\\.;Religião;2;2;1;150;Religião
+razao_social;^A\\.R\\.L\\.S;Religião;2;2;1;151;Religião
+razao_social;^A\\.\\:;Religião;2;2;1;152;Religião
+razao_social;LOJA SIMBOLICA;Religião;2;2;1;153;Religião
+razao_social;^ARLS;Religião;2;2;1;154;Religião
+razao_social;ARQUIDIOCESE;Religião;2;2;1;155;Religião
+razao_social;TEMLO;Religião;2;2;1;156;Religião
+razao_social;PRESBITERIAN;Religião;2;2;1;157;Religião
+razao_social;SINAGOGA;Religião;2;2;1;158;Religião
+razao_social;TERREIRO;Religião;2;2;1;159;Religião
+razao_social;^BISPADO;Religião;2;2;1;160;Religião
+razao_social;^ORATORIO DA DIVINA;Religião;2;2;1;161;Religião
+razao_social;^COMUNIDADE PROFETICA;Religião;2;2;1;162;Religião
+razao_social;FACULDADE;Religião;2;.;0;163;Religião
+razao_social;MACKENZIE;Religião;2;.;0;164;Religião
+razao_social;^CAEDES;Religião;2;.;0;165;Religião
+razao_social;RECUPERACAO;Religião;2;.;0;166;Religião
+razao_social;REABILITACAO;Religião;2;.;0;167;Religião
+razao_social;^INSTITUTO EDUC;Religião;2;.;0;168;Religião
+razao_social;^LAR;Religião;2;.;0;169;Religião
+razao_social;^COLEGI;Religião;2;.;0;170;Religião
+razao_social;^CRECHE;Religião;2;.;0;171;Religião
+razao_social;^ESCOLA;Religião;2;.;0;172;Religião
+micro_area_atuacao;Associações de produtores rurais, pescadores e similares;Outras organizações da sociedade civil;3;1;1;173;Outras atividades associativas
+razao_social;^FUND;Outras organizações da sociedade civil;3;2;1;174;Outras atividades associativas
+razao_social;^INST;Outras organizações da sociedade civil;3;2;1;175;Outras atividades associativas
+cnae;711;Habitação;0;.;1;176;Habitação
+cnae;943;Habitação;4;1;1;177;Habitação
+razao_social;HABITAC;Habitação;4;2;1;178;Habitação
+razao_social;COOPERATIVA;Habitação;4;3;1;179;Habitação
+razao_social;FINANCIAMENTO;Habitação;4;3;1;180;Habitação
+razao_social;SOCIED;Habitação;4;3;1;181;Habitação
+cnae;943;Outras formas de desenvolvimento e defesa de direitos;0;.;1;182;
+cnae;943;Associação de Moradores;5;1;1;183;Desenvolvimento e defesa de direitos e interesses
+razao_social;RESIDENCIAL;Associação de Moradores;5;2;1;184;Desenvolvimento e defesa de direitos e interesses
+razao_social;MORADORES;Associação de Moradores;5;2;1;185;Desenvolvimento e defesa de direitos e interesses
+razao_social;BAIRRO;Associação de Moradores;5;2;1;186;Desenvolvimento e defesa de direitos e interesses
+razao_social;ASSOCIACAO;Associação de Moradores;5;3;1;187;Desenvolvimento e defesa de direitos e interesses
+razao_social;UNIAO;Associação de Moradores;5;3;1;188;Desenvolvimento e defesa de direitos e interesses
+razao_social;AMIGO;Associação de Moradores;5;3;1;189;Desenvolvimento e defesa de direitos e interesses
+razao_social;SOCIED;Associação de Moradores;5;3;1;190;Desenvolvimento e defesa de direitos e interesses
+cnae;943;Associações de Produtores Rurais;6;1;1;191;Desenvolvimento e defesa de direitos e interesses
+razao_social;rural;Associações de Produtores Rurais;6;2;1;192;Desenvolvimento e defesa de direitos e interesses
+razao_social;produto;Associações de Produtores Rurais;6;3;1;193;Desenvolvimento e defesa de direitos e interesses
+razao_social;criador;Associações de Produtores Rurais;6;3;1;194;Desenvolvimento e defesa de direitos e interesses
+razao_social;agricult;Associações de Produtores Rurais;6;3;1;195;Desenvolvimento e defesa de direitos e interesses
+cnae;943;Associações de Produtores Rurais;7;1;1;196;Desenvolvimento e defesa de direitos e interesses
+razao_social;agropecua;Associações de Produtores Rurais;7;2;1;197;Desenvolvimento e defesa de direitos e interesses
+cnae;943;Meio Ambiente e Proteção Animal;8;1;1;198;Desenvolvimento e defesa de direitos e interesses
+razao_social;meio ambiente;Meio Ambiente e Proteção Animal;8;2;1;199;Desenvolvimento e defesa de direitos e interesses
+razao_social;natureza;Meio Ambiente e Proteção Animal;8;2;1;200;Desenvolvimento e defesa de direitos e interesses
+razao_social;ecologi;Meio Ambiente e Proteção Animal;8;2;1;201;Desenvolvimento e defesa de direitos e interesses
+razao_social;veterinar;Meio Ambiente e Proteção Animal;8;2;1;202;Desenvolvimento e defesa de direitos e interesses
+razao_social;botanic;Meio Ambiente e Proteção Animal;8;2;1;203;Desenvolvimento e defesa de direitos e interesses
+razao_social;ambiental;Meio Ambiente e Proteção Animal;8;2;1;204;Desenvolvimento e defesa de direitos e interesses
+razao_social;planeta agua;Meio Ambiente e Proteção Animal;8;2;1;205;Desenvolvimento e defesa de direitos e interesses
+cnae;943;Centros e associações comunitárias;9;1;1;206;Desenvolvimento e defesa de direitos e interesses
+razao_social;centro;Centros e associações comunitárias;9;2;1;207;Desenvolvimento e defesa de direitos e interesses
+razao_social;associacao;Centros e associações comunitárias;9;2;1;208;Desenvolvimento e defesa de direitos e interesses
+razao_social;conselho;Centros e associações comunitárias;9;2;1;209;Desenvolvimento e defesa de direitos e interesses
+razao_social;comunitari;Centros e associações comunitárias;9;3;1;210;Desenvolvimento e defesa de direitos e interesses
+cnae;943;Desenvolvimento rural;10;1;1;211;Desenvolvimento e defesa de direitos e interesses
+razao_social;rural;Desenvolvimento rural;10;2;1;212;Desenvolvimento e defesa de direitos e interesses
+razao_social;agricola;Desenvolvimento rural;10;2;1;213;Desenvolvimento e defesa de direitos e interesses
+razao_social;comuni;Desenvolvimento rural;10;3;1;214;Desenvolvimento e defesa de direitos e interesses
+razao_social;associac;Desenvolvimento rural;10;3;1;215;Desenvolvimento e defesa de direitos e interesses
+razao_social;desenvolvi;Desenvolvimento rural;10;3;1;216;Desenvolvimento e defesa de direitos e interesses
+razao_social;organizacao;Desenvolvimento rural;10;3;1;217;Desenvolvimento e defesa de direitos e interesses
+cnae;943;Desenvolvimento rural;11;1;1;218;Desenvolvimento e defesa de direitos e interesses
+razao_social;rurais;Desenvolvimento rural;11;2;1;219;Desenvolvimento e defesa de direitos e interesses
+razao_social;agricolas;Desenvolvimento rural;11;2;1;220;Desenvolvimento e defesa de direitos e interesses
+razao_social;produtores;Desenvolvimento rural;11;3;1;221;Desenvolvimento e defesa de direitos e interesses
+cnae;943;Desenvolvimento rural;12;1;1;222;Desenvolvimento e defesa de direitos e interesses
+razao_social;assentamento;Desenvolvimento rural;12;2;1;223;Desenvolvimento e defesa de direitos e interesses
+cnae;943;Desenvolvimento rural;13;1;1;224;Desenvolvimento e defesa de direitos e interesses
+razao_social;irrigacao;Desenvolvimento rural;13;2;1;225;Desenvolvimento e defesa de direitos e interesses
+cnae;943;Emprego e Treinamento;14;1;1;226;Desenvolvimento e defesa de direitos e interesses
+razao_social;empresa junior;Emprego e Treinamento;14;2;1;227;Desenvolvimento e defesa de direitos e interesses
+razao_social;empresa jr;Emprego e Treinamento;14;2;1;228;Desenvolvimento e defesa de direitos e interesses
+cnae;943;Defesa de direitos e grupos e minorias;15;1;1;229;Desenvolvimento e defesa de direitos e interesses
+razao_social;centro academico;Defesa de direitos e grupos e minorias;15;2;1;230;Desenvolvimento e defesa de direitos e interesses
+razao_social;diretorio academico;Defesa de direitos e grupos e minorias;15;2;1;231;Desenvolvimento e defesa de direitos e interesses
+razao_social;dce;Defesa de direitos e grupos e minorias;15;2;1;232;Desenvolvimento e defesa de direitos e interesses
+razao_social;diretorio central dos estudantes;Defesa de direitos e grupos e minorias;15;2;1;233;Desenvolvimento e defesa de direitos e interesses
+cnae;943;Defesa de direitos e grupos e minorias;16;1;1;234;Desenvolvimento e defesa de direitos e interesses
+razao_social;defesa;Defesa de direitos e grupos e minorias;16;2;1;235;Desenvolvimento e defesa de direitos e interesses
+razao_social;direito;Defesa de direitos e grupos e minorias;16;2;1;236;Desenvolvimento e defesa de direitos e interesses
+cnae;943;Defesa de direitos e grupos e minorias;17;1;1;237;Desenvolvimento e defesa de direitos e interesses
+razao_social;centro;Defesa de direitos e grupos e minorias;17;2;1;238;Desenvolvimento e defesa de direitos e interesses
+razao_social;associacao;Defesa de direitos e grupos e minorias;17;2;1;239;Desenvolvimento e defesa de direitos e interesses
+razao_social;defesa;Defesa de direitos e grupos e minorias;17;2;1;240;Desenvolvimento e defesa de direitos e interesses
+razao_social;aposenta;Defesa de direitos e grupos e minorias;17;3;1;241;Desenvolvimento e defesa de direitos e interesses

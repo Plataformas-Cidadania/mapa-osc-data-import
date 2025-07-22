@@ -96,21 +96,23 @@ if(!(101 %in% processos_att_atual)) {
                            sheet = 1)
     }
     
+    CamposObrigadorios <- c("cd_certificado", 
+                            "dt_inicio_certificado", 
+                            "dt_fim_certificado",
+                            "bo_oficial", 
+                            "cd_municipio", 
+                            "cd_uf", 
+                            "ft_certificado")
+    
     assert_that(
-      all(
-        c("cd_certificado", "dt_inicio_certificado", "dt_fim_certificado",
-          "bo_oficial", "cd_municipio", "cd_uf", 
-          "ft_certificado") %in% names(RawFile)), 
+      all(CamposObrigadorios %in% names(RawFile)), 
       
       msg = paste0("Falta os seguintes campos na tabela", ListRawFiles[i], ": ",
                    names(RawFile)[
-                     !(
-                       c("cd_certificado", "dt_inicio_certificado",
-                         "dt_fim_certificado", "bo_oficial",
-                         "cd_municipio", "cd_uf",
-                         "ft_certificado") %in% names(RawFile)
-                     )]))
+                     !( CamposObrigadorios %in% names(RawFile) ) 
+                     ]))
       
+    rm(CamposObrigadorios)
     
     NewRows <- RawFile %>% 
       mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
