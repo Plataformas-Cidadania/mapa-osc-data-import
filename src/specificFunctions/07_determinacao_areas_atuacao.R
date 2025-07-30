@@ -67,7 +67,7 @@ if( !(31 %in% processos_att_atual) ) {
   if(!(exists("Tb_OSC_Full") && "data.frame" %in% class(Tb_OSC_Full))) {
     
     # Se o arquivo já tiver sido baixado, vamos direto para carregar ele.
-    PathFile <- paste0(DirName, "intermediate_files/Tb_OSC_Full.RDS")
+    PathFile <- glue("{diretorio_att}intermediate_files/Tb_OSC_Full.RDS")
     
     # Garante que o arquivo existe.
     assert_that(file.exists(PathFile), 

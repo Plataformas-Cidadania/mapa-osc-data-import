@@ -32,10 +32,14 @@ files_input_next <- list(list.files("input_files_next/")) %>%
   # Só o modelos_Input.xlsm que vou deixar aqui na pasta
   str_subset("^modelos_Input.xlsm$", negate = TRUE)
 
+message("Esvazia diretório input_files_next")
+
 # Transfere todos os arquivos
 for (i in seq_along(files_input_next)) {
   # i <- 1 # Debug
   # diretorio_att <- "backup_files/2025_03/"  # Debug
+  message("Transferindo arquivo '", files_input_next[i], "'")
+  
   file.rename(
     from = glue("input_files_next/{files_input_next[i]}"), 
     to = glue("{diretorio_att}input_files/{files_input_next[i]}")
@@ -68,6 +72,8 @@ assert_that(
   )
 )
 
+message("Fazendo backup dos arquivos de replicação")
+
 # Copia os arquivos utilizados na atualização para o backup
 for (i in seq_along(codigos_dir)) {
   # i <- 1
@@ -96,6 +102,8 @@ rm(i, codigos_dir)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Insere a finalização da rotina no controle de atualização  ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+message("Fechamento do controle de atualização")
 
 # Insere o comentário da Atualização
 query_AltRow <- glue("UPDATE tb_controle_atualizacao \n",

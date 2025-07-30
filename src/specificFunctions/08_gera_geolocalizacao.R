@@ -55,7 +55,7 @@ if( !(91 %in% processos_att_atual) ) {
     
     # Se o arquivo já tiver sido baixado, vamos direto para carregar ele.
     # diretorio_att <- "backup_files/2024_01/"
-    PathFile <- paste0(diretorio_att, "intermediate_files/DB_OSC.RDS")
+    PathFile <- glue("{diretorio_att}intermediate_files/DB_OSC.RDS")
     
     # Garante que o arquivo existe.
     assert_that(file.exists(PathFile), 

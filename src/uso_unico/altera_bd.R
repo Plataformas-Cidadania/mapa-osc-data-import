@@ -70,7 +70,7 @@ class(old_data)
 
 # query_AltRow <- glue("UPDATE tb_controle_atualizacao \n",
 #                      " SET tx_att_situacao = 'finalizada' \n",
-#                      " WHERE att_id = 1",
+#                      " WHERE att_id = 3",
 #                      ";")
 # 
 # query_AltRow <- glue("UPDATE tb_controle_atualizacao \n",

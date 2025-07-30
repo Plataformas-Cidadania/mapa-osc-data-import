@@ -27,18 +27,21 @@ definicoes <- list()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Schema da Receita Federal de onde iremos retirar os dados:
-definicoes$schema_receita <- "rfb_2025" # ATUALIZAR AQUI QUANDO CHEGAR NOVOS DADOS
+definicoes$schema_receita <- "rfb_2025_junho" # ATUALIZAR AQUI QUANDO CHEGAR NOVOS DADOS
 
 # Escolhe o banco que vai ser atualizado 
 # (escolher entre homologação e produção)
 # As chaves deve estar em: "src/specificFunctions/01_setup_atualizacao.R"
-definicoes$Banco_Atualização <- "Homologação" # Opções: 'Produção' | 'Homologação'
+# Opções: 'Produção' | 'Homologação'
+definicoes$Banco_Atualização <- "Produção" 
 
 # Arquivo JSON com as chaves de acesso ao banco de dados da RFB e da RAIS:
 definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"
 
 # Adiciona um comentário para a atualização
-definicoes$tx_att_comentarios <- glue::glue("Corrige bug da atualização 2025_02 na lista de OSC de habitação (ficou faltando a determinação da subárea de atuação")
+definicoes$tx_att_comentarios <- glue::glue(
+  "Atualição dos dados da RFB com base em extração em julho de 2025"
+  )
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,13 +49,16 @@ definicoes$tx_att_comentarios <- glue::glue("Corrige bug da atualização 2025_0
 
 # Essa atualização é teste? 
 # (não registra processos novos nos controles)
-definicoes$att_teste <- TRUE
+definicoes$att_teste <- FALSE
 
 # Essa atualização vai salvar os arquivos intermediários no diretório de backup?
-definicoes$salva_backup <- FALSE
+definicoes$salva_backup <- TRUE
 
 # Existem novos dados RAIS nesta atualização?
-definicoes$atualiza_RAIS <- FALSE
+definicoes$atualiza_RAIS <- TRUE
+
+definicoes$schemas_RAIS <- "vinculos_v6"
+definicoes$tabela_RAIS <- "tb_vinculos"
 
 # Outras definições importantes, mas que raramente precisam ser mudada
 # estão na rotina de Setup (abaixo) ('src/specificFunctions/setup_atualizacao.R')

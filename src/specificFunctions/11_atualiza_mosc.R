@@ -98,15 +98,21 @@ if(!exists('tb_osc')) {
   tb_dados_gerais <- readRDS(glue("{diretorio_att}output_files/tb_dados_gerais.RDS"))
 }
 
-map_chr(tb_dados_gerais, class)
+# map_chr(tb_dados_gerais, class)
 
 # Corrige tipos de dado
 tb_dados_gerais[["dt_fechamento_osc"]] <- as_date(tb_dados_gerais[["dt_fechamento_osc"]])
 tb_dados_gerais[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais[["cd_natureza_juridica_osc"]])
 tb_dados_gerais[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais[["dt_fundacao_osc"]])
 tb_dados_gerais[["ft_fechamento_osc"]] <- as.character(tb_dados_gerais[["ft_fechamento_osc"]])
-tb_dados_gerais[["cd_matriz_filial"]] <- as.integer(tb_dados_gerais[["cd_matriz_filial"]])
 
+# TO DO: unificar esse campo ####
+if(definicoes$Banco_Atualização == "Produção") {
+  tb_dados_gerais[["cd_matriz_filial"]] <- as.integer(tb_dados_gerais[["cd_matriz_filial"]])
+}
+if(definicoes$Banco_Atualização == "Homologação") {
+  tb_dados_gerais[["cd_matriz_filial"]] <- as.character(tb_dados_gerais[["cd_matriz_filial"]])
+}
 
 # Esta variável tem um interpretação diferente no banco de dados antigo e novo (investigar!)
 # tb_dados_gerais[["dt_ano_cadastro_cnpj"]] <- NA_Date_
@@ -134,7 +140,7 @@ rm(Atualizacao, tb_dados_gerais)
 
 # Carrega dados RDS:
 # DtFechamentoOSC <- readRDS(glue("{diretorio_att}intermediate_files/DtFechamentoOSC.RDS"))
-DtFechamentoOSC <- readRDS(glue("backup_files/2025_01/intermediate_files/DtFechamentoOSC.RDS"))
+DtFechamentoOSC <- readRDS(glue("{diretorio_att}intermediate_files/DtFechamentoOSC.RDS"))
 
 # Carrega id_osc
 old_data <- try(

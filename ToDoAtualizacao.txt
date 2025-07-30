@@ -1,0 +1,26 @@
+
+
+To do:
+
+	-Pedir para fazer um espelho do banco de dados de produção no banco de dados de homologação
+
+	-Verificar se os novos dados da RFB estão disponíveis
+
+	-Se os dados estiverem disponíveis, verificar se a credencial tem acesso a eles
+
+	-Verificar se os novos dados RAIS estão disponíveis
+
+	-Alterar 'definicoes$schema_receita'
+
+	-Alterar 'definicoes$tx_att_comentarios'
+
+	-Verificar e alterar 'tab_auxiliares/CamposAtualizacao'
+
+	-Inserir os arquivos necessários em 'input_files_next':
+		-Para cada certificação:
+			-Inserir dados segundo 'input_files_next/modelos_Input'
+
+
+
+	-Fazer atualização no banco de homologação, como teste:
+		-https://mapaosc-homolog.ipea.gov.br/mapa

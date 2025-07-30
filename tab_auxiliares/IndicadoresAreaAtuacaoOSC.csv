@@ -25,9 +25,9 @@ cnae;88;Assistência social;0;.;1;23;Assistência social
 cnae;94910;Religião;0;.;1;24;Religião
 cnae;94111;Associações empresariais e patronais;0;.;1;25;Associações patronais e profissionais
 cnae;94120;Associações profissionais;0;.;1;26;Associações patronais e profissionais
-cnae;01;Associações de produtores rurais, pescadores e similares;0;.;1;27;Associações patronais e profissionais
-cnae;02;Associações de produtores rurais, pescadores e similares;0;.;1;28;Associações patronais e profissionais
-cnae;03;Associações de produtores rurais, pescadores e similares;0;.;1;29;Associações patronais e profissionais
+cnae;1;Associações de produtores rurais, pescadores e similares;0;.;1;27;Associações patronais e profissionais
+cnae;2;Associações de produtores rurais, pescadores e similares;0;.;1;28;Associações patronais e profissionais
+cnae;3;Associações de produtores rurais, pescadores e similares;0;.;1;29;Associações patronais e profissionais
 cnae;94995;Associações de atividades não especificadas anteriormente;0;.;1;30;Outras atividades associativas
 razao_social;IGREJA;Religião;1;1;1;31;Religião
 razao_social;EVANGELIC;Religião;1;1;1;32;Religião
@@ -173,14 +173,14 @@ razao_social;^CRECHE;Religião;2;.;0;171;Religião
 razao_social;^ESCOLA;Religião;2;.;0;172;Religião
 micro_area_atuacao;Associações de produtores rurais, pescadores e similares;Outras organizações da sociedade civil;3;1;1;173;Outras atividades associativas
 razao_social;^FUND;Outras organizações da sociedade civil;3;2;1;174;Outras atividades associativas
-razao_social;^INST;Outras organizações da sociedade civil;3;2;1;175;Outras atividades associativas
+razao_social;^INST;Outras organizações da sociedade civil;3;2;1;175;
 cnae;711;Habitação;0;.;1;176;Habitação
 cnae;943;Habitação;4;1;1;177;Habitação
 razao_social;HABITAC;Habitação;4;2;1;178;Habitação
 razao_social;COOPERATIVA;Habitação;4;3;1;179;Habitação
 razao_social;FINANCIAMENTO;Habitação;4;3;1;180;Habitação
 razao_social;SOCIED;Habitação;4;3;1;181;Habitação
-cnae;943;Outras formas de desenvolvimento e defesa de direitos;0;.;1;182;
+cnae;943;Outras formas de desenvolvimento e defesa de direitos;0;.;1;182;Outras atividades associativas
 cnae;943;Associação de Moradores;5;1;1;183;Desenvolvimento e defesa de direitos e interesses
 razao_social;RESIDENCIAL;Associação de Moradores;5;2;1;184;Desenvolvimento e defesa de direitos e interesses
 razao_social;MORADORES;Associação de Moradores;5;2;1;185;Desenvolvimento e defesa de direitos e interesses

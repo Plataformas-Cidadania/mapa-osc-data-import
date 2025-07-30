@@ -8,3 +8,6 @@ keys/*
 !keys/flag.txt
 backup_files/*
 !backup_files/flag.txt
+input_files_next/*
+!backup_files/modelos_Input.xlsm
+/backup_files
