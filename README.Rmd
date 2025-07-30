@@ -361,14 +361,14 @@ organizações com as seguintes naturezas jurídicas:
 
     -   **399-9:** Associação Privada.
 
-    -   **320-1:** Estabelecimento, no Brasil, de Fundação ou Associação
-        Estrangeiras
+    -   **320-1:** Estabelecimento, no Brasil, de Fundação ou Associação Estrangeiras
 
 **Fonte:**
 <https://concla.ibge.gov.br/estrutura/natjur-estrutura/natureza-juridica-2021>
 
-O scritp
-[src/specificFunctions/05_baixa_dados_rfb.R](src/specificFunctions/05_baixa_dados_rfb.R)
+É preciso deixar claro que o Mapa não exclui nenhuma organização religiosa. Diferentemente da Lei 13.204/2015, o Mapa não considera OSCs apenas as organizações “que se dediquem a atividades ou projetos de interesse público ou de cunho social distintos das destinadas a fins exclusivamente religiosos”. Isso ocorre porque, atualmente, não há meios de distinguir as organizações religiosas que realizam atividades sociais daquelas dedicadas apenas ao culto.
+
+O scritp [src/specificFunctions/05_baixa_dados_rfb.R](src/specificFunctions/05_baixa_dados_rfb.R)
 cria uma query em linguagem SQL, baseado na estrutura dos dados da
 receita, e a envia para o banco ‘psql10-df/rais_2019’, obtendo em
 retorno o conjunto das organizações privadas sem fins lucrativos
