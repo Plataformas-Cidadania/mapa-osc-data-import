@@ -11,3 +11,4 @@ backup_files/*
 input_files_next/*
 !backup_files/modelos_Input.xlsm
 /backup_files
+tab_auxiliares/~$IndicadoresAreaAtuacaoOSC.xlsx

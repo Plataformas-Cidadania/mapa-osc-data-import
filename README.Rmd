@@ -516,7 +516,7 @@ processo como concluído em ‘tb_processos_atualizacao’.
 ### Etapa 03 - Determinação das Áreas de Atuação
 
 Esta seção descreve os procedimentos do script
-[src/specificFunctions/07_determinacao_areas_atuacao.R], que pode ser
+[src/specificFunctions/07_determinacao_areas_atuacao.R](src/specificFunctions/07_determinacao_areas_atuacao.R), que pode ser
 executado diretamente ou através de
 [src/atualiza_dados_OSC.R](src/atualiza_dados_OSC.R).
 
@@ -531,7 +531,7 @@ que funciona de maneira similar, mas não idêntica, à função
 
 Assim como a função find_OSC, a função **AreaAtuacaoOSC** estima as
 áreas de atuação das OSC usando uma tabela auxiliar
-(tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv). No entanto, aqui são
+[tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv](tab_auxiliares/IndicadoresAreaAtuacaoOSC.csv). No entanto, aqui são
 estimados não apenas os dados da razão social das organizações, mas
 também os dados CNAE. Essa tabela define quais campos CNAE e expressões
 regulares devem ser associados a cada área de atuação. Alguns casos são

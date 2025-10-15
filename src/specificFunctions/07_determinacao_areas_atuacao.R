@@ -174,7 +174,8 @@ if( !(31 %in% processos_att_atual) ) {
   MultiAreas$micro_area_atuacao <- NA
   MultiAreas$micro_area_atuacao <- AreaAtuacaoOSC(MultiAreas, 
                                                   DB_SubAreaRegras, 
-                                                  chuck_size = 10000, verbose = FALSE)
+                                                  chuck_size = 10000, 
+                                                  verbose = FALSE)
   
   message(agora(), "   Fim da determinação das áreas usando a CNAE secundária")
   
