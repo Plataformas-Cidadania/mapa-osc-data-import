@@ -316,6 +316,7 @@ if( !(21 %in% processos_att_atual) ) {
   rm(path_file_backup)
   rm(DtFechamentoOSC)
   rm(tb_JoinOSC) # não vamos mais utilizar esses dados
+  gc()
   
   } else {
     

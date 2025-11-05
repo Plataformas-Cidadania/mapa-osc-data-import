@@ -170,6 +170,7 @@ if( !(11 %in% processos_att_atual) ) {
   
   dbDisconnect(conexao_rfb)
   rm(conexao_rfb)
+  gc()
   
 } else {
   

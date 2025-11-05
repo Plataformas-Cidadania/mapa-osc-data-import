@@ -238,6 +238,7 @@ if( !(91 %in% processos_att_atual) ) {
     rm(input_busca_geo, novos_enderecos_osc, tb_localizacao_old)
     rm(CodMunicRFB)
     rm(geo_loc, campos, HorarioFim, HorarioInicio)
+    gc()
     # ls()
   
 } else {

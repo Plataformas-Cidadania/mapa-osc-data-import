@@ -27,20 +27,20 @@ definicoes <- list()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Schema da Receita Federal de onde iremos retirar os dados:
-definicoes$schema_receita <- "rfb_2025_junho" # ATUALIZAR AQUI QUANDO CHEGAR NOVOS DADOS
+definicoes$schema_receita <- "rfb_unificado" # ATUALIZAR AQUI QUANDO CHEGAR NOVOS DADOS
 
 # Escolhe o banco que vai ser atualizado 
 # (escolher entre homologação e produção)
 # As chaves deve estar em: "src/specificFunctions/01_setup_atualizacao.R"
 # Opções: 'Produção' | 'Homologação'
-definicoes$Banco_Atualização <- "Produção" 
+definicoes$Banco_Atualização <- "Homologação" 
 
 # Arquivo JSON com as chaves de acesso ao banco de dados da RFB e da RAIS:
 definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"
 
 # Adiciona um comentário para a atualização
 definicoes$tx_att_comentarios <- glue::glue(
-  "Atualição dos dados da RFB com base em extração em julho de 2025"
+  "Atualição dos dados da RFB com base em extração em setembro de 2025"
   )
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,13 +49,13 @@ definicoes$tx_att_comentarios <- glue::glue(
 
 # Essa atualização é teste? 
 # (não registra processos novos nos controles)
-definicoes$att_teste <- FALSE
+definicoes$att_teste <- TRUE
 
 # Essa atualização vai salvar os arquivos intermediários no diretório de backup?
 definicoes$salva_backup <- TRUE
 
 # Existem novos dados RAIS nesta atualização?
-definicoes$atualiza_RAIS <- TRUE
+definicoes$atualiza_RAIS <- FALSE
 
 definicoes$schemas_RAIS <- "vinculos_v6"
 definicoes$tabela_RAIS <- "tb_vinculos"

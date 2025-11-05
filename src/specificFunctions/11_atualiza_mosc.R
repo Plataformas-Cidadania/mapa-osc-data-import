@@ -42,6 +42,7 @@ assert_that(file.exists(glue("{diretorio_att}output_files/tb_dados_gerais.RDS"))
 assert_that(file.exists(glue("{diretorio_att}output_files/tb_area_atuacao.RDS")))
 assert_that(file.exists(glue("{diretorio_att}output_files/tb_contato.RDS")))
 assert_that(file.exists(glue("{diretorio_att}output_files/tb_localizacao.RDS")))
+assert_that(file.exists(glue("{diretorio_att}output_files/tb_quadro_societario.RDS")))
 
 
 
@@ -309,6 +310,34 @@ Atualizacao <- AtualizaDados(Conexao = conexao_mosc,
 
 assert_that(Atualizacao)
 rm(Atualizacao, tb_area_atuacao)
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Atualiza tb_quadro_societario: ####
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+message("Inserindo dados da tabela 'tb_quadro_societario'")
+
+# Carrega dados:
+if(!exists('tb_quadro_societario')) {
+  tb_area_atuacao <- readRDS(glue("{diretorio_att}output_files/tb_quadro_societario.RDS"))
+}
+
+# Corrige tipos de dado
+tb_area_atuacao[["id_osc"]] <- as.integer(tb_area_atuacao[["id_osc"]])
+
+# Executa atualização
+Atualizacao <- AtualizaDados(Conexao = conexao_mosc,
+                             DadosNovos = tb_quadro_societario,
+                             Chave = "id_quadro_societario",
+                             Table_NameAntigo = "tb_quadro_societario",
+                             verbose = TRUE,
+                             samples = TRUE)
+
+assert_that(Atualizacao)
+rm(Atualizacao, tb_quadro_societario)
+gc()
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

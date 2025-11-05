@@ -38,23 +38,27 @@ tables
 
 # rm(tables)
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Baixa as informações das tabelas ####
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 col_names <- dbGetQuery(
-  conexao_mosc, 
+  conexao_mosc,
   glue(
     "SELECT *",
     "FROM information_schema.columns ",
-    "WHERE table_name   = 'tb_controle_atualizacao'",
+    "WHERE table_name   = 'tb_certificado'",
     ";"
   )
 )
 
 col_names$column_name
 
-# Baixa as informações das tabelas
+
 old_data <- try(
   dbGetQuery(
     conexao_mosc,
-    paste0("SELECT * FROM tb_controle_atualizacao",
+    paste0("SELECT * FROM tb_certificado",
            " LIMIT 500",
            ";")
   )
@@ -62,6 +66,7 @@ old_data <- try(
 
 View(old_data)
 class(old_data)
+map_chr(old_data, class)
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -87,9 +92,9 @@ class(old_data)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Cria uma coluna no banco de dados ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# query_AddCol <- glue("ALTER TABLE tb_dados_gerais \n",
-#                        " ADD COLUMN cd_cnae_secundaria TEXT",
+# 
+# query_AddCol <- glue("ALTER TABLE tb_certificado \n",
+#                        " ADD COLUMN ft_checagem_certificado int4",
 #                        ";")
 # 
 # query_AddCol

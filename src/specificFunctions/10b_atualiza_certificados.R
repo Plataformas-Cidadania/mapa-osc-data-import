@@ -219,6 +219,7 @@ if(!(101 %in% processos_att_atual)) {
     id_processo = 10)
   
   rm(tb_certificado, tb_id_certificados, Empty2NA, Check_PK_Rules, idControl)
+  gc()
   # ls()
 }
 

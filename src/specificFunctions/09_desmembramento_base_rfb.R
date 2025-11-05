@@ -191,6 +191,9 @@ if( !(61 %in% processos_att_atual) ) {
     path_file <- glue("{diretorio_att}output_files/tb_osc.RDS")
     saveRDS(tb_osc, path_file)
     
+    # Salva o idControl
+    saveRDS(idControl, glue("{diretorio_att}output_files/idControl.RDS"))
+    
     # Atualiza controle de processos (tb_backups_files)  
     if(!definicoes$att_teste) atualiza_processos_att(
       TipoAtt = "arquivo backup", 

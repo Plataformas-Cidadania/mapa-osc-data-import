@@ -132,7 +132,12 @@ processos_att_atual <- tb_processos_atualizacao %>%
 
 # Diretório da atualização dos dados:
 diretorio_att <- paste0(definicoes$dir_backup_files,
-                        codigo_presente_att, "/")
+                        codigo_presente_att, 
+                        # Cria aqui uma estrutura para diferenciar atualizações
+                        # do banco de homologação e de produção
+                        ifelse(definicoes$Banco_Atualização == "Homologação", 
+                               "_hmlg", ""),
+                        "/")
 
 # Carrega tabela dos arquivos de backup:
 tb_backups_files <- tbl(conexao_mosc, "tb_backups_files")
