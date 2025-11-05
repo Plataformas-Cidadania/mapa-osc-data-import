@@ -103,6 +103,12 @@ source("src/specificFunctions/09_desmembramento_base_rfb.R")
 # Insere Dados da RAIS
 source("src/specificFunctions/10_insere_dados_rais.R")
 
+# Insere Dados dos certificados
+# source("src/specificFunctions/10b_atualiza_certificados.R")
+
+# Insere Dados do quadro societário
+source("src/specificFunctions/10c_insere_quadro_societario.R")
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Atualização MOSC: Update dos dados no Banco de Dados MOSC ####

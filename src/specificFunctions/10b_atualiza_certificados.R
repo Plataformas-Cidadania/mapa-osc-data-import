@@ -120,7 +120,9 @@ if(!(101 %in% processos_att_atual)) {
                                             side = "left", 
                                             pad = "0")) %>% 
       # Adicona id_osc
-      left_join(idControl, by = "cd_identificador_osc") %>% 
+      left_join(idControl, by = "cd_identificador_osc") 
+    
+    %>% 
       
       # Somente inserir dados completos
       dplyr::filter(!is.na(id_osc), 
