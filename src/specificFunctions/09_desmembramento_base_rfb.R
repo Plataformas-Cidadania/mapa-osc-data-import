@@ -636,10 +636,7 @@ if( !(61 %in% processos_att_atual) ) {
                                        width = 14,
                                        side = "left", 
                                        pad = "0")
-        ) %>%
-      Input_data <- fread(
-        glue( "input_files_next/{fontes_alterativas_atuacao[g]}")
-        )
+        ) %>% 
 
       # Insere "id_osc"
       left_join(idControl, by = "cd_identificador_osc") %>%

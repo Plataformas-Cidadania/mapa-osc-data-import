@@ -6,7 +6,7 @@
 # Autor do Script: Murilo Junqueira 
 # (m.junqueira@yahoo.com.br; murilo.junqueira@ipea.gov.br)
 
-# Data de Criação do Scrip: 2023-10-19
+# Data de Criação do Scrip: 2025-11-03
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,6 +46,11 @@ if( !(111 %in% processos_att_atual) ) {
     file.exists(glue("{diretorio_att}output_files/idControl.RDS")) |
       exists("idControl"), 
     msg = "'idControl' não encontrado na memória ou em arquivo salvo!"
+  )
+  
+  assert_that(
+    dbIsValid(conexao_mosc) && exists("conexao_mosc"), 
+    msg = "A rotina não está conectada ao banco MOSC"
   )
 
   message(agora(), "  Carrega Dados do Quadro Societário")
@@ -117,6 +122,7 @@ if( !(111 %in% processos_att_atual) ) {
      campo_natureza_juridica, natjur_nao_lucrativo)
   
   # Executa a busca do quadro societário das OSC:
+  message("Baixando dados do Quadro Societário")
   quadro_societario_raw <- dbGetQuery(conexao_rfb, query_naolucrativo_rfb)
   
   rm(query_naolucrativo_rfb)
@@ -133,22 +139,23 @@ if( !(111 %in% processos_att_atual) ) {
   
   for (i in seq_along(var_duplicadas) ) {
     # i <- 2
-    message(var_duplicadas[i])
+    # message(var_duplicadas[i])
     to_remove <- c(to_remove, which(names(quadro_societario_raw) == var_duplicadas[i])[-1])
   }
   
   quadro_societario_clean <- quadro_societario_raw[ , -to_remove]
   
   rm(i, to_remove, var_duplicadas)
-  
   rm(quadro_societario_raw)
+  
+  message("Formata dados do Quadro Societário")
   
   # Código da fonte de dados RFB
   FonteRFB <- paste0("CNPJ/SRF/MF/", codigo_presente_att)
   
   # Resgata os id dos quadros existentes:
   id_quadro_societario_Old <- tbl(conexao_mosc, "tb_quadro_societario") %>% 
-    select(id_quadro_societario, tx_cpf_socio, tx_nome_socio) %>% 
+    select(id_quadro_societario, id_osc, tx_cpf_socio, tx_nome_socio) %>% 
     collect() %>% 
     mutate(tx_cpf_socio = str_pad(as.character(tx_cpf_socio), 
                                   width = 11, 
@@ -156,7 +163,7 @@ if( !(111 %in% processos_att_atual) ) {
                                   pad = "0"), 
            # Esse truque aqui é para compensar o fato de que o CPF não está
            # completo no banco.
-           id_socio_temp = paste0(tx_cpf_socio, "_", tx_nome_socio)
+           id_socio_temp = paste0(id_osc, "_", tx_cpf_socio, "_", tx_nome_socio)
            ) %>% 
     select(id_socio_temp, id_quadro_societario)
   
@@ -188,14 +195,14 @@ if( !(111 %in% processos_att_atual) ) {
                              pad = "0"),
       tx_data_entrada_socio = ymd(data_entrada_sociedade),
       cd_qualificacao_socio = as.integer(qualificacao_socio),
-      cd_tipo_socio = as.integer(faixa_etaria),
+      cd_tipo_socio = as.integer(identificador_de_socio),
       ft_nome_socio = FonteRFB,
       ft_cpf_socio = FonteRFB,
       ft_data_entrada_socio = FonteRFB,
       ft_qualificacao_socio = FonteRFB,
       ft_tipo_socio = FonteRFB,
       bo_oficial = TRUE, 
-      id_socio_temp = paste0(tx_cpf_socio, "_", tx_nome_socio),
+      id_socio_temp = paste0(id_osc, "_", tx_cpf_socio, "_", tx_nome_socio),
       ) %>% 
     
     # Insere os 'id_quadro_societario':
@@ -229,10 +236,10 @@ if( !(111 %in% processos_att_atual) ) {
       everything()
     )
   
+  # names(tb_quadro_societario)
+  # View(tb_quadro_societario)
+  
 
-  
-  # Estou aqui !!!! ####
-  
   # Cria novos 'id_quadro_societario':
   if(sum(is.na(tb_quadro_societario$id_quadro_societario)) > 0) {
     

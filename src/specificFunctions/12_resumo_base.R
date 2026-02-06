@@ -26,6 +26,9 @@ library(DBI)
 library(RODBC)
 library(RPostgres)
 
+message("Iniciando extração de dados para CSV")
+Sys.sleep(2)
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Cria conexão com a base ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -108,6 +111,7 @@ rm(tb_dados_gerais, tb_osc)
 # Usando o arquivo de backup:
 # tb_localizacao <- readRDS("backup_files/2024_01/output_files/tb_localizacao.RDS")
 
+message("Extraindo geolocalização")
 
 # Usando o arquivo do banco de dados
 tb_localizacao <- dbGetQuery(conexao_mosc, paste0("SELECT * FROM tb_localizacao",
@@ -125,6 +129,23 @@ UFs <- fread("tab_auxiliares/UFs.csv",
              encoding = "Latin-1")
 
 
+LatLonOSC <- dbGetQuery(conexao_mosc, 
+                        glue(
+                          "
+  SELECT
+    id_osc,
+    public.ST_X(geo_localizacao) AS longitude,
+    public.ST_Y(geo_localizacao) AS latitude
+  FROM
+    tb_localizacao;
+  "
+                        )
+                        )
+
+message("Processando dados...")
+
+# View(LatLonOSC)
+
 Dados <- Dados %>% 
   left_join(select(tb_localizacao, 
                    id_osc,
@@ -138,6 +159,8 @@ Dados <- Dados %>%
             by = c("cd_municipio" = "Munic_Id")) %>% 
   
   left_join(UFs, by = "UF_Id") %>% 
+  
+  left_join(LatLonOSC, by = "id_osc") %>% 
             
   # Corrige nomes esquisitos desta base:
   rename(tx_endereco_completo = tx_endereco_corrigido) %>% 
@@ -146,7 +169,7 @@ Dados <- Dados %>%
 
 # names(Dados)
 
-rm(tb_localizacao, Municipios, UFs)
+rm(tb_localizacao, Municipios, UFs, LatLonOSC)
 
 
 # Dados da tabela 'tb_area_atuacao'
@@ -267,8 +290,8 @@ Dados2 <- Dados %>%
     municipio_nome, 
     # cd_uf, 
     UF_Sigla, 
-    # tx_latitude, 
-    # tx_longitude, 
+    longitude, 
+    latitude, 
     
     # Áreas de Atuação:
     cnae, 
@@ -313,6 +336,8 @@ Dados2 <- Dados %>%
 hoje_txt <- today() %>% 
   as.character() %>% 
   str_remove_all("-")
+
+message("Salvando o arquivo")
 
 # Salva
 fwrite(Dados2, glue("{diretorio_att}output_files/{hoje_txt}_MOSC_baseresumida.csv"), 

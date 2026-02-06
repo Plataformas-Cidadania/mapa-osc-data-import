@@ -105,6 +105,11 @@ rm(i, codigos_dir)
 
 message("Fechamento do controle de atualização")
 
+# Inicia a conexão com o bd portal_osc (se necessário):
+if(!(exists("conexao_mosc") && dbIsValid(conexao_mosc))){
+  source("src/specificFunctions/conexao_banco_mosc.R")
+}
+
 # Insere o comentário da Atualização
 query_AltRow <- glue("UPDATE tb_controle_atualizacao \n",
                      " SET tx_att_comentarios = '{definicoes$tx_att_comentarios}' \n",

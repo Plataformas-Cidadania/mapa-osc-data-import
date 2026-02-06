@@ -86,6 +86,7 @@ Atualizacao <- AtualizaDados(Conexao = conexao_mosc,
 
 assert_that(Atualizacao)
 rm(Atualizacao, tb_osc)
+gc()
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -106,14 +107,7 @@ tb_dados_gerais[["dt_fechamento_osc"]] <- as_date(tb_dados_gerais[["dt_fechament
 tb_dados_gerais[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais[["cd_natureza_juridica_osc"]])
 tb_dados_gerais[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais[["dt_fundacao_osc"]])
 tb_dados_gerais[["ft_fechamento_osc"]] <- as.character(tb_dados_gerais[["ft_fechamento_osc"]])
-
-# TO DO: unificar esse campo ####
-if(definicoes$Banco_Atualização == "Produção") {
-  tb_dados_gerais[["cd_matriz_filial"]] <- as.integer(tb_dados_gerais[["cd_matriz_filial"]])
-}
-if(definicoes$Banco_Atualização == "Homologação") {
-  tb_dados_gerais[["cd_matriz_filial"]] <- as.character(tb_dados_gerais[["cd_matriz_filial"]])
-}
+tb_dados_gerais[["cd_matriz_filial"]] <- as.integer(tb_dados_gerais[["cd_matriz_filial"]])
 
 # Esta variável tem um interpretação diferente no banco de dados antigo e novo (investigar!)
 # tb_dados_gerais[["dt_ano_cadastro_cnpj"]] <- NA_Date_
@@ -129,6 +123,7 @@ Atualizacao <- AtualizaDados(Conexao = conexao_mosc,
 
 assert_that(Atualizacao)
 rm(Atualizacao, tb_dados_gerais)
+gc()
 
 
 
@@ -231,6 +226,7 @@ rm(query_JoinUpdate)
 if(dbExistsTable(conexao_mosc, "update_temp")) dbRemoveTable(conexao_mosc, "update_temp")
 
 rm(DtFechamentoOSC)
+gc()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Atualiza tb_contato: ####
@@ -253,6 +249,7 @@ Atualizacao <- AtualizaDados(Conexao = conexao_mosc,
 
 assert_that(Atualizacao)
 rm(Atualizacao, tb_contato)
+gc()
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -283,6 +280,7 @@ Atualizacao <- AtualizaDados(Conexao = conexao_mosc,
 
 assert_that(Atualizacao)
 rm(Atualizacao, tb_localizacao)
+gc()
 
 
 
@@ -310,6 +308,7 @@ Atualizacao <- AtualizaDados(Conexao = conexao_mosc,
 
 assert_that(Atualizacao)
 rm(Atualizacao, tb_area_atuacao)
+gc()
 
 
 
@@ -321,11 +320,11 @@ message("Inserindo dados da tabela 'tb_quadro_societario'")
 
 # Carrega dados:
 if(!exists('tb_quadro_societario')) {
-  tb_area_atuacao <- readRDS(glue("{diretorio_att}output_files/tb_quadro_societario.RDS"))
+  tb_quadro_societario <- readRDS(glue("{diretorio_att}output_files/tb_quadro_societario.RDS"))
 }
 
 # Corrige tipos de dado
-tb_area_atuacao[["id_osc"]] <- as.integer(tb_area_atuacao[["id_osc"]])
+tb_quadro_societario[["id_osc"]] <- as.integer(tb_quadro_societario[["id_osc"]])
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = conexao_mosc,

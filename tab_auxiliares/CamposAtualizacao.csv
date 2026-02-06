@@ -35,3 +35,7 @@ rfb_unificado,campo_rfb_natureza_juridica,natureza_juridica
 rfb_unificado,campo_rfb_cnae_principal,cnae_fiscal
 rfb_unificado,campo_rfb_razao_social,razao_social
 rfb_unificado,tabela_socios_rfb,socios
+rfb_unificado,url_proposta,http://repositorio.dados.gov.br/seges/detru/siconv_proposta.csv.zip
+rfb_unificado,url_convenio,http://repositorio.dados.gov.br/seges/detru/siconv_convenio.csv.zip
+rfb_unificado,zip_proposta,siconv_proposta.csv.zip
+rfb_unificado,zip_convenio,siconv_convenio.csv.zip

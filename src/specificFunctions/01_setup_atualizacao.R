@@ -38,6 +38,7 @@ library(assertthat)
 library(data.table)
 library(readxl)
 library(jsonlite) 
+library(vroom)
 
 # Manipulação de datas
 library(lubridate) 
@@ -51,6 +52,9 @@ library(DBI)
 library(RODBC)
 library(RPostgres) 
 library(dbplyr) 
+
+# Interfaço com usuário
+library(rstudioapi)
 
 assert_that(file.exists("src/generalFunctions/agora.R"))
 assert_that(file.exists("src/specificFunctions/atualiza_processos_att.R"))
@@ -87,14 +91,17 @@ definicoes$dir_backup_files <- "backup_files/"
 assert_that(definicoes$Banco_Atualização[1] %in% c("Homologação", "Produção"), 
             msg = "Valor de 'definicoes$Banco_Atualização' não permitido")
 
-# Pede para o usuário digitar o nome do banco que quer atualizar:
-ConfirmacaoBanco <- readline(
-  prompt = glue(
+
+# Open a prompt dialog box
+ConfirmacaoBanco <- showPrompt(
+  title = "Confirmação de Segurança",
+  message = glue(
     "Digite o banco que vai ser atualizado (opção atual: '", 
     definicoes$Banco_Atualização[1],
     "') : "
-    )
-  )
+  ),
+  # default = "25" # Optional: default value
+)
 
 assert_that(ConfirmacaoBanco == definicoes$Banco_Atualização[1], 
             msg = "Banco digitado não confere com 'definicoes$Banco_Atualização'") 

@@ -40,22 +40,22 @@ definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"
 
 # Adiciona um comentário para a atualização
 definicoes$tx_att_comentarios <- glue::glue(
-  "Atualição dos dados da RFB com base em extração em setembro de 2025"
+  "Atualição dos dados da RFB com base em extração em outubro de 2025"
   )
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 # Essa atualização é teste? 
 # (não registra processos novos nos controles)
-definicoes$att_teste <- TRUE
+definicoes$att_teste <- FALSE
 
 # Essa atualização vai salvar os arquivos intermediários no diretório de backup?
 definicoes$salva_backup <- TRUE
 
 # Existem novos dados RAIS nesta atualização?
 definicoes$atualiza_RAIS <- FALSE
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 definicoes$schemas_RAIS <- "vinculos_v6"
 definicoes$tabela_RAIS <- "tb_vinculos"
@@ -121,13 +121,17 @@ source("src/specificFunctions/11_atualiza_mosc.R")
 # Finaliza a Rotina ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# Extrai uma cópia em CSV para download no site
+source("src/specificFunctions/12_resumo_base.R")
+
+# Procedimentos finais de atualização:
 source("src/specificFunctions/13_finaliza_att.R")
 
 
 dbDisconnect(conexao_mosc)
 
 # Limpa memória
-rm(conexao_mosc, agora, atualiza_processos_att, CamposAtualizacao)
+rm(conexao_mosc, agora, atualiza_processos_att)
 rm(definicoes, diretorio_att, codigo_presente_att, id_presente_att)
 rm(processos_att_atual, tb_backups_files, tb_controle_atualizacao, 
    tb_processos_atualizacao)

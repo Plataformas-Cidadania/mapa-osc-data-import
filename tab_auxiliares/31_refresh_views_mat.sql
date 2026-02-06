@@ -18,4 +18,5 @@ refresh materialized view osc.vw_geo_osc;
 refresh materialized view ipeadata.vw_dados_geograficos_idh_municipio;
 refresh materialized view ipeadata.vw_dados_geograficos_idh_uf;
 refresh materialized view portal.vw_osc_dados_gerais;
-refresh materialized view spat.mvw_count_mun
+refresh materialized view spat.mvw_count_mun;
+SELECT * FROM portal.atualizar_graficos();
