@@ -295,7 +295,7 @@ Dados2 <- Dados %>%
     
     # Áreas de Atuação:
     cnae, 
-    # cnae_fiscal_secundaria,
+    cnae_fiscal_secundaria,
     Area_Assistencia_social, 
     Area_Associacoes_patronais_e_profissionais, 
     Area_Cultura_e_recreacao, 

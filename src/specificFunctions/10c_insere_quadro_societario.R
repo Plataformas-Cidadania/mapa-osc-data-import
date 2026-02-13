@@ -76,7 +76,6 @@ if( !(111 %in% processos_att_atual) ) {
   if(dbIsValid(conexao_rfb)) message("Conectado ao BD 'rais_2019'")
   rm(postCon)
   
-  
   # Carrega os campos necessários para os testes abaixo.
   CamposAtualizacao <- fread("tab_auxiliares/CamposAtualizacao.csv") %>% 
     dplyr::filter(schema_receita == definicoes$schema_receita)
@@ -102,51 +101,83 @@ if( !(111 %in% processos_att_atual) ) {
     select(nomes) %>% slice(1) %>%  unlist() %>% as.character() %>% 
     str_split(fixed("|")) %>% magrittr::extract2(1)
   
+  # Filtros para a query da Receita:
+  filtros_rfb <- CamposAtualizacao %>% 
+    dplyr::filter(campos == "filtro_query_rfb") %>% 
+    select(nomes) %>% unlist() %>% as.character()
+  
   rm(CamposAtualizacao)
   
+  # Resgata o ID já existente das OSC
+  idControl <- tbl(conexao_mosc, "tb_osc") %>% 
+    select(id_osc, cd_identificador_osc) %>% 
+    collect() %>% 
+    mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
+                                          width = 14, 
+                                          side = "left", 
+                                          pad = "0"))
   
-  query_naolucrativo_rfb <- glue(
-    "SELECT * FROM {tabela_empresas_rfb} 
-      RIGHT JOIN {tabela_socios_rfb} 
-      ON {tabela_socios_rfb}.{campo_cnpj} \\
-      = {tabela_empresas_rfb}.{campo_cnpj} 
-      WHERE {campo_natureza_juridica} IN ('",
-    paste(natjur_nao_lucrativo, collapse = "', '"),
-    "')",
-    # " LIMIT 1000", 
-    ";")
+  
+  x <- unique(idControl$cd_identificador_osc) %>% 
+    str_sub(1, 8)
+  
+  chunck_size <- 50000
+  
+  split_CNPJ <- split(x, ceiling(seq_along(x)/chunck_size) )
+  
+  # length(split_CNPJ)
+  rm(x, chunck_size)
+  
+  filtrorfb_2 <- filtros_rfb %>% 
+    paste0("s.", .) %>% 
+    paste0(collapse = " AND ") 
+  
+  
+  source("src/generalFunctions/fix_duplicate_names.R")
+  
+  socios_df <- tibble()
+  
+  # Executa a busca do quadro societário das OSC:
+  message("Baixando dados do Quadro Societário")
+  
+  message("Início da busca: ", agora())
+  for (j in seq_along(split_CNPJ) ) {
+    # j <- 5
+    
+    message(j, "/", length(split_CNPJ))
+    
+    x_j <- split_CNPJ[[j]] %>% 
+      paste0(collapse = "', '") %>% 
+      paste0("'", ., "'")
+    
+    query_j <- glue("
+    WITH lista_procura AS (SELECT unnest(ARRAY[{x_j}]) AS cnpj)
+SELECT s.* FROM {tabela_socios_rfb} s
+INNER JOIN lista_procura lp ON s.{campo_cnpj} = lp.cnpj
+WHERE {filtrorfb_2};"
+    )
+    rm(x_j)
+    # query_j
+    # names(data_j)
+    
+    message("Início do ciclo ", j, ":   ", agora())
+    data_j <- dbGetQuery(conexao_rfb, query_j)
+    message("Fim do ciclo ", j, ":   ", agora())
+    
+    # Corrige nomes duplicados:
+    data_j <- fix_duplicate_names(data_j, alert = FALSE)
+    
+    socios_df <- bind_rows(socios_df, data_j)
+    rm(query_j, data_j)
+  }
+  rm(j, filtrorfb_2, split_CNPJ, fix_duplicate_names)
+  
+  message("Fim da busca: ", agora())
   
   # query_naolucrativo_rfb
   
   rm(tabela_empresas_rfb, tabela_socios_rfb, campo_cnpj, 
-     campo_natureza_juridica, natjur_nao_lucrativo)
-  
-  # Executa a busca do quadro societário das OSC:
-  message("Baixando dados do Quadro Societário")
-  quadro_societario_raw <- dbGetQuery(conexao_rfb, query_naolucrativo_rfb)
-  
-  rm(query_naolucrativo_rfb)
-  
-  # Remove variáveis duplicadas:
-  var_duplicadas <- names(quadro_societario_raw) %>% 
-    enframe(name = NULL, value = "var") %>% 
-    group_by(var) %>% 
-    summarise(Freq = n()) %>% 
-    dplyr::filter(Freq > 1) %>% 
-    select(var) %>% unlist() %>% as.character()
-  
-  to_remove <- integer(0)
-  
-  for (i in seq_along(var_duplicadas) ) {
-    # i <- 2
-    # message(var_duplicadas[i])
-    to_remove <- c(to_remove, which(names(quadro_societario_raw) == var_duplicadas[i])[-1])
-  }
-  
-  quadro_societario_clean <- quadro_societario_raw[ , -to_remove]
-  
-  rm(i, to_remove, var_duplicadas)
-  rm(quadro_societario_raw)
+     campo_natureza_juridica, natjur_nao_lucrativo, filtros_rfb)
   
   message("Formata dados do Quadro Societário")
   
@@ -168,7 +199,7 @@ if( !(111 %in% processos_att_atual) ) {
     select(id_socio_temp, id_quadro_societario)
   
   # Formata os dados
-  tb_quadro_societario <- quadro_societario_clean %>% 
+  tb_quadro_societario <- socios_df %>% 
     
     mutate(cd_identificador_osc = str_pad(as.character(cnpj), 
                           width = 14,
@@ -208,16 +239,6 @@ if( !(111 %in% processos_att_atual) ) {
     # Insere os 'id_quadro_societario':
     left_join(id_quadro_societario_Old, by = "id_socio_temp") %>% 
     
-    # Remove a maioria dos campos da tabela 'empresas':
-    select(
-      -razao_social,
-      -natureza_juridica,
-      -qualificacao_responsavel,
-      -porte_empresa,
-      -ente_federativo_responsavel,
-      -capital_social,
-    ) %>% 
-    
     # Ordem das variáveis
     select(     
       id_quadro_societario,
@@ -238,6 +259,9 @@ if( !(111 %in% processos_att_atual) ) {
   
   # names(tb_quadro_societario)
   # View(tb_quadro_societario)
+  
+  # table(tb_quadro_societario$mes)
+  # table(tb_quadro_societario$ano)
   
 
   # Cria novos 'id_quadro_societario':
@@ -276,7 +300,9 @@ if( !(111 %in% processos_att_atual) ) {
     path_file_backup = ifelse(definicoes$salva_backup, path_file_backup, NULL))
   
   rm(path_file_backup, FonteRFB, id_quadro_societario_Old)
-  rm(quadro_societario_clean)
+  rm(socios_df, idControl)
+  rm(tb_quadro_societario)
+  # ls()
   
   dbDisconnect(conexao_rfb)
   rm(conexao_rfb)

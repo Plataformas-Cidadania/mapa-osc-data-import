@@ -70,6 +70,12 @@ if( !(121 %in% processos_att_atual) ) {
   if(!file.exists(zip_proposta) | !file.exists(zip_convenio)) {
     # Download dos arquivos
     message("Baixando arquivos...")
+    
+    # Cria diretório siconv
+    if(!dir.exists(glue(diretorio_att, "/input_files/dados_siconv")) ) { 
+      dir.create(glue(diretorio_att, "/input_files/dados_siconv"))
+    }
+    
     download.file(url_proposta, destfile = zip_proposta, mode = "wb")
     download.file(url_convenio, destfile = zip_convenio, mode = "wb")
     
@@ -125,7 +131,7 @@ if( !(121 %in% processos_att_atual) ) {
     left_join(dados_proposta, by = "ID_PROPOSTA") 
   
   # Limpa memória
-  rm(dados_convenio, dados_proposta, csvs)
+  rm(dados_convenio, dados_proposta)
   gc()
   
   
@@ -328,7 +334,7 @@ if( !(121 %in% processos_att_atual) ) {
   rm(NovosIds, idProjetos, transferegov_tidy)
   
   # Salva arquivos de endereços das OSC
-  saveRDS(tb_projeto, glue("{diretorio_att}intermediate_files/tb_projeto.RDS"))
+  saveRDS(tb_projeto, glue("{diretorio_att}output_files/tb_projeto.RDS"))
   
   processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 120], 121))
   
@@ -337,7 +343,7 @@ if( !(121 %in% processos_att_atual) ) {
     id_att = id_presente_att, 
     id_processo = 121, 
     path_file_backup = ifelse(definicoes$salva_backup, 
-                              glue("{diretorio_att}intermediate_files/tb_projeto.RDS"), 
+                              glue("{diretorio_att}output_files/tb_projeto.RDS"), 
                               NULL))
   
   
@@ -345,6 +351,7 @@ if( !(121 %in% processos_att_atual) ) {
   unlink(csv_convenio)
   unlink(csv_proposta)
   rm(csv_convenio, csv_proposta)
+  rm(tb_projeto)
   gc()
   # ls()
   

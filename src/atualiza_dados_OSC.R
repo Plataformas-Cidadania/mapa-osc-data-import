@@ -40,7 +40,7 @@ definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"
 
 # Adiciona um comentário para a atualização
 definicoes$tx_att_comentarios <- glue::glue(
-  "Atualição dos dados da RFB com base em extração em outubro de 2025"
+  "Atualição dos dados da RFB com base em extração em janeiro de 2026"
   )
 
 # Essa atualização é teste? 
@@ -53,12 +53,11 @@ definicoes$salva_backup <- TRUE
 # Existem novos dados RAIS nesta atualização?
 definicoes$atualiza_RAIS <- FALSE
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
 definicoes$schemas_RAIS <- "vinculos_v6"
 definicoes$tabela_RAIS <- "tb_vinculos"
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Outras definições importantes, mas que raramente precisam ser mudada
 # estão na rotina de Setup (abaixo) ('src/specificFunctions/setup_atualizacao.R')
@@ -109,6 +108,9 @@ source("src/specificFunctions/10_insere_dados_rais.R")
 # Insere Dados do quadro societário
 source("src/specificFunctions/10c_insere_quadro_societario.R")
 
+
+# Insere Dados do quadro societário
+source("src/specificFunctions/10d_insere_transfere_gov.R")
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Atualização MOSC: Update dos dados no Banco de Dados MOSC ####

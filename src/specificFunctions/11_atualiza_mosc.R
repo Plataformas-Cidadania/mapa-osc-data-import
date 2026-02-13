@@ -43,6 +43,7 @@ assert_that(file.exists(glue("{diretorio_att}output_files/tb_area_atuacao.RDS"))
 assert_that(file.exists(glue("{diretorio_att}output_files/tb_contato.RDS")))
 assert_that(file.exists(glue("{diretorio_att}output_files/tb_localizacao.RDS")))
 assert_that(file.exists(glue("{diretorio_att}output_files/tb_quadro_societario.RDS")))
+assert_that(file.exists(glue("{diretorio_att}output_files/tb_projeto.RDS")))
 
 
 
@@ -98,6 +99,13 @@ message("Inserindo dados da tabela 'tb_dados_gerais'")
 # Carrega dados:
 if(!exists('tb_osc')) {
   tb_dados_gerais <- readRDS(glue("{diretorio_att}output_files/tb_dados_gerais.RDS"))
+}
+
+if(codigo_presente_att == "2026_01") {
+  # Na atualização 
+  dbExecute(conexao_mosc, paste0("UPDATE tb_dados_gerais", "\n",
+                                 " SET tx_nome_fantasia_osc = NULL",
+                                 ";"))
 }
 
 # map_chr(tb_dados_gerais, class)
@@ -331,6 +339,33 @@ Atualizacao <- AtualizaDados(Conexao = conexao_mosc,
                              DadosNovos = tb_quadro_societario,
                              Chave = "id_quadro_societario",
                              Table_NameAntigo = "tb_quadro_societario",
+                             verbose = TRUE,
+                             samples = TRUE)
+
+assert_that(Atualizacao)
+rm(Atualizacao, tb_quadro_societario)
+gc()
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Atualiza tb_projeto ####
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+message("Inserindo dados da tabela 'tb_projeto'")
+
+# Carrega dados:
+if(!exists('tb_projeto')) {
+  tb_projeto <- readRDS(glue("{diretorio_att}output_files/tb_projeto.RDS"))
+}
+
+# Corrige tipos de dado
+tb_projeto[["cd_status_projeto"]] <- as.integer(tb_projeto[["cd_status_projeto"]])
+
+# Executa atualização
+Atualizacao <- AtualizaDados(Conexao = conexao_mosc,
+                             DadosNovos = tb_projeto,
+                             Chave = "id_projeto",
+                             Table_NameAntigo = "tb_projeto",
                              verbose = TRUE,
                              samples = TRUE)
 

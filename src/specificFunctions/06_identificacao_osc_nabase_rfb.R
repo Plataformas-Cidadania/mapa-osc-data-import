@@ -74,7 +74,10 @@ if( !(21 %in% processos_att_atual) ) {
     
     # Carrega o arquivo com os dados da busca SQL base SRF
     message(agora(), "   Carregando dados previamente baixados da RFB...")
+    
+    # Carrega dados
     tb_JoinOSC <- readRDS(path_file_backup)
+    
     rm(path_file_backup)
   }
   
@@ -160,10 +163,18 @@ if( !(21 %in% processos_att_atual) ) {
   # Na regra do MOSC, todas as OSCIP são OSC
   message("Incorporando OSCIP")
   
-  if(file.exists("input_files_next/tb_oscip.csv")) {
+  if(file.exists("input_files_next/OSCIP_tidy.xlsm")) {
     
-    OSCIP <- fread("input_files_next/tb_oscip.csv") %>% 
-      rename(cd_identificador_osc = cnpj) %>% 
+    library(readxl)
+    
+    OSCIP_df <- read_xlsx("input_files_next/OSCIP_tidy.xlsm", 
+                       sheet = "oscip_tidy")  
+    
+    
+    OSCIP <- OSCIP_df %>% 
+      dplyr::filter(UltimaAcao == 1 & Acao == "Qualificação") %>% 
+      rename(cd_identificador_osc = CNPJ_Formatado) %>% 
+      select(cd_identificador_osc) %>% 
       # Corrigir cd_identificador_osc (pad)
       mutate(cd_identificador_osc = str_pad(cd_identificador_osc, 
                                             width = 14, side = "left",
@@ -182,6 +193,28 @@ if( !(21 %in% processos_att_atual) ) {
         # identificação pela OSCIP:
         ft_IsOSC = ifelse(IsOSC, glue("findOSC.R_{codigo_presente_att}"), NA)
       )
+    
+    # table(tb_JoinOSC$eh_oscip)
+    
+    # Processa dados OSCIP
+    
+    # Resgata as informações das OSC já existentes
+    oscip_old <- tbl(conexao_mosc, "tb_certificado") %>% 
+      dplyr::filter(
+        cd_certificado == 4,
+        dt_fim_certificado > today() | is.na(dt_fim_certificado) 
+        ) %>%  
+      collect() 
+    
+    
+    # Remove OSC com certificado vencido # TODO
+    
+    # Adiciona novos registros de OSC # TODO
+    
+    
+    # names(OSCIP_df)
+    
+    rm(OSCIP, OSCIP_df, oscip_old)
     
   } else {
     message("Arquivo de OSCIPs não encontrado")

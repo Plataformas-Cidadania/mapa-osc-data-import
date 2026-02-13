@@ -120,6 +120,18 @@ query_AltRow <- glue("UPDATE tb_controle_atualizacao \n",
 
 dbExecute(conexao_mosc, query_AltRow)
 
+definicoes$data_dados_referencia
+
+# Atualiza a data de referência dos dados
+query_AltRow <- glue("UPDATE tb_controle_atualizacao \n",
+                     " SET dt_att_ref = '{definicoes$data_dados_referencia}'::timestamp \n",
+                     " WHERE att_id = {id_presente_att}",
+                     ";")
+
+# query_AltRow
+
+dbExecute(conexao_mosc, query_AltRow)
+
 # Coloca a data de finalização da atualização
 
 horario_fim <- agora()
