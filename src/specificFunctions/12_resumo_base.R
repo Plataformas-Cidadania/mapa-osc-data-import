@@ -73,18 +73,25 @@ Dados <- tb_dados_gerais %>%
   left_join(select(tb_osc, id_osc, cd_identificador_osc, bo_osc_ativa, 
                    cd_situacao_cadastral), 
             by = "id_osc") %>% 
-  dplyr::filter(bo_osc_ativa) %>% 
+  # dplyr::filter(bo_osc_ativa) %>% # desde a att 2026_01, inserir as osc inativas
   # Evita problemas de padding:
   mutate(
     cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
                                    width = 14, 
                                    pad = "0"), 
     situacao_cadastral = case_when(
+      bo_osc_ativa ~ "Nula ou Baixada",
       cd_situacao_cadastral == 2 ~ "Ativa",
       cd_situacao_cadastral == 3 ~ "Suspensa",
       cd_situacao_cadastral == 4 ~ "Inapta",
       TRUE ~ "Não Identificado"
-      )
+      ),
+    removida_do_mosc = ifelse(bo_osc_ativa, "não", "sim"),
+    matriz_filial = case_when(
+      cd_matriz_filial == 1 ~ "Matriz",
+      cd_matriz_filial == 2 ~ "Filial",
+      TRUE ~ "Não Identificado"
+    ),
   ) %>% 
   select(id_osc, 
          # razão social
@@ -100,11 +107,25 @@ Dados <- tb_dados_gerais %>%
          # cnae
          cd_classe_atividade_economica_osc, 
          # Situação cadastral
-         situacao_cadastral
+         situacao_cadastral, 
+         # Se a osc está presente no mapa ou não
+         removida_do_mosc,
+         # Mostra se é matriz ou filial
+         matriz_filial,
+         # Data de Fechamento
+         dt_fechamento_osc,
+         # Ano de Fechamento
+         nr_ano_fechamento_osc,
+         # CNAE secundária
+         cd_cnae_secundaria,
          )
 
 rm(tb_dados_gerais, tb_osc)
 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Insere dados de localização ####
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Dados da tabela 'tb_localizacao':
 
@@ -171,6 +192,42 @@ Dados <- Dados %>%
 
 rm(tb_localizacao, Municipios, UFs, LatLonOSC)
 
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Insere dados de contato ####
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+message("Dados de contato")
+
+tb_contato <- dbGetQuery(conexao_mosc, paste0("SELECT * FROM tb_contato",
+                                              # " LIMIT 500", 
+                                              ";"))
+# names(tb_contato)
+
+Dados <- Dados %>% 
+  # Insere as dummies de área de atuação no conjunto principal de dados:
+  left_join(select(tb_contato, 
+                   id_osc, 
+                   tx_telefone,
+                   tx_email, 
+                   nm_representante,
+                   tx_site,    
+                   tx_facebook,        
+                   tx_google,          
+                   tx_linkedin,        
+                   tx_twitter,
+  ), 
+  by = "id_osc")
+
+rm(tb_contato)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Insere dados de área de atuação ####
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+message("Dados de área de atuação")
 
 # Dados da tabela 'tb_area_atuacao'
 # finalidades de atuação/area de atuação 
@@ -261,7 +318,11 @@ if(FALSE) {
 }
 
 
-# Arruma e Salva os dados finais:
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Arruma e Salva os dados finais ####
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+message("Arruma e Salva os dados finais")
 
 # names(Dados)
 
@@ -269,7 +330,20 @@ Dados2 <- Dados %>%
   rename(
     cnpj = cd_identificador_osc, 
     municipio_nome = Munic_Nome, 
-    cnae = cd_classe_atividade_economica_osc) %>% 
+    cnae = cd_classe_atividade_economica_osc,
+    data_fechamento = dt_fechamento_osc,
+    ano_fechamento = nr_ano_fechamento_osc,
+    cnae_secundaria = cd_cnae_secundaria,
+    natureza_juridica = cd_natureza_juridica_osc,
+    telefone = tx_telefone,
+    email = tx_email, 
+    nome_representante = nm_representante,
+    site = tx_site,    
+    facebook = tx_facebook,        
+    site_google = tx_google,          
+    linkedin = tx_linkedin,        
+    twitter = tx_twitter,
+    ) %>% 
   
   # Deixa as variáveis em uma ordem agradável
   select(
@@ -280,9 +354,13 @@ Dados2 <- Dados %>%
     tx_nome_fantasia_osc, 
     
     # Dados da OSC:
-    cd_natureza_juridica_osc, 
-    dt_fundacao_osc, 
+    natureza_juridica, 
+    matriz_filial,
     situacao_cadastral,
+    dt_fundacao_osc, 
+    removida_do_mosc,
+    data_fechamento,
+    ano_fechamento,
     
     # Localização:
     tx_endereco_completo, 
@@ -293,9 +371,19 @@ Dados2 <- Dados %>%
     longitude, 
     latitude, 
     
+    # Contato:
+    telefone,
+    email, 
+    nome_representante,
+    site,    
+    facebook,        
+    site_google,          
+    linkedin,        
+    twitter,
+    
     # Áreas de Atuação:
     cnae, 
-    cnae_fiscal_secundaria,
+    cnae_secundaria,
     Area_Assistencia_social, 
     Area_Associacoes_patronais_e_profissionais, 
     Area_Cultura_e_recreacao, 
@@ -339,11 +427,31 @@ hoje_txt <- today() %>%
 
 message("Salvando o arquivo")
 
-# Salva
-fwrite(Dados2, glue("{diretorio_att}output_files/{hoje_txt}_MOSC_baseresumida.csv"), 
+# Salva base completa
+
+fwrite(Dados2, glue("{diretorio_att}output_files/{hoje_txt}_MOSC_basecompleta.csv"), 
        sep = ";", dec = ",")
 
-rm(Dados, Dados2)
+saveRDS(Dados2, 
+        glue("{diretorio_att}output_files/{hoje_txt}_MOSC_basecompleta.RDS"))
+
+# Salva base sem os contatos
+Dados_semContato <- Dados2 %>% 
+  select(
+    -telefone,
+    -email, 
+    -nome_representante,
+    -site,    
+    -facebook,        
+    -site_google,          
+    -linkedin,        
+    -twitter,)
+
+fwrite(Dados_semContato, 
+       glue("{diretorio_att}output_files/{hoje_txt}_MOSC_baseresumida.csv"), 
+       sep = ";", dec = ",")
+
+rm(Dados, Dados2, Dados_semContato)
 dbDisconnect(conexao_mosc)
 rm(conexao_mosc)
 rm(hoje_txt)

@@ -54,7 +54,9 @@ if( !(21 %in% processos_att_atual) ) {
   Sys.sleep(2) # Dar um tempo apenas para o usuário ler as mensagens da atualização
   
   ## Início do processo ####
-  processos_att_atual <- unique(c(processos_att_atual[processos_att_atual != 21], 20))
+  processos_att_atual <- unique(
+    c(processos_att_atual[processos_att_atual != 21], 20)
+    )
   
   # Atualiza controle de processos (tb_processos_atualizacao)  
   if(!definicoes$att_teste) atualiza_processos_att(
@@ -64,7 +66,12 @@ if( !(21 %in% processos_att_atual) ) {
     processo_nome = "Identificação OSC")
   
   # Se os dados da Receita Federal não estiverem carregados, carrega eles. ####
-  if(!(exists("tb_JoinOSC") && class(tb_JoinOSC) == "data.frame")) {
+  if( !(
+    exists("tb_JoinOSC") && 
+    any(
+      class(tb_JoinOSC) %in% c("data.frame", "tbl") 
+      )
+    )) {
     
     path_file_backup <- glue("{diretorio_att}intermediate_files/tb_JoinOSC.RDS")
     

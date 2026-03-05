@@ -85,6 +85,11 @@ if(!any(pull(tb_controle_atualizacao, tx_att_situacao) == "Iniciada")) {
     # Coloca aqui o ano da atualização (o presente ano):
     paste0(year(now()), "_", .)
   
+  # Identifica as atualizações de homologação:
+  if(definicoes$Banco_Atualização == "Homologação") {
+    codigo_presente_att <- paste0(codigo_presente_att, "_hmlg")
+  }
+  
   # Insere linha de atualização nova:
   if(!definicoes$att_teste) {
     rows_append(
@@ -133,10 +138,6 @@ processos_att_atual <- tb_processos_atualizacao %>%
 # Diretório da atualização dos dados:
 diretorio_att <- paste0(definicoes$dir_backup_files,
                         codigo_presente_att, 
-                        # Cria aqui uma estrutura para diferenciar atualizações
-                        # do banco de homologação e de produção
-                        ifelse(definicoes$Banco_Atualização == "Homologação", 
-                               "_hmlg", ""),
                         "/")
 
 # Carrega tabela dos arquivos de backup:

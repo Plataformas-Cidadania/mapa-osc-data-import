@@ -313,7 +313,7 @@ WHERE {filtrorfb_2};"
   # Caso o processo já tenha sido feito anteriormente ####
   assert_that(exists("tb_quadro_societario") || 
                 file.exists(
-                  glue("{diretorio_att}intermediate_files/tb_quadro_societario.RDS")),
+                  glue("{diretorio_att}output_files/tb_quadro_societario.RDS")),
               
               msg = glue("Não foi encontrado os dados do quadro societário na ", 
                          "memória ou em arquivos backup. Verificar porque o ", 

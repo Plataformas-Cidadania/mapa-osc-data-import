@@ -12,17 +12,17 @@ library(RODBC)
 library(RPostgres)
 
 # Debug:
-# DadosNovos <- tb_localizacao
-# DadosNovos <- slice(tb_osc_New, 1:500)
-# DadosNovos[["cd_identificador_osc"]] <- as.numeric(DadosNovos[["cd_identificador_osc"]])
-# Chave <- "id_osc"
-# Conexao <- connec
-# Table_NameAntigo <- "tb_localizacao"
-# GeoVar = c("geo_localizacao")
+# Conexao = conexao_mosc
+# DadosNovos = tb_projeto
+# Chave = "id_projeto"
+# Table_NameAntigo = "tb_projeto"
 # verbose = TRUE
 # samples = TRUE
-# # rm(DadosNovos, Chave, Conexao, Table_NameAntigo)
-# ls()
+# verbose = FALSE
+# samples = TRUE
+# deleterows = FALSE
+# GeoVar = NULL
+ls()
 
 
 AtualizaDados <- function(Conexao, 
@@ -110,7 +110,9 @@ AtualizaDados <- function(Conexao,
   rm(i)
   
   ## Avisa das colunas que não serão atualizadas:
-  if(!all(names(DadosNovos) %in% names(DadosAntigos))) {
+  if(!all(
+    names(DadosNovos) %in% names(DadosAntigos)
+    )) {
     message(paste0("Os campos '", 
                    paste0(names(DadosAntigos)[!names(DadosAntigos) %in% names(DadosNovos)],
                           collapse = "', '"),
@@ -289,8 +291,17 @@ AtualizaDados <- function(Conexao,
       if(dbExistsTable(Conexao, "geo_temp")) dbRemoveTable(Conexao, "geo_temp")
     }  
     
+    # Retira os Triggers para poder atualizar mais rápido
+    dbExecute(Conexao, 
+              glue("ALTER TABLE {Table_NameAntigo} DISABLE TRIGGER ALL;") )
+    
     ## Insere linhas:
     AddedRows <- dbAppendTable(Conexao, Table_NameAntigo, AddData)
+    
+    # Recoloca os triggers
+    dbExecute(Conexao, 
+              glue("ALTER TABLE {Table_NameAntigo} ENABLE TRIGGER ALL;") )
+    
 
     message(AddedRows, " linhas novas inseridas na tabela")
     
@@ -327,6 +338,7 @@ AtualizaDados <- function(Conexao,
     message("Atualizando coluna ", col)
     
     # Variável que será atualizada com o nome padronizado
+    DadosNovos <- as_tibble(DadosNovos)
     DadosCheck <- DadosNovos[, c(Chave, col)]
     names(DadosCheck) <- c(Chave, "Dado")
     
@@ -418,6 +430,7 @@ AtualizaDados <- function(Conexao,
       # Deleta a coluna, se ela existir:
       query_DropCol <- paste0("ALTER TABLE ", Table_NameAntigo, 
                               " DROP COLUMN IF EXISTS temp_var;")
+      
       if("temp_var" %in% names(DadosAntigos)) {
         dbExecute(Conexao, query_DropCol)
       }
@@ -436,7 +449,14 @@ AtualizaDados <- function(Conexao,
                              toupper(VarType), 
                              ";")
       
+      # Retira os Triggers para poder atualizar mais rápido
+      dbExecute(Conexao, 
+                glue("ALTER TABLE {Table_NameAntigo} DISABLE TRIGGER ALL;") )
+      
+      
+      ## Cria Coluna
       dbExecute(Conexao, query_AddCol)
+      
       
       rm(QueryGetInformation, ColTypes, VarType, query_AddCol)
       
@@ -448,6 +468,7 @@ AtualizaDados <- function(Conexao,
                                  " = update_temp.", Chave,
                                  ";")
       # cat(query_JoinUpdate)
+      
       
       # Executa a inserção das colunas
       dbExecute(Conexao, query_JoinUpdate)
@@ -466,7 +487,12 @@ AtualizaDados <- function(Conexao,
       # Deleta a coluna criada
       dbExecute(Conexao, query_DropCol)
       
-      # Remove a tabela deletedata
+      # Recoloca os triggers
+      dbExecute(Conexao, 
+                glue("ALTER TABLE {Table_NameAntigo} ENABLE TRIGGER ALL;") )
+      
+      
+      # Remove a tabela update_temp
       if(dbExistsTable(Conexao, "update_temp")) {
         dbRemoveTable(Conexao, "update_temp")
       }

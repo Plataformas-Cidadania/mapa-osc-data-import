@@ -97,15 +97,8 @@ gc()
 message("Inserindo dados da tabela 'tb_dados_gerais'")
 
 # Carrega dados:
-if(!exists('tb_osc')) {
+if(!exists('tb_dados_gerais')) {
   tb_dados_gerais <- readRDS(glue("{diretorio_att}output_files/tb_dados_gerais.RDS"))
-}
-
-if(codigo_presente_att == "2026_01") {
-  # Na atualização 
-  dbExecute(conexao_mosc, paste0("UPDATE tb_dados_gerais", "\n",
-                                 " SET tx_nome_fantasia_osc = NULL",
-                                 ";"))
 }
 
 # map_chr(tb_dados_gerais, class)
@@ -186,6 +179,11 @@ query_JoinUpdate <- glue("UPDATE tb_dados_gerais \n",
                          ";")
 # query_JoinUpdate
 
+# Retira os Triggers para poder atualizar mais rápido
+dbExecute(conexao_mosc, 
+          glue("ALTER TABLE tb_dados_gerais DISABLE TRIGGER ALL;") )
+
+
 # Executa a inserção das colunas
 dbExecute(conexao_mosc, query_JoinUpdate)
 
@@ -227,6 +225,11 @@ query_JoinUpdate <- glue("UPDATE tb_dados_gerais \n",
 
 # Executa a inserção das colunas
 dbExecute(conexao_mosc, query_JoinUpdate)
+
+# Recoloca os triggers
+dbExecute(conexao_mosc, 
+          glue("ALTER TABLE tb_dados_gerais ENABLE TRIGGER ALL;") )
+
 
 rm(query_JoinUpdate)
 
@@ -360,6 +363,12 @@ if(!exists('tb_projeto')) {
 
 # Corrige tipos de dado
 tb_projeto[["cd_status_projeto"]] <- as.integer(tb_projeto[["cd_status_projeto"]])
+
+# Temporariamente, apaga alguns dados, devido a restrições no banco de dados
+tb_projeto[["cd_municipio"]] <- NA_integer_
+tb_projeto[["ft_municipio"]] <- NA_character_
+tb_projeto[["cd_uf"]] <- NA_integer_
+tb_projeto[["ft_uf"]] <- NA_character_
 
 # Executa atualização
 Atualizacao <- AtualizaDados(Conexao = conexao_mosc,

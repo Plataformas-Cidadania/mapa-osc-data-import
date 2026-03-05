@@ -360,7 +360,7 @@ if( !(121 %in% processos_att_atual) ) {
   # Caso o processo já tenha sido feito anteriormente ####
   assert_that(exists("tb_projeto") || 
                 file.exists(
-                  glue("{diretorio_att}intermediate_files/tb_projeto.RDS")),
+                  glue("{diretorio_att}output_files/tb_projeto.RDS")),
               
               msg = glue("Não foi encontrado o objeto 'tb_projeto' na ", 
                          "memória ou em arquivos backup. Verificar porque o ", 
