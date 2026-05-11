@@ -1,6 +1,18 @@
 log de versões mapa-osc-data-import
 
 
+-Att 2026_4
+	-A tabela tb_certificado passou a contar com mais três campos:
+		-bo_certificado_ativo : se o certificado está ativo ou não
+		-dt_status_certificado : última vez que foi chegado se o certificado está ativo.
+		-dt_dados_certificado : a data última data em que houve dados sobre o certificado da linha.
+
+	-Todo a rotina de processamento dos certificados foi atualizada.
+	-Foi criado a tb_cadastros para guardar informações sobre os cadastros que as OSC são registradas
+	-As informações dos cadastros e certificados passaram a constar do CSV de exportação do Mapa
+
+-Att 2026_2
+	-Os dados de exportação CSV passaram a contar com OSC que não estão mais ativas no banco (baixadas)
 
 -0.9.01
 	-2025-05-28

@@ -13,16 +13,16 @@ library(RPostgres)
 
 # Debug:
 # Conexao = conexao_mosc
-# DadosNovos = tb_projeto
-# Chave = "id_projeto"
-# Table_NameAntigo = "tb_projeto"
+
+# DadosNovos = tb_quadro_societario
+# Chave = "id_quadro_societario"
+# Table_NameAntigo = "tb_quadro_societario"
+# 
 # verbose = TRUE
-# samples = TRUE
-# verbose = FALSE
 # samples = TRUE
 # deleterows = FALSE
 # GeoVar = NULL
-ls()
+# ls()
 
 
 AtualizaDados <- function(Conexao, 
@@ -72,8 +72,19 @@ AtualizaDados <- function(Conexao,
   DadosAntigos <- dbGetQuery(Conexao, 
                              paste0("SELECT * FROM ",
                                     Table_NameAntigo,
-                                    # " LIMIT 500", 
+                                    " LIMIT 5000", 
                                     ";"))
+  
+  # Verifica se a coluna 'temp_var' está na tabela (possível sujeira de 
+  # atualizações incompletas). Se a coluna estiver lá, deleta.
+  if('temp_var' %in% names(DadosAntigos)) {
+    dbExecute(conexao_mosc, 
+              glue(
+                "ALTER TABLE {Table_NameAntigo} ",
+                "DROP COLUMN IF EXISTS temp_var;"
+              ) 
+    )
+  }
   
   # Vamos verificar agora se os dados a se atualizar e os antigos
   # estão adequados:
@@ -119,6 +130,22 @@ AtualizaDados <- function(Conexao,
                    "' não estão na tabela de atualização."))  
   }  
   
+  
+  # Mapear apenas os triggers criados por usuários que estão ATIVOS
+  triggers_ativos <- dbGetQuery(
+    Conexao, 
+    glue("
+  SELECT t.tgname 
+  FROM pg_trigger t
+  JOIN pg_class c ON t.tgrelid = c.oid
+  JOIN pg_namespace n ON c.relnamespace = n.oid
+  WHERE n.nspname = 'osc' 
+    AND c.relname = '{Table_NameAntigo}'
+    AND t.tgenabled != 'D' 
+    AND t.tgisinternal = false;
+")
+  ) %>% 
+    pull("tgname")
   
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Remove linhas que  não estão mais em DadosNovos ####
@@ -292,15 +319,23 @@ AtualizaDados <- function(Conexao,
     }  
     
     # Retira os Triggers para poder atualizar mais rápido
-    dbExecute(Conexao, 
-              glue("ALTER TABLE {Table_NameAntigo} DISABLE TRIGGER ALL;") )
+    
+    # Desativar ESTRITAMENTE o que estava ativo
+    for(trig in triggers_ativos) {
+      dbExecute(Conexao, 
+                glue("ALTER TABLE {Table_NameAntigo} DISABLE TRIGGER {trig};"))
+    }
+    rm(trig)
     
     ## Insere linhas:
     AddedRows <- dbAppendTable(Conexao, Table_NameAntigo, AddData)
     
-    # Recoloca os triggers
-    dbExecute(Conexao, 
-              glue("ALTER TABLE {Table_NameAntigo} ENABLE TRIGGER ALL;") )
+    # Reativa exatamente os mesmos triggers que desligamos.
+    for (trig in triggers_ativos) {
+      dbExecute(Conexao, 
+                glue("ALTER TABLE {Table_NameAntigo} ENABLE TRIGGER {trig};"))
+    }
+    rm(trig)
     
 
     message(AddedRows, " linhas novas inseridas na tabela")
@@ -332,7 +367,7 @@ AtualizaDados <- function(Conexao,
   # Atualiza coluna a coluna, usando a estratégia da tabela
   # intermediária.
   for (col in Att_Cols) {
-    # col <- Att_Cols[5]
+    # col <- Att_Cols[2]
     # print(col)
     
     message("Atualizando coluna ", col)
@@ -376,15 +411,23 @@ AtualizaDados <- function(Conexao,
     DadosUpdate <- DadosUpdate %>% 
       left_join(DadosCheck, by = Chave) %>% 
       mutate(Atualiza = case_when(
+        
+        # Regras para atualizar linhas:
+        
         ## O dado novo não por der NA
         is.na(Dado) ~ FALSE, 
+        
         ## Se o dado novo não for NA e o antigo sim
         !is.na(Dado) & is.na(Dado_Old) ~ TRUE,
+        
         # Se os dados forem iguais, não precisa atualizar
         Dado == Dado_Old ~ FALSE,
+        
         # Vou deixar isso aqui para os outros casos:
         TRUE ~ TRUE), 
+        
         temp_var = ifelse(Atualiza, Dado, Dado_Old)) %>% 
+      
       # select(all_of(Chave), temp_var) %>% 
       select(everything())
     
@@ -450,13 +493,16 @@ AtualizaDados <- function(Conexao,
                              ";")
       
       # Retira os Triggers para poder atualizar mais rápido
-      dbExecute(Conexao, 
-                glue("ALTER TABLE {Table_NameAntigo} DISABLE TRIGGER ALL;") )
       
+      # Desativar ESTRITAMENTE o que estava ativo
+      for(trig in triggers_ativos) {
+        dbExecute(Conexao, 
+                  glue("ALTER TABLE {Table_NameAntigo} DISABLE TRIGGER {trig};"))
+      }
+      rm(trig)
       
       ## Cria Coluna
       dbExecute(Conexao, query_AddCol)
-      
       
       rm(QueryGetInformation, ColTypes, VarType, query_AddCol)
       
@@ -487,11 +533,14 @@ AtualizaDados <- function(Conexao,
       # Deleta a coluna criada
       dbExecute(Conexao, query_DropCol)
       
-      # Recoloca os triggers
-      dbExecute(Conexao, 
-                glue("ALTER TABLE {Table_NameAntigo} ENABLE TRIGGER ALL;") )
       
-      
+      # Reativa exatamente os mesmos triggers que desligamos.
+      for (trig in triggers_ativos) {
+        dbExecute(Conexao, 
+                  glue("ALTER TABLE {Table_NameAntigo} ENABLE TRIGGER {trig};"))
+      }
+      rm(trig)
+
       # Remove a tabela update_temp
       if(dbExistsTable(Conexao, "update_temp")) {
         dbRemoveTable(Conexao, "update_temp")
@@ -502,7 +551,7 @@ AtualizaDados <- function(Conexao,
          LinhasAtualizadas)
       
     } else {
-      message("Não há linhas na tabela '", col, 
+      message("Não há linhas na coluna '", col, 
               "' para serem atualizadas.")
     }
     rm(DadosCheck, DadosUpdate)
@@ -513,7 +562,7 @@ AtualizaDados <- function(Conexao,
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Finaliza Atualização
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  rm(Att_Cols, Tables, DadosAntigos)
+  rm(Att_Cols, Tables, DadosAntigos, triggers_ativos)
   # ls()
   
   message("Atualização Concluída!")

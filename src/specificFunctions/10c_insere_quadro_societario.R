@@ -102,9 +102,9 @@ if( !(111 %in% processos_att_atual) ) {
     str_split(fixed("|")) %>% magrittr::extract2(1)
   
   # Filtros para a query da Receita:
-  filtros_rfb <- CamposAtualizacao %>% 
-    dplyr::filter(campos == "filtro_query_rfb") %>% 
-    select(nomes) %>% unlist() %>% as.character()
+  # filtros_rfb <- CamposAtualizacao %>% 
+  #   dplyr::filter(campos == "filtro_query_rfb") %>% 
+  #   select(nomes) %>% unlist() %>% as.character()
   
   rm(CamposAtualizacao)
   
@@ -128,10 +128,15 @@ if( !(111 %in% processos_att_atual) ) {
   # length(split_CNPJ)
   rm(x, chunck_size)
   
-  filtrorfb_2 <- filtros_rfb %>% 
-    paste0("s.", .) %>% 
-    paste0(collapse = " AND ") 
+  # filtrorfb_2 <- filtros_rfb %>% 
+  #   paste0("s.", .) %>% 
+  #   paste0(collapse = " AND ") 
   
+  
+  filtrorfb_2 <- glue(
+    "s.ano = '{year(definicoes$data_dados_referencia)}' AND ",
+    "s.mes = '{month(definicoes$data_dados_referencia)}'"
+  )
   
   source("src/generalFunctions/fix_duplicate_names.R")
   

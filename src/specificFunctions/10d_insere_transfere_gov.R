@@ -76,8 +76,20 @@ if( !(121 %in% processos_att_atual) ) {
       dir.create(glue(diretorio_att, "/input_files/dados_siconv"))
     }
     
-    download.file(url_proposta, destfile = zip_proposta, mode = "wb")
-    download.file(url_convenio, destfile = zip_convenio, mode = "wb")
+    library(httr)
+    
+    # GET ignora a verificação de SSL e grava direto no disco
+    GET(
+      url = url_proposta[1],
+      write_disk(zip_proposta[1], overwrite = TRUE),
+      config(ssl_verifypeer = FALSE) 
+    )
+    
+    GET(
+      url = url_convenio[1],
+      write_disk(zip_convenio[1], overwrite = TRUE),
+      config(ssl_verifypeer = FALSE) 
+    )
     
     ## Descompactar dentro da pasta central
     print("Descompactando arquivos...")
@@ -105,11 +117,23 @@ if( !(121 %in% processos_att_atual) ) {
                           encoding = "UTF-8", 
                           sep = ";", 
                           # nrows = 10000,
-                          select = c("ID_PROPOSTA", 
-                                     "COD_MUNIC_IBGE", 
-                                     "IDENTIF_PROPONENTE",
-                                     "OBJETO_PROPOSTA"),
+                          # select = c("ID_PROPOSTA",
+                          #            "COD_MUNIC_IBGE",
+                          #            "IDENTIF_PROPONENTE",
+                          #            "OBJETO_PROPOSTA"),
                           dec = ",")
+  
+  
+  # Limpa o BOM da primeira coluna modificando por referência 
+  # (zero custo de memória)
+  setnames(
+    x = dados_proposta, 
+    old = names(dados_proposta)[1], 
+    new = gsub("[^[:alnum:]_]", "", names(dados_proposta)[1])
+  )
+  
+  dados_proposta <- dados_proposta %>% 
+    select(ID_PROPOSTA, COD_MUNIC_IBGE, IDENTIF_PROPONENTE, OBJETO_PROPOSTA)
   
   dados_convenio <- fread(csv_convenio, 
                           encoding = "UTF-8", 
@@ -124,7 +148,7 @@ if( !(121 %in% processos_att_atual) ) {
                                      "VL_REPASSE_CONV"),
                           dec = ",")
   
-  # Mesclar os dados usando data.table
+  # Mesclar os dados 
   print("Processando dados...")
   
   dados_mesclados <- dados_convenio %>% 
@@ -341,7 +365,7 @@ if( !(121 %in% processos_att_atual) ) {
   if(!definicoes$att_teste) atualiza_processos_att(
     TipoAtt = "fim", 
     id_att = id_presente_att, 
-    id_processo = 121, 
+    id_processo = 12, 
     path_file_backup = ifelse(definicoes$salva_backup, 
                               glue("{diretorio_att}output_files/tb_projeto.RDS"), 
                               NULL))

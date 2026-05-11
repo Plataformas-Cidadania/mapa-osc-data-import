@@ -139,13 +139,19 @@ if( !(11 %in% processos_att_atual) ) {
   
   # Baixa dados dos estabelecimentos:
   
-  message("Baixa dados dos estabelecimentos")
+  message("Baixa dados das empresas")
   
-  filtrorfb_1 <- filtros_rfb %>% 
-    paste0(collapse = " AND ") %>% 
-    paste0(" AND ")
+  # filtrorfb_1 <- filtros_rfb %>% 
+  #   paste0(collapse = " AND ") %>% 
+  #   paste0(" AND ")
   
-  query_estabelecimentos <- glue(
+  filtrorfb_1 <- glue(
+    "ano = '{year(definicoes$data_dados_referencia)}' AND ",
+    "mes = '{month(definicoes$data_dados_referencia)}' AND"
+  )
+  
+  
+  query_empresas <- glue(
     "
 SELECT * FROM {tabela_empresas_rfb}
     WHERE {filtrorfb_1} 
@@ -154,13 +160,15 @@ SELECT * FROM {tabela_empresas_rfb}
     ";"
   )
   
-  # query_estabelecimentos
+  # query_empresas
   
   message("Início da busca: ", agora())
-  empresas_df <- dbGetQuery(conexao_rfb, query_estabelecimentos)
+  empresas_df <- dbGetQuery(conexao_rfb, query_empresas)
   message("Fim da busca: ", agora())
   
-  rm(filtrorfb_1, query_estabelecimentos)
+  rm(filtrorfb_1, query_empresas)
+  
+  assert_that(nrow(empresas_df) > 10000)
   
   Sys.sleep(2)
   
@@ -175,10 +183,14 @@ SELECT * FROM {tabela_empresas_rfb}
   # length(split_CNPJ)
   rm(x, chunck_size)
   
-  filtrorfb_2 <- filtros_rfb %>% 
-    paste0("e.", .) %>% 
-    paste0(collapse = " AND ") 
+  # filtrorfb_2 <- filtros_rfb %>% 
+  #   paste0("e.", .) %>% 
+  #   paste0(collapse = " AND ") 
   
+  filtrorfb_2 <- glue(
+    "e.ano = '{year(definicoes$data_dados_referencia)}' AND ",
+    "e.mes = '{month(definicoes$data_dados_referencia)}'"
+  )
   
   source("src/generalFunctions/fix_duplicate_names.R")
   

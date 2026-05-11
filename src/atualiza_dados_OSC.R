@@ -33,14 +33,14 @@ definicoes$schema_receita <- "rfb_unificado" # ATUALIZAR AQUI QUANDO CHEGAR NOVO
 # (escolher entre homologação e produção)
 # As chaves deve estar em: "src/specificFunctions/01_setup_atualizacao.R"
 # Opções: 'Produção' | 'Homologação'
-definicoes$Banco_Atualização <- "Produção" 
+definicoes$Banco_Atualização <- "Homologação" 
 
 # Arquivo JSON com as chaves de acesso ao banco de dados da RFB e da RAIS:
 definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"
 
 # Adiciona um comentário para a atualização
 definicoes$tx_att_comentarios <- glue::glue(
-  "Atualização ad hoc para corrigir o erro que apagou o nome fantasia das osc na atualização 2026_01. Somente a tabela tb_dados_gerais foi atualizada"
+  "Atualização com os dados de abril/2026"
   )
 
 # Essa atualização é teste? 
@@ -52,9 +52,6 @@ definicoes$salva_backup <- TRUE
 
 # Existem novos dados RAIS nesta atualização?
 definicoes$atualiza_RAIS <- FALSE
-
-definicoes$schemas_RAIS <- "vinculos_v6"
-definicoes$tabela_RAIS <- "tb_vinculos"
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -73,9 +73,6 @@ if( !(101 %in% processos_att_atual) & definicoes$atualiza_RAIS ) {
                                           side = "left", 
                                           pad = "0"))
   
-  # Estou aqui !!!! #####
-  
-  
   # Conecta à base de dados da RAIS:
   source("src/generalFunctions/postCon.R") 
   conexao_RAIS <- postCon(definicoes$credenciais_rfb, 

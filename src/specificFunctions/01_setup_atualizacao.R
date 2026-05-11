@@ -84,7 +84,9 @@ definicoes$path_rscript_att_mosc <- "src/atualiza_dados_OSC.R"
 definicoes$dir_backup_files <- "backup_files/"
 
 
-
+# Definições RAIS
+definicoes$schemas_RAIS <- "vinculos_v6"
+definicoes$tabela_RAIS <- "tb_vinculos"
 
 # Uma série de procedmentos para evitar que se atualize o banco de dados errado:
 

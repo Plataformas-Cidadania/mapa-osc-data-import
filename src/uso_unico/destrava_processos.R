@@ -45,10 +45,10 @@ WHERE state != 'idle' AND query NOT LIKE '%pg_stat_activity%';
 
 teste
 
-
+  
 
 # Interrompe processos:
-dbExecute(conexao_mosc, "SELECT pg_terminate_backend(122835);")
+dbExecute(conexao_mosc, "SELECT pg_terminate_backend(90313);")
 
 dbExecute(conexao_mosc, "SELECT pg_terminate_backend(38417);")
 

@@ -124,6 +124,65 @@ if(!any(pull(tb_controle_atualizacao, tx_att_situacao) == "Iniciada")) {
     collect() %>% 
     unlist() %>% as.character()
   
+  # Data de referência da atualização atual:
+  definicoes$data_dados_referencia <- tb_controle_atualizacao %>% 
+    dplyr::filter(att_id == id_presente_att) %>% 
+    collect() %>% 
+    pull(dt_att_ref) %>% 
+    ymd() %>% 
+    as.character()
+  
+  # Se a data de atualização não estiver presente, busca ela.
+  if(is.null(definicoes$data_dados_referencia) | 
+     is.na(definicoes$data_dados_referencia)) {
+    
+    # Data de referência do dos dados originais (Receita Federal)
+    message("Encontra data de referência da atualização")
+    
+    message(agora(), "  Conectando aos Bancos de Dados RFB (rais_2019)")
+    Sys.sleep(1) # Dar um tempo apenas para o usuário ler as mensagens da atualização
+    
+    assert_that("credenciais_rfb" %in% names(definicoes), 
+                msg = "O objeto 'credenciais_rfb', não foi carregado!")
+    
+    source("src/generalFunctions/postCon.R") 
+    
+    conexao_rfb <- postCon(definicoes$credenciais_rfb, 
+                           Con_options = glue("-c search_path={definicoes$schema_receita}")
+    )
+    
+    if(dbIsValid(conexao_rfb)) message("Conectado ao BD 'rais_2019'")
+    
+    tabela_estabelecimentos_rfb <-  CamposAtualizacao %>% 
+      dplyr::filter(
+        schema_receita == definicoes$schema_receita[1],
+        campos == "tabela_estabelecimentos_rfb", 
+      ) %>% 
+      slice(1) %>% 
+      pull(nomes)
+    
+    
+    message("Início da busca: ", agora())
+    data_mais_recente <- try(dbGetQuery(conexao_rfb, 
+                                        glue("SELECT MAX(data_situacao_cadastral) ", 
+                                             "FROM {tabela_estabelecimentos_rfb}",
+                                             ";")))
+    message("Fim da busca: ", agora())
+    
+    definicoes$data_dados_referencia <- data_mais_recente %>% 
+      slice(1) %>% 
+      pull(max) %>% 
+      ymd()
+    
+    rm(data_mais_recente, tabela_estabelecimentos_rfb)
+    
+    dbDisconnect(conexao_rfb)
+    rm(conexao_rfb, postCon)
+    
+  }
+  
+  message("Data mais recente dos dados brutos: ", 
+          definicoes$data_dados_referencia)
 }
 
 # Controle dos processo da atualização atual:

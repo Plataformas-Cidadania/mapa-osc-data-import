@@ -69,10 +69,10 @@ tb_dados_gerais <- dbGetQuery(conexao_mosc, paste0("SELECT * FROM tb_dados_gerai
 
 # names(tb_dados_gerais)
 
-Dados <- tb_dados_gerais %>% 
-  left_join(select(tb_osc, id_osc, cd_identificador_osc, bo_osc_ativa, 
-                   cd_situacao_cadastral), 
-            by = "id_osc") %>% 
+Dados <- tb_osc %>% 
+  select(id_osc, cd_identificador_osc, bo_osc_ativa, cd_situacao_cadastral) %>%
+  left_join(tb_dados_gerais, by = "id_osc") %>% 
+  
   # dplyr::filter(bo_osc_ativa) %>% # desde a att 2026_01, inserir as osc inativas
   # Evita problemas de padding:
   mutate(
@@ -80,11 +80,10 @@ Dados <- tb_dados_gerais %>%
                                    width = 14, 
                                    pad = "0"), 
     situacao_cadastral = case_when(
-      bo_osc_ativa ~ "Nula ou Baixada",
       cd_situacao_cadastral == 2 ~ "Ativa",
       cd_situacao_cadastral == 3 ~ "Suspensa",
       cd_situacao_cadastral == 4 ~ "Inapta",
-      TRUE ~ "Não Identificado"
+      TRUE ~ "Nula ou Baixada"
       ),
     removida_do_mosc = ifelse(bo_osc_ativa, "não", "sim"),
     matriz_filial = case_when(
@@ -120,6 +119,9 @@ Dados <- tb_dados_gerais %>%
          cd_cnae_secundaria,
          )
 
+# table(Dados$cd_situacao_cadastral)
+# table(Dados$situacao_cadastral)
+
 rm(tb_dados_gerais, tb_osc)
 
 
@@ -135,9 +137,10 @@ rm(tb_dados_gerais, tb_osc)
 message("Extraindo geolocalização")
 
 # Usando o arquivo do banco de dados
-tb_localizacao <- dbGetQuery(conexao_mosc, paste0("SELECT * FROM tb_localizacao",
-                                                   # " LIMIT 500", 
-                                                   ";"))
+tb_localizacao <- dbGetQuery(conexao_mosc,
+                             paste0("SELECT * FROM tb_localizacao",
+                                    # " LIMIT 500", 
+                                    ";"))
 
 # sum(is.na(tb_localizacao$tx_endereco_corrigido))
 # sum(is.na(Dados$tx_endereco_completo))
@@ -412,7 +415,10 @@ Dados2 <- Dados %>%
     SubArea_Religiao)
 
 # names(Dados2)
-# 
+
+# table(Dados2$cd_situacao_cadastral)
+# table(Dados2$situacao_cadastral)
+
 # table(Dados2$SubArea_Hospitais)
 # table(Dados2$SubArea_Esportes_e_recreacao)
 # table(Dados2$SubArea_Educacao_infantil)

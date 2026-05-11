@@ -229,11 +229,22 @@ assert_that(!dbExistsTable(conexao_mosc, "teste"),
   if(.) message("Teste de exclusão de inserção no 'portal_osc' realizado ", 
                 "com sucesso") 
 
+# Verifica se a coluna 'temp_var' está em tb_osc (possível sujeira de 
+# atualizações incompletas). Se a coluna estiver lá, deleta.
+
+if('temp_var' %in% names(teste)) {
+  dbExecute(conexao_mosc, 
+            paste0("ALTER TABLE tb_osc",
+                   " DROP COLUMN IF EXISTS temp_var;") )
+}
+
 Sys.sleep(2)
 
 rm(teste, teste_verific)
 
 # # Teste para inserir coluna em 'portal_osc'
+
+
 
 # Teste de cria coluna em uma tabela existente:
 query_AddCol <- paste0("ALTER TABLE tb_osc",
@@ -371,30 +382,41 @@ rm(teste_rfb, tabela_empresas_rfb)
 
 Sys.sleep(2)
 
-# Data de referência do dos dados originais (Receita Federal)
-message("Encontra data de referência da atualização")
-
-tabela_estabelecimentos_rfb <-  CamposAtualizacao %>% 
-  dplyr::filter(campos == "tabela_estabelecimentos_rfb") %>% 
-  slice(1) %>% 
-  select(nomes) %>% 
-  unlist() %>% as.character()
-
-estabelecimentos_raw <- try(dbGetQuery(conexao_rfb, 
-                                       glue("SELECT data_situacao_cadastral ",
-                                            "FROM {tabela_estabelecimentos_rfb}",
-                                            " LIMIT 5000000", 
-                                            ";")))
-
-definicoes$data_dados_referencia <- estabelecimentos_raw %>% 
-  dplyr::filter(data_situacao_cadastral > 0) %>% 
-  mutate(data_situacao_cadastral = ymd(data_situacao_cadastral)) %>% 
-  summarise(max_date = max(data_situacao_cadastral, na.rm = TRUE)) %>% 
-  mutate(max_date = as.character(max_date)) %>% 
-  unlist() %>% as.character() %>% ymd()
+# Checa tabelas RAIS
+if(definicoes$atualiza_RAIS) {
   
-rm(estabelecimentos_raw, tabela_estabelecimentos_rfb)
-
+  message("Checando tabela RAIS")
+  
+  conexao_RAIS <- postCon(definicoes$credenciais_rfb, 
+                          Con_options = 
+                            glue(
+                              "-c search_path={definicoes$schemas_RAIS}"))
+  
+  assert_that(dbIsValid(conexao_RAIS), 
+              msg = "Não foi possível conectar ao banco 'rais_2019'") %>% 
+    if(.) message("Conectado ao BD 'rais_2019'")
+  
+  Sys.sleep(1)
+  
+  # Checa se a tabela dos dados está presente:
+  tables_RAIS <- dbListTables(conexao_RAIS)
+  
+  assert_that(
+    definicoes$tabela_RAIS %in% tables_RAIS, 
+    
+    msg = glue(
+      "Tabela {definicoes$tabela_RAIS} NÃO encontrada no banco RAIS!"
+      ) 
+    ) %>% 
+      
+    if(.) message(
+      glue("Tabela {definicoes$tabela_RAIS} encontrada no banco RAIS")
+      )
+  
+  dbDisconnect(conexao_RAIS)
+  rm(conexao_RAIS, tables_RAIS)
+  Sys.sleep(1)
+}
 
 # De forma profilática, desconecta do banco de dados
 dbDisconnect(conexao_rfb)
