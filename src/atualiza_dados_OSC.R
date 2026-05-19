@@ -40,7 +40,7 @@ definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"
 
 # Adiciona um comentário para a atualização
 definicoes$tx_att_comentarios <- glue::glue(
-  "Atualização com os dados de abril/2026"
+  "Atualização com os dados de maio/2026"
   )
 
 # Essa atualização é teste? 

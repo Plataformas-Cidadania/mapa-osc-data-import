@@ -150,7 +150,6 @@ if( !(11 %in% processos_att_atual) ) {
     "mes = '{month(definicoes$data_dados_referencia)}' AND"
   )
   
-  
   query_empresas <- glue(
     "
 SELECT * FROM {tabela_empresas_rfb}

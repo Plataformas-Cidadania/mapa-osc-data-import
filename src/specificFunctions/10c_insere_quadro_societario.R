@@ -140,7 +140,7 @@ if( !(111 %in% processos_att_atual) ) {
   
   source("src/generalFunctions/fix_duplicate_names.R")
   
-  socios_df <- tibble()
+  socios_df_list <- vector(mode = "list", length = length(split_CNPJ))
   
   # Executa a busca do quadro societário das OSC:
   message("Baixando dados do Quadro Societário")
@@ -172,17 +172,22 @@ WHERE {filtrorfb_2};"
     # Corrige nomes duplicados:
     data_j <- fix_duplicate_names(data_j, alert = FALSE)
     
-    socios_df <- bind_rows(socios_df, data_j)
+    # socios_df <- bind_rows(socios_df, data_j)
+    socios_df_list[[j]] <- data_j
     rm(query_j, data_j)
   }
   rm(j, filtrorfb_2, split_CNPJ, fix_duplicate_names)
   
   message("Fim da busca: ", agora())
   
+  socios_df <- bind_rows(socios_df_list)
+  
+  rm(socios_df_list)
+  
   # query_naolucrativo_rfb
   
   rm(tabela_empresas_rfb, tabela_socios_rfb, campo_cnpj, 
-     campo_natureza_juridica, natjur_nao_lucrativo, filtros_rfb)
+     campo_natureza_juridica, natjur_nao_lucrativo)
   
   message("Formata dados do Quadro Societário")
   
@@ -201,6 +206,8 @@ WHERE {filtrorfb_2};"
            # completo no banco.
            id_socio_temp = paste0(id_osc, "_", tx_cpf_socio, "_", tx_nome_socio)
            ) %>% 
+    # Para eveitar relações "many-to-many":
+    distinct(id_socio_temp, .keep_all = TRUE) %>% 
     select(id_socio_temp, id_quadro_societario)
   
   # Formata os dados
@@ -241,6 +248,9 @@ WHERE {filtrorfb_2};"
       id_socio_temp = paste0(id_osc, "_", tx_cpf_socio, "_", tx_nome_socio),
       ) %>% 
     
+    # Evita duplicação de sócios nas OSC:
+    distinct(id_socio_temp, .keep_all = TRUE) %>% 
+    
     # Insere os 'id_quadro_societario':
     left_join(id_quadro_societario_Old, by = "id_socio_temp") %>% 
     
@@ -268,7 +278,6 @@ WHERE {filtrorfb_2};"
   # table(tb_quadro_societario$mes)
   # table(tb_quadro_societario$ano)
   
-
   # Cria novos 'id_quadro_societario':
   if(sum(is.na(tb_quadro_societario$id_quadro_societario)) > 0) {
     
@@ -288,6 +297,11 @@ WHERE {filtrorfb_2};"
     rm(Max_OldID, NewID)
   }
   
+  # Garante consistência das chaves primárias:
+  source("src/generalFunctions/Check_PK_Rules.R")
+  
+  Check_PK_Rules(tb_quadro_societario$id_quadro_societario)
+  
   # Caminho do arquivo Backup
   path_file_backup <- glue("{diretorio_att}output_files/tb_quadro_societario.RDS")
   
@@ -306,7 +320,7 @@ WHERE {filtrorfb_2};"
   
   rm(path_file_backup, FonteRFB, id_quadro_societario_Old)
   rm(socios_df, idControl)
-  rm(tb_quadro_societario)
+  rm(tb_quadro_societario, Check_PK_Rules)
   # ls()
   
   dbDisconnect(conexao_rfb)
