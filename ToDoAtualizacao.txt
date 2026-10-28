@@ -24,3 +24,14 @@ To do:
 
 	-Fazer atualização no banco de homologação, como teste:
 		-https://mapaosc-homolog.ipea.gov.br/mapa
+
+
+
+
+
+
+To do de aprimoramento no código:
+
+	-Checar atualizações em '10d_insere_transfere_gov.R'
+
+	-Omitir OSC com restrições de publicidade por questões de segurança (XXXXX nos campos de contato, como telefone, endereço CEP etc)

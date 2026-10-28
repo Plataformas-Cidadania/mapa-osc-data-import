@@ -11,6 +11,7 @@
 
 
 # Main packages
+library(conflicted)
 library(tidyverse)
 library(data.table)
 library(stringr)
@@ -18,11 +19,13 @@ library(assertthat)
 library(lubridate)
 library(glue)
 
+conflicted::conflict_prefer("filter", "dplyr")
 
 # Options
 options(stringsAsFactors = FALSE)
 options(encoding = "utf-8")
 options(dplyr.summarise.inform = FALSE)
+options(na.rm = TRUE)
 
 
 cat("Projeto: Importar e formatar dados IPEA")

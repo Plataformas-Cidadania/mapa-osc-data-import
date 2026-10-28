@@ -23,5 +23,6 @@ refresh materialized view spat.mvw_count_mun;
 REFRESH MATERIALIZED VIEW portal.vw_osc_projeto;
 REFRESH MATERIALIZED VIEW CONCURRENTLY portal.vw_osc_recursos_projeto;
 REFRESH MATERIALIZED VIEW CONCURRENTLY portal.vw_osc_area_atuacao;
-REFRESH MATERIALIZED VIEW CONCURRENTLY portal.vw_osc_certificado
+REFRESH MATERIALIZED VIEW CONCURRENTLY portal.vw_osc_certificado;
+REFRESH MATERIALIZED VIEW public.mvw_tabelao WITH DATA;
 SELECT * FROM portal.atualizar_graficos();

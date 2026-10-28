@@ -106,11 +106,12 @@ if( !(111 %in% processos_att_atual) ) {
   #   dplyr::filter(campos == "filtro_query_rfb") %>% 
   #   select(nomes) %>% unlist() %>% as.character()
   
-  rm(CamposAtualizacao)
+  rm(CamposAtualizacao, tabela_empresas_rfb,
+     campo_natureza_juridica, natjur_nao_lucrativo)
   
   # Resgata o ID já existente das OSC
   idControl <- tbl(conexao_mosc, "tb_osc") %>% 
-    select(id_osc, cd_identificador_osc) %>% 
+    select(id_osc, cd_identificador_osc, bo_osc_ativa) %>% 
     collect() %>% 
     mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
                                           width = 14, 
@@ -147,7 +148,7 @@ if( !(111 %in% processos_att_atual) ) {
   
   message("Início da busca: ", agora())
   for (j in seq_along(split_CNPJ) ) {
-    # j <- 5
+    # j <- 1
     
     message(j, "/", length(split_CNPJ))
     
@@ -173,21 +174,19 @@ WHERE {filtrorfb_2};"
     data_j <- fix_duplicate_names(data_j, alert = FALSE)
     
     # socios_df <- bind_rows(socios_df, data_j)
+    # View(socios_df_list[[j]])
     socios_df_list[[j]] <- data_j
     rm(query_j, data_j)
   }
-  rm(j, filtrorfb_2, split_CNPJ, fix_duplicate_names)
-  
   message("Fim da busca: ", agora())
+  rm(j, filtrorfb_2, split_CNPJ, fix_duplicate_names,
+     tabela_socios_rfb, campo_cnpj)
   
   socios_df <- bind_rows(socios_df_list)
   
   rm(socios_df_list)
   
   # query_naolucrativo_rfb
-  
-  rm(tabela_empresas_rfb, tabela_socios_rfb, campo_cnpj, 
-     campo_natureza_juridica, natjur_nao_lucrativo)
   
   message("Formata dados do Quadro Societário")
   
@@ -206,35 +205,83 @@ WHERE {filtrorfb_2};"
            # completo no banco.
            id_socio_temp = paste0(id_osc, "_", tx_cpf_socio, "_", tx_nome_socio)
            ) %>% 
-    # Para eveitar relações "many-to-many":
+    # Para evitar relações "many-to-many":
     distinct(id_socio_temp, .keep_all = TRUE) %>% 
     select(id_socio_temp, id_quadro_societario)
+
+  # Prepara idControl com cnpj_basico (8 primeiros dígitos do CNPJ) para o join:
+  # A relação entre socios_df e idControl é many-to-many: um sócio pode estar em
+  # várias OSC, e cada OSC pode ter vários estabelecimentos 
+  # (cd_identificador_osc)com o mesmo cnpj_basico. O quadro societário é
+  # replicado para cada estabelecimento da organização.
+  
+  # Resgata o ID já existente das OSC
+  idControl <- tbl(conexao_mosc, "tb_osc") %>% 
+    select(id_osc, cd_identificador_osc, bo_osc_ativa) %>% 
+    collect() %>% 
+    mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
+                                          width = 14, 
+                                          side = "left", 
+                                          pad = "0"))
+  
+  idControl_basico <- idControl %>%
+    mutate(cnpj_basico = str_sub(cd_identificador_osc, 1, 8)) %>% 
+    dplyr::filter(bo_osc_ativa) %>% 
+    select(-bo_osc_ativa)
+  
+  rm(idControl)
+  
+  # socios_df %>% 
+  #   group_by(cnpj_basico) %>% 
+  #   summarise(Count_freq = n()) %>% 
+  #   group_by(Count_freq) %>% 
+  #   summarise(Freq = n()) %>% 
+  #   print(n = 50)
+  # 
+  # nrow(tb_quadro_societario)
+
+  # nrow(tb_quadro_societario) / nrow(idControl_basico)
   
   # Formata os dados
   tb_quadro_societario <- socios_df %>% 
     
-    mutate(cd_identificador_osc = str_pad(as.character(cnpj), 
-                          width = 14,
-                          side = "left",
-                          pad = "0"
-                          )) %>% 
+    # Mantém apenas as colunas necessárias para reduzir uso de memória:
+    select(
+      cnpj_basico,
+      nome_socio,
+      cnpj_cpf_socio,
+      data_entrada_sociedade,
+      qualificacao_socio,
+      identificador_de_socio
+    ) %>%
     
-    # Filtra apenas os CNPJ que são OSC:
-    dplyr::filter(cd_identificador_osc %in% idControl$cd_identificador_osc) %>% 
+    # Filtra apenas os CNPJ básicos que pertencem a OSC:
+    dplyr::filter(cnpj_basico %in% idControl_basico$cnpj_basico) %>% 
     
-    # Insere os 'id_osc':
-    left_join(idControl, by = "cd_identificador_osc") %>% 
+    # Remove duplicatas de sócio por cnpj_basico antes do join:
+    # socios_df tem uma linha por (CNPJ completo, sócio), então o mesmo sócio
+    # aparece N vezes se a empresa tem N estabelecimentos na RFB. Sem essa
+    # deduplicação, o join many-to-many gera N×M linhas por sócio (onde M é
+    # o número de estabelecimentos em idControl_basico), causando explosão.
+    distinct(cnpj_basico, cnpj_cpf_socio, nome_socio, .keep_all = TRUE) %>%
     
+    # Replica o quadro societário para cada estabelecimento 
+    # (cd_identificador_osc) com o mesmo cnpj_basico em idControl
+    # (relação many-to-many):
+    left_join(idControl_basico, 
+              by = "cnpj_basico", 
+              relationship = "many-to-many") %>%
+
     # Formata dados:
     rename(
       tx_nome_socio = nome_socio,
       tx_cpf_socio = cnpj_cpf_socio
-      ) %>% 
-    
+      ) %>%
+
     mutate(
-      tx_cpf_socio = str_pad(as.character(tx_cpf_socio), 
-                             width = 11, 
-                             side = "left", 
+      tx_cpf_socio = str_pad(as.character(tx_cpf_socio),
+                             width = 11,
+                             side = "left",
                              pad = "0"),
       tx_data_entrada_socio = ymd(data_entrada_sociedade),
       cd_qualificacao_socio = as.integer(qualificacao_socio),
@@ -244,18 +291,18 @@ WHERE {filtrorfb_2};"
       ft_data_entrada_socio = FonteRFB,
       ft_qualificacao_socio = FonteRFB,
       ft_tipo_socio = FonteRFB,
-      bo_oficial = TRUE, 
+      bo_oficial = TRUE,
       id_socio_temp = paste0(id_osc, "_", tx_cpf_socio, "_", tx_nome_socio),
-      ) %>% 
-    
-    # Evita duplicação de sócios nas OSC:
-    distinct(id_socio_temp, .keep_all = TRUE) %>% 
-    
-    # Insere os 'id_quadro_societario':
-    left_join(id_quadro_societario_Old, by = "id_socio_temp") %>% 
-    
+      ) %>%
+
+    # Evita duplicação de sócios na mesma OSC (mesmo id_osc):
+    distinct(id_socio_temp, .keep_all = TRUE) %>%
+
+    # Insere os 'id_quadro_societario' (resgata ids antigos onde disponível):
+    left_join(id_quadro_societario_Old, by = "id_socio_temp") %>%
+
     # Ordem das variáveis
-    select(     
+    select(
       id_quadro_societario,
       id_osc,
       tx_nome_socio,
@@ -269,16 +316,16 @@ WHERE {filtrorfb_2};"
       cd_tipo_socio,
       ft_tipo_socio,
       bo_oficial,
-      everything()
+      cd_identificador_osc
     )
+  rm(socios_df, FonteRFB, idControl_basico)
   
   # names(tb_quadro_societario)
   # View(tb_quadro_societario)
+  # sum(is.na(tb_quadro_societario$id_quadro_societario))
   
-  # table(tb_quadro_societario$mes)
-  # table(tb_quadro_societario$ano)
-  
-  # Cria novos 'id_quadro_societario':
+  # Cria novos 'id_quadro_societario' (inclusive para linhas duplicadas por
+  # estabelecimento que não existiam no banco anterior):
   if(sum(is.na(tb_quadro_societario$id_quadro_societario)) > 0) {
     
     # id máximo antigo
@@ -296,11 +343,13 @@ WHERE {filtrorfb_2};"
     
     rm(Max_OldID, NewID)
   }
+  rm(id_quadro_societario_Old)
   
   # Garante consistência das chaves primárias:
   source("src/generalFunctions/Check_PK_Rules.R")
   
   Check_PK_Rules(tb_quadro_societario$id_quadro_societario)
+  rm(Check_PK_Rules)
   
   # Caminho do arquivo Backup
   path_file_backup <- glue("{diretorio_att}output_files/tb_quadro_societario.RDS")
@@ -318,9 +367,7 @@ WHERE {filtrorfb_2};"
     id_processo = 11, 
     path_file_backup = ifelse(definicoes$salva_backup, path_file_backup, NULL))
   
-  rm(path_file_backup, FonteRFB, id_quadro_societario_Old)
-  rm(socios_df, idControl)
-  rm(tb_quadro_societario, Check_PK_Rules)
+  rm(path_file_backup, tb_quadro_societario)
   # ls()
   
   dbDisconnect(conexao_rfb)

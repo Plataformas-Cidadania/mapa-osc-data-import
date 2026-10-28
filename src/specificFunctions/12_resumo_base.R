@@ -123,7 +123,7 @@ Dados <- tb_osc %>%
 # table(Dados$situacao_cadastral)
 
 rm(tb_dados_gerais, tb_osc)
-
+gc()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Insere dados de localização ####
@@ -194,8 +194,7 @@ Dados <- Dados %>%
 # names(Dados)
 
 rm(tb_localizacao, Municipios, UFs, LatLonOSC)
-
-
+gc()
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -225,6 +224,7 @@ Dados <- Dados %>%
   by = "id_osc")
 
 rm(tb_contato)
+gc()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Insere dados de área de atuação ####
@@ -292,7 +292,7 @@ Dados <- Dados %>%
 
 rm(dados_join, tb_area_atuacao)
 rm(dc_area_atuacao, dc_subarea_atuacao)
-
+gc()
 
 # Dados do arquivo da RFB: ####
 # (CNAE primária e secundária).
@@ -322,6 +322,31 @@ if(FALSE) {
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Dados Trabalhistas ####
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+# Usando o arquivo do banco de dados
+tb_relacoes_trabalho <- dbGetQuery(conexao_mosc, 
+                                   paste0("SELECT * FROM tb_relacoes_trabalho",
+                                          # " LIMIT 500", 
+                                          ";"))
+
+
+dados_join <- tb_relacoes_trabalho %>% 
+  select(id_osc, nr_trabalhadores_vinculo, nr_trabalhadores_deficiencia, 
+         nr_trabalhadores_voluntarios)
+
+
+Dados <- Dados %>% 
+  # Insere as dummies de área de atuação no conjunto principal de dados:
+  left_join(dados_join, by = "id_osc")
+
+rm(dados_join, tb_relacoes_trabalho)
+gc()
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Arruma e Salva os dados finais ####
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -346,6 +371,7 @@ Dados2 <- Dados %>%
     site_google = tx_google,          
     linkedin = tx_linkedin,        
     twitter = tx_twitter,
+    nr_trabalhadores_formais = nr_trabalhadores_vinculo
     ) %>% 
   
   # Deixa as variáveis em uma ordem agradável
@@ -383,6 +409,11 @@ Dados2 <- Dados %>%
     site_google,          
     linkedin,        
     twitter,
+    
+    # Dados Trabalhistas
+    nr_trabalhadores_formais,
+    nr_trabalhadores_deficiencia,
+    nr_trabalhadores_voluntarios,
     
     # Áreas de Atuação:
     cnae, 
@@ -441,8 +472,8 @@ fwrite(Dados2, glue("{diretorio_att}output_files/{hoje_txt}_MOSC_basecompleta.cs
 saveRDS(Dados2, 
         glue("{diretorio_att}output_files/{hoje_txt}_MOSC_basecompleta.RDS"))
 
-# Salva base sem os contatos
-Dados_semContato <- Dados2 %>% 
+# Salva para divulgação
+Dados_publico <- Dados2 %>% 
   select(
     -telefone,
     -email, 
@@ -451,10 +482,14 @@ Dados_semContato <- Dados2 %>%
     -facebook,        
     -site_google,          
     -linkedin,        
-    -twitter,)
+    -twitter,
+    -nr_trabalhadores_formais,
+    -nr_trabalhadores_deficiencia,
+    -nr_trabalhadores_voluntarios,
+    )
 
-fwrite(Dados_semContato, 
-       glue("{diretorio_att}output_files/{hoje_txt}_MOSC_baseresumida.csv"), 
+fwrite(Dados_publico, 
+       glue("{diretorio_att}output_files/{hoje_txt}_MOSC_baseDivulgacao.csv"), 
        sep = ";", dec = ",")
 
 rm(Dados, Dados2, Dados_semContato)

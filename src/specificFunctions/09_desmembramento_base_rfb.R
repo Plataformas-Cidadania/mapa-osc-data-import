@@ -118,6 +118,9 @@ if( !(61 %in% processos_att_atual) ) {
                                           side = "left", 
                                           pad = "0"))
   
+  # OSC com restrições de visibilidade:
+  osc_restritas <- readRDS("tab_auxiliares/osc_restritas.RDS")
+  
   # Tabela: tb_osc ####
   
   message("Gerando tabela: tb_osc")
@@ -327,6 +330,33 @@ if( !(61 %in% processos_att_atual) ) {
   
   # Remove strings vazias ("")
   tb_contato <- Empty2NA(tb_contato)
+  
+  # Remove dados sensíveis de OSC com restrições de visibilidade
+  
+  # Remove dados de OSC sensíveis
+  message("Remove dados de OSC sensíveis - Contato")
+  idx_restritas_contato <- which(tb_contato$id_osc %in% osc_restritas)
+  
+  for(j in c("tx_telefone", 
+             "ft_telefone", 
+             "tx_email", 
+             "ft_email", 
+             "bo_nao_possui_email")
+  ) {
+    # j <- "tx_telefone"
+    message(j)
+    if( str_sub(j, 1, 2) == "ft" ) {
+      tb_contato[[j]][idx_restritas_contato] <- "sigilo"
+    } else if ( str_sub(j, 1, 2) == "tx" ) {
+      tb_contato[[j]][idx_restritas_contato] <- "xxxxx"
+    } else if( str_sub(j, 1, 2) == "nr" ) {
+      tb_contato[[j]][idx_restritas_contato] <- 0
+    }  else {
+      tb_contato[[j]][idx_restritas_contato] <- NA
+    }
+  }
+  rm(idx_restritas_contato, j)
+  
   
   # Colocar contato no formato curto.
   
@@ -544,6 +574,29 @@ if( !(61 %in% processos_att_atual) ) {
   # Remove strings vazias ("")
   tb_localizacao <- Empty2NA(tb_localizacao)
   
+  # Remove dados de OSC sensíveis
+  message("Remove dados de OSC sensíveis - Localização")
+  
+  idx_restritas_contato <- which(tb_localizacao$id_osc %in% osc_restritas)
+  
+  for(j in str_subset(names(tb_localizacao), 
+                      "id_osc|cd_identificador_osc", 
+                      negate = TRUE)
+      ) {
+    # j <- "tx_telefone"
+    message(j)
+    if( str_sub(j, 1, 2) == "ft" ) {
+      tb_localizacao[[j]][idx_restritas_contato] <- "sigilo"
+    } else if ( str_sub(j, 1, 2) == "tx" ) {
+      tb_localizacao[[j]][idx_restritas_contato] <- "xxxxx"
+    } else if( str_sub(j, 1, 2) == "nr" ) {
+      tb_localizacao[[j]][idx_restritas_contato] <- 0
+    }  else {
+      tb_localizacao[[j]][idx_restritas_contato] <- NA
+    }
+  }
+  rm(idx_restritas_contato, j)
+  
   # Como o padrão da base de dados é class("cd_identificador_osc") == numeric , 
   # vou deixar assim
   tb_localizacao[["cd_identificador_osc"]] <- as.numeric(tb_localizacao[["cd_identificador_osc"]])
@@ -572,10 +625,7 @@ if( !(61 %in% processos_att_atual) ) {
     rm(path_file)
   }
   
-  
-  
   # Tabela: tb_area_atuacao ####
-  
   message("Gerando tabela: tb_area_atuacao")
   
   tb_area_atuacao <- DB_OSC %>% 

@@ -33,14 +33,14 @@ definicoes$schema_receita <- "rfb_unificado" # ATUALIZAR AQUI QUANDO CHEGAR NOVO
 # (escolher entre homologação e produção)
 # As chaves deve estar em: "src/specificFunctions/01_setup_atualizacao.R"
 # Opções: 'Produção' | 'Homologação'
-definicoes$Banco_Atualização <- "Homologação" 
+definicoes$Banco_Atualização <- "Produção" 
 
 # Arquivo JSON com as chaves de acesso ao banco de dados da RFB e da RAIS:
 definicoes$credenciais_rfb <- "keys/rais_2019_MuriloJunqueira.json"
 
 # Adiciona um comentário para a atualização
 definicoes$tx_att_comentarios <- glue::glue(
-  "Atualização com os dados de maio/2026"
+  "Atualização com os dados de julho/2026"
   )
 
 # Essa atualização é teste? 
@@ -137,3 +137,4 @@ rm(processos_att_atual, tb_backups_files, tb_controle_atualizacao,
 ls()
 gc()
 # Fim ####
+

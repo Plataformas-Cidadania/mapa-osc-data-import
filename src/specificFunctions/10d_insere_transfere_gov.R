@@ -23,6 +23,9 @@
 
 # bibliotecas necessárias:
 library(httr)
+library(readr)
+
+conflicts_prefer(readr::locale)
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -118,93 +121,66 @@ if( !(121 %in% processos_att_atual) ) {
     )
   }
   
-  ## Descompactar dentro da pasta central
-  print("Descompactando arquivos...")
-  unzip(zip_proposta, exdir = paste0(diretorio_att, "input_files/"))
-  unzip(zip_convenio, exdir = paste0(diretorio_att, "input_files/"))
-  unzip(zip_emendas, exdir = paste0(diretorio_att, "input_files/"))
+  assert_that(file.exists(zip_proposta))
+  assert_that(file.exists(zip_convenio))
+  assert_that(file.exists(zip_emendas))
   
-  # Identificar os arquivos CSV
-  csvs <- list.files(paste0(diretorio_att, "input_files/"), 
-                     pattern = "^siconv", 
-                     full.names = TRUE) %>% 
-    str_subset("csv$")
+  # Identificar os nomes dos CSVs dentro dos arquivos zip
+  csv_proposta <- unzip(zip_proposta, list = TRUE)$Name %>%
+    str_subset("\\.csv$")
   
-  csv_proposta <- str_subset(csvs, "proposta")
-  csv_convenio <- str_subset(csvs, "convenio")
-  csv_emenda <- str_subset(csvs, "emenda")
+  csv_convenio <- unzip(zip_convenio, list = TRUE)$Name %>%
+    str_subset("\\.csv$")
   
-  rm(csvs, zip_proposta, zip_convenio, url_proposta, url_convenio, 
-     zip_emendas, url_emendas, CamposAtualizacao)
+  csv_emenda <- unzip(zip_emendas, list = TRUE)$Name %>%
+    str_subset("\\.csv$")
   
   
-  # Ler os dados com codificação Latin1 (UTF-8) e converter para data.table
-  print("Lendo dados dos arquivos CSV...")
+  # Ler os dados diretamente dos arquivos zip para a memória
+  # readr remove automaticamente o BOM do arquivo
+  print("Lendo dados dos arquivos zip...")
   
-  # Corrige problema de caracteres incorretos dos nomes
-  proposta_names <- fread(csv_proposta, 
-                          nrows = 10,
-                          encoding = "UTF-8", 
-                          sep = ";", 
-                          dec = ",")
-  
-  # names(proposta_names)
-  
-  # Limpa o BOM da primeira coluna modificando por referência 
-  # (zero custo de memória)
-  setnames(
-    x = proposta_names, 
-    old = names(proposta_names)[1], 
-    new = gsub("[^[:alnum:]_]", "", names(proposta_names)[1])
+  dados_proposta <- read_delim(
+    unz(zip_proposta, csv_proposta),
+    delim = ";",
+    locale = locale(encoding = "UTF-8", decimal_mark = ","),
+    col_select = c(
+      ID_PROPOSTA, COD_MUNIC_IBGE, NR_PROPOSTA,
+      IDENTIF_PROPONENTE, OBJETO_PROPOSTA
+    ),
+    show_col_types = FALSE
+    # Adicione nrows = 10000 para debug
   )
   
-  # Para selecionar apenas as colunas relevantes
-  sel_col <- names(proposta_names) %in% 
-    c("ID_PROPOSTA",
-      "COD_MUNIC_IBGE",
-      "NR_PROPOSTA",
-      "IDENTIF_PROPONENTE",
-      "OBJETO_PROPOSTA") %>% 
-    which()
-  
-  dados_proposta <- fread(
-    csv_proposta, 
-    # nrows = 10000, # debug
-    encoding = "UTF-8", 
-    dec = ",",
-    sep = ";", 
-    select = sel_col
-  ) %>% 
-    magrittr::set_names(
-      c("ID_PROPOSTA",
-        "COD_MUNIC_IBGE",
-        "NR_PROPOSTA",
-        "IDENTIF_PROPONENTE",
-        "OBJETO_PROPOSTA")
-    )
-  
-  rm(proposta_names, sel_col)
-  
-  dados_convenio <- fread(
-    csv_convenio, 
-    encoding = "UTF-8", 
-    sep = ";", 
-    # nrows = 10000,  # debug
-    select = c("ID_PROPOSTA",
-               "NR_CONVENIO",
-               "SIT_CONVENIO",
-               "DIA_INIC_VIGENC_CONV",
-               "DIA_FIM_VIGENC_CONV",
-               "VL_GLOBAL_CONV",
-               "VL_REPASSE_CONV"),
-    dec = ",")
+  dados_convenio <- read_delim(
+    unz(zip_convenio, csv_convenio),
+    delim = ";",
+    locale = locale(encoding = "UTF-8", decimal_mark = ","),
+    col_select = c(
+      ID_PROPOSTA, NR_CONVENIO, SIT_CONVENIO,
+      DIA_INIC_VIGENC_CONV, DIA_FIM_VIGENC_CONV,
+      VL_GLOBAL_CONV, VL_REPASSE_CONV
+    ),
+    show_col_types = FALSE
+    # Adicione nrows = 10000 para debug
+  )
   
   # Dados das emendas parlamentares:
-  dados_emendas <- fread(csv_emenda, select = "ID_PROPOSTA") %>% 
+  dados_emendas <- read_delim(
+    unz(zip_emendas, csv_emenda),
+    delim = ";",
+    locale = locale(encoding = "UTF-8"),
+    col_select = ID_PROPOSTA,
+    show_col_types = FALSE
+  ) %>%
     # Deixa apenas emendas relacionadas a convênios:
-    dplyr::filter(ID_PROPOSTA != "", 
-                  !is.na(ID_PROPOSTA)) %>% 
+    dplyr::filter(ID_PROPOSTA != "", !is.na(ID_PROPOSTA)) %>%
     pull(ID_PROPOSTA)
+  
+  rm(csv_proposta, csv_convenio, csv_emenda,
+     zip_proposta, zip_convenio, zip_emendas,
+     url_proposta, url_convenio, url_emendas,
+     CamposAtualizacao)
   
   # Mesclar os dados 
   print("Processando dados...")
@@ -261,10 +237,14 @@ if( !(121 %in% processos_att_atual) ) {
     ) %>% 
     
     # Resgata o id_osc antigo.
-    mutate(cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
-                                          width = 14, 
-                                          side = "left", 
-                                          pad = "0")) %>% 
+    mutate(
+      cd_identificador_osc = str_pad(as.character(cd_identificador_osc), 
+                                     width = 14, 
+                                     side = "left", 
+                                     pad = "0"), 
+      nr_numero_instrumento = as.integer(nr_numero_instrumento)
+    ) %>% 
+    
     left_join(idControl, by = "cd_identificador_osc") %>% 
     
     # Exclui as organizações que não são OSC
@@ -272,8 +252,6 @@ if( !(121 %in% processos_att_atual) ) {
     
     # Formata dados:
     mutate(
-      
-      id_projeto = NA_integer_,
       tx_nome_projeto = paste0("Parceria ", nr_numero_instrumento),
       
       cd_status_projeto = case_when(
@@ -358,7 +336,6 @@ if( !(121 %in% processos_att_atual) ) {
     
     # Seleciona colunas e arruma a ordem
     select(
-      id_projeto,
       id_osc,
       tx_nome_projeto,
       ft_nome_projeto,
@@ -401,8 +378,6 @@ if( !(121 %in% processos_att_atual) ) {
       ft_numero_instrumento,
     )
   
-  rm(dados_mesclados, idControl)
-  
   # Cria nova chave primária para os dados:
   
   ## Baixa chaves antigas:
@@ -438,7 +413,10 @@ if( !(121 %in% processos_att_atual) ) {
       
       # Só vale para projetos finalizados ou em andamento:
       check_missing = check_missing & (cd_status_projeto %in% c(2, 4, 5) ),
-    ) 
+    ) %>% 
+    filter(!is.na(nr_numero_instrumento), nr_numero_instrumento != 0) %>% 
+    select(old_id, nr_numero_instrumento, check_missing) %>% 
+    distinct(nr_numero_instrumento, .keep_all = TRUE)
   
   # sum(idProjetos$check_missing)
   
@@ -450,12 +428,20 @@ if( !(121 %in% processos_att_atual) ) {
            ft_status_projeto = fonte_carga) %>% 
     select(id_projeto, cd_status_projeto, ft_status_projeto)
   
+  
+  # nrow(idProjetos)
+  # length(unique(idProjetos$nr_numero_instrumento))
+  # 
+  # nrow(transferegov_tidy)
+  # length(unique(transferegov_tidy$nr_numero_instrumento))
+  # 
+  
   # Insere id nos convênios existentes:
   tb_projeto <- transferegov_tidy %>% 
+    distinct(nr_numero_instrumento, .keep_all = TRUE) %>% 
     left_join(select(idProjetos, old_id, nr_numero_instrumento), 
               by = "nr_numero_instrumento") %>% 
-    mutate(id_projeto = old_id) %>% 
-    select(-old_id) %>% 
+    rename(id_projeto = old_id) %>% 
     bind_rows(alterar_status)
   
   # sum(is.na(tb_projeto$id_projeto))
@@ -468,14 +454,11 @@ if( !(121 %in% processos_att_atual) ) {
   rm(NovosIds, idProjetos, transferegov_tidy, alterar_status, fonte_carga)
   
   # Salva arquivos de endereços das OSC
-  saveRDS(tb_projeto, glue("{diretorio_att}output_files/tb_projeto.RDS"))
+  if(definicoes$salva_backup) {
+    saveRDS(tb_projeto, glue("{diretorio_att}output_files/tb_projeto.RDS"))
+  }
   
-  # Deleta arquivos descompatactados (deixa os compactados)
-  unlink(csv_convenio)
-  unlink(csv_proposta)
-  unlink(csv_emenda)
-  
-  rm(csv_convenio, csv_proposta, csv_emenda)
+  rm(dados_mesclados, idControl)
   rm(tb_projeto)
   gc()
   # ls()

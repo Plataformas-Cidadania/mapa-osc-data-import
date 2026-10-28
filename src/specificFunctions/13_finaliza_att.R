@@ -26,26 +26,30 @@ library(RPostgres)
 # Esvazia diretório 'input_files_next'   ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Lista arquivos de 'input_files_next'
-files_input_next <- list(list.files("input_files_next/")) %>% 
-  unlist() %>% 
-  # Só o modelos_Input.xlsm que vou deixar aqui na pasta
-  str_subset("^modelos_Input.xlsm$", negate = TRUE)
-
-message("Esvazia diretório input_files_next")
-
-# Transfere todos os arquivos
-for (i in seq_along(files_input_next)) {
-  # i <- 1 # Debug
-  # diretorio_att <- "backup_files/2025_03/"  # Debug
-  message("Transferindo arquivo '", files_input_next[i], "'")
+# Somente esvaziar 'input_files_next' na atualização do banco de produção:
+if(definicoes$Banco_Atualização == "Produção") {
+  # Lista arquivos de 'input_files_next'
+  files_input_next <- list(list.files("input_files_next/")) %>% 
+    unlist() %>% 
+    # Só o modelos_Input.xlsm que vou deixar aqui na pasta
+    str_subset("^modelos_Input.xlsm$", negate = TRUE)
   
-  file.rename(
-    from = glue("input_files_next/{files_input_next[i]}"), 
-    to = glue("{diretorio_att}input_files/{files_input_next[i]}")
-  )
+  message("Esvazia diretório input_files_next")
+  
+  # Transfere todos os arquivos
+  for (i in seq_along(files_input_next)) {
+    # i <- 1 # Debug
+    # diretorio_att <- "backup_files/2025_03/"  # Debug
+    message("Transferindo arquivo '", files_input_next[i], "'")
+    
+    file.rename(
+      from = glue("input_files_next/{files_input_next[i]}"), 
+      to = glue("{diretorio_att}input_files/{files_input_next[i]}")
+    )
+  }
+  rm(i, files_input_next)
 }
-rm(i, files_input_next)
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Cópia dos arquivos de código da atualização  ####

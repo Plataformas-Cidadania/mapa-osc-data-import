@@ -109,6 +109,7 @@ tb_dados_gerais[["cd_natureza_juridica_osc"]] <- as.numeric(tb_dados_gerais[["cd
 tb_dados_gerais[["dt_fundacao_osc"]] <- as_date(tb_dados_gerais[["dt_fundacao_osc"]])
 tb_dados_gerais[["ft_fechamento_osc"]] <- as.character(tb_dados_gerais[["ft_fechamento_osc"]])
 tb_dados_gerais[["cd_matriz_filial"]] <- as.integer(tb_dados_gerais[["cd_matriz_filial"]])
+tb_dados_gerais[["nr_ano_fechamento_osc"]] <- as.integer(tb_dados_gerais[["nr_ano_fechamento_osc"]])
 
 # Esta variável tem um interpretação diferente no banco de dados antigo e novo (investigar!)
 # tb_dados_gerais[["dt_ano_cadastro_cnpj"]] <- NA_Date_
@@ -180,8 +181,8 @@ query_JoinUpdate <- glue("UPDATE tb_dados_gerais \n",
 # query_JoinUpdate
 
 # Retira os Triggers para poder atualizar mais rápido
-dbExecute(conexao_mosc, 
-          glue("ALTER TABLE tb_dados_gerais DISABLE TRIGGER ALL;") )
+# dbExecute(conexao_mosc, 
+#           glue("ALTER TABLE tb_dados_gerais DISABLE TRIGGER ALL;") )
 
 
 # Executa a inserção das colunas
@@ -227,8 +228,8 @@ query_JoinUpdate <- glue("UPDATE tb_dados_gerais \n",
 dbExecute(conexao_mosc, query_JoinUpdate)
 
 # Recoloca os triggers
-dbExecute(conexao_mosc, 
-          glue("ALTER TABLE tb_dados_gerais ENABLE TRIGGER ALL;") )
+# dbExecute(conexao_mosc, 
+#           glue("ALTER TABLE tb_dados_gerais ENABLE TRIGGER ALL;") )
 
 
 rm(query_JoinUpdate)
@@ -322,65 +323,69 @@ rm(Atualizacao, tb_area_atuacao)
 gc()
 
 
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Atualiza tb_quadro_societario: ####
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-message("Inserindo dados da tabela 'tb_quadro_societario'")
-
-# Carrega dados:
-if(!exists('tb_quadro_societario')) {
-  tb_quadro_societario <- readRDS(glue("{diretorio_att}output_files/tb_quadro_societario.RDS"))
+if(FALSE) {
+  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Atualiza tb_quadro_societario: ####
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  message("Inserindo dados da tabela 'tb_quadro_societario'")
+  
+  # Carrega dados:
+  if(!exists('tb_quadro_societario')) {
+    tb_quadro_societario <- readRDS(glue("{diretorio_att}output_files/tb_quadro_societario.RDS"))
+  }
+  
+  # Corrige tipos de dado
+  tb_quadro_societario[["id_osc"]] <- as.integer(tb_quadro_societario[["id_osc"]])
+  
+  # Executa atualização
+  Atualizacao <- AtualizaDados(Conexao = conexao_mosc,
+                               DadosNovos = tb_quadro_societario,
+                               Chave = "id_quadro_societario",
+                               Table_NameAntigo = "tb_quadro_societario",
+                               verbose = TRUE,
+                               samples = TRUE)
+  
+  assert_that(Atualizacao)
+  rm(Atualizacao, tb_quadro_societario)
+  gc()
+  
+  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Atualiza tb_projeto ####
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  message("Inserindo dados da tabela 'tb_projeto'")
+  
+  # Carrega dados:
+  if(!exists('tb_projeto')) {
+    tb_projeto <- readRDS(glue("{diretorio_att}output_files/tb_projeto.RDS"))
+  }
+  
+  # Corrige tipos de dado
+  tb_projeto[["cd_status_projeto"]] <- as.integer(tb_projeto[["cd_status_projeto"]])
+  tb_projeto[["nr_numero_instrumento"]] <- as.integer(tb_projeto[["nr_numero_instrumento"]])
+  
+  # Temporariamente, apaga alguns dados, devido a restrições no banco de dados
+  tb_projeto[["cd_municipio"]] <- NA_integer_
+  tb_projeto[["ft_municipio"]] <- NA_character_
+  tb_projeto[["cd_uf"]] <- NA_integer_
+  tb_projeto[["ft_uf"]] <- NA_character_
+  
+  # Executa atualização
+  Atualizacao <- AtualizaDados(Conexao = conexao_mosc,
+                               DadosNovos = tb_projeto,
+                               Chave = "id_projeto",
+                               Table_NameAntigo = "tb_projeto",
+                               verbose = TRUE,
+                               samples = TRUE)
+  
+  assert_that(Atualizacao)
+  rm(Atualizacao, tb_quadro_societario)
+  gc()
+  
 }
-
-# Corrige tipos de dado
-tb_quadro_societario[["id_osc"]] <- as.integer(tb_quadro_societario[["id_osc"]])
-
-# Executa atualização
-Atualizacao <- AtualizaDados(Conexao = conexao_mosc,
-                             DadosNovos = tb_quadro_societario,
-                             Chave = "id_quadro_societario",
-                             Table_NameAntigo = "tb_quadro_societario",
-                             verbose = TRUE,
-                             samples = TRUE)
-
-assert_that(Atualizacao)
-rm(Atualizacao, tb_quadro_societario)
-gc()
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Atualiza tb_projeto ####
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-message("Inserindo dados da tabela 'tb_projeto'")
-
-# Carrega dados:
-if(!exists('tb_projeto')) {
-  tb_projeto <- readRDS(glue("{diretorio_att}output_files/tb_projeto.RDS"))
-}
-
-# Corrige tipos de dado
-tb_projeto[["cd_status_projeto"]] <- as.integer(tb_projeto[["cd_status_projeto"]])
-
-# Temporariamente, apaga alguns dados, devido a restrições no banco de dados
-tb_projeto[["cd_municipio"]] <- NA_integer_
-tb_projeto[["ft_municipio"]] <- NA_character_
-tb_projeto[["cd_uf"]] <- NA_integer_
-tb_projeto[["ft_uf"]] <- NA_character_
-
-# Executa atualização
-Atualizacao <- AtualizaDados(Conexao = conexao_mosc,
-                             DadosNovos = tb_projeto,
-                             Chave = "id_projeto",
-                             Table_NameAntigo = "tb_projeto",
-                             verbose = TRUE,
-                             samples = TRUE)
-
-assert_that(Atualizacao)
-rm(Atualizacao, tb_quadro_societario)
-gc()
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

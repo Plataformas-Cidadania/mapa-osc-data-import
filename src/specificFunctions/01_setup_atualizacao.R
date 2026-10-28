@@ -6,7 +6,7 @@
 # Autor do Script: Murilo Junqueira 
 # (m.junqueira@yahoo.com.br; murilo.junqueira@ipea.gov.br)
 
-# Data de Criação do Scrip: 2024-07-12
+# Data de Criação do Script: 2024-07-12
 
 ## Inputs:
 # definicoes 
@@ -30,6 +30,7 @@ message("Carregando bibliotecas...")
 Sys.sleep(2)
 
 # Pacotes de programação e manipulação de dados
+library(conflicted)
 library(magrittr)
 library(tidyverse) 
 library(assertthat) 
@@ -56,8 +57,13 @@ library(dbplyr)
 # Interfaço com usuário
 library(rstudioapi)
 
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(lubridate::year)
+conflicts_prefer(lubridate::month)
+
 assert_that(file.exists("src/generalFunctions/agora.R"))
 assert_that(file.exists("src/specificFunctions/atualiza_processos_att.R"))
+
 
 # Carrega essa função facilitadora da marcação do tempo:
 source("src/generalFunctions/agora.R")

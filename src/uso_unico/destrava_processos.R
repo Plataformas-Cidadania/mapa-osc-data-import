@@ -11,8 +11,8 @@ library(RPostgres)
 library(jsonlite)
 
 # Chaves do banco de dados
-keys <- "keys/psql12-homolog_key.json" # Banco de homologação
-# keys <- "keys/psql12-usr_manutencao_mapa.json" # Banco de produção
+# keys <- "keys/psql12-homolog_key.json" # Banco de homologação
+keys <- "keys/psql12-usr_manutencao_mapa.json" # Banco de produção
 
 # Concecta aos bancos de dados do MOSC:
 source("src/generalFunctions/postCon.R") 
@@ -45,10 +45,24 @@ WHERE state != 'idle' AND query NOT LIKE '%pg_stat_activity%';
 
 teste
 
-  
+teste$pid
+
+
+# Verifica processos que estão travando o banco
+teste2 <- try(
+  dbGetQuery(
+    conexao_mosc,
+    "
+SELECT setval( pg_get_serial_sequence('tb_projeto', 'id_projeto'), MAX(id_projeto) ) FROM tb_projeto;
+
+"
+  )
+)
+
+teste2
 
 # Interrompe processos:
-dbExecute(conexao_mosc, "SELECT pg_terminate_backend(90313);")
+dbExecute(conexao_mosc, "SELECT pg_terminate_backend(6213);")
 
 dbExecute(conexao_mosc, "SELECT pg_terminate_backend(38417);")
 
@@ -94,4 +108,5 @@ dbDisconnect(conexao_mosc)
 rm(conexao_mosc)
 
 rm(teste, tables)
+rm(teste2)
 gc()

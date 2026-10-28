@@ -123,14 +123,14 @@ if(!any(pull(tb_controle_atualizacao, tx_att_situacao) == "Iniciada")) {
     select(cd_att_ref) %>% 
     collect() %>% 
     unlist() %>% as.character()
-  
-  # Data de referência da atualização atual:
-  definicoes$data_dados_referencia <- tb_controle_atualizacao %>% 
-    dplyr::filter(att_id == id_presente_att) %>% 
-    collect() %>% 
-    pull(dt_att_ref) %>% 
-    ymd()
 }
+
+# Data de referência da atualização atual:
+definicoes$data_dados_referencia <- tb_controle_atualizacao %>% 
+  dplyr::filter(att_id == id_presente_att) %>% 
+  collect() %>% 
+  pull(dt_att_ref) %>% 
+  ymd()
 
 # Se a data de atualização não estiver presente, busca ela.
 if(is.null(definicoes$data_dados_referencia) | 
